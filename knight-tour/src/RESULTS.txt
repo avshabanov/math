@@ -1,0 +1,64 @@
+
+== OS ==
+debian-6-i386   kernel v. 2.6.32-5-686
+Pentium(R) Dual-Core  CPU      E5200  @ 2.50GHz
+
+== Tools ==
+
+$ java -version
+java version "1.7.0_07"
+Java(TM) SE Runtime Environment (build 1.7.0_07-b10)
+Java HotSpot(TM) Server VM (build 23.3-b01, mixed mode)
+
+$ gcc --version
+gcc (Debian 4.4.5-8) 4.4.5
+
+$ mono --version
+Mono JIT compiler version 2.6.7 (Debian 2.6.7-5.1)
+
+== Compilation ==
+
+$ javac KnightTour.java
+
+# gcc with default optimizations
+$ gcc KnightTour.c -Wall -std=c99 -o KnightTour0.out
+
+# gcc with max optimizations
+$ gcc KnightTour.c -Wall -std=c99 -O3 -o KnightTour3.out
+
+$ gmcs KnightTour.cs
+
+== Evaluation Results ==
+
+$ java KnightTour 8 8 4
+Time: 0 sec 750343.916 msec
+Time: 0 sec 739627.566 msec
+Time: 0 sec 727159.144 msec
+Time: 0 sec 718427.107 msec
+
+$ ./KnightTour0.out 8 8 4
+Time: 1 sec 512245 000 msec
+Time: 1 sec 512110 000 msec
+Time: 1 sec 500791 000 msec
+Time: 1 sec 478638 000 msec
+
+$ ./KnightTour3.out 8 8 4
+Time: 0 sec 623685 000 msec
+Time: 0 sec 602377 000 msec
+Time: 0 sec 603271 000 msec
+Time: 0 sec 602442 000 msec
+
+$ mono ./KnightTour.exe 8 8 4
+Time: 00:00:01.3305608
+Time: 00:00:01.2716064
+Time: 00:00:01.2669855
+Time: 00:00:01.2638342
+
+== Conclusion ==
+So the best times are:
+
+gcc -O3     ~0.60 sec
+java        ~0.72 sec
+mono        ~1.26 sec
+gcc         ~1.49 sec
+
