@@ -54,23 +54,22 @@ where -1 < x < 1. If |x| >> 1 the function will produce increasing error."
 (defmacro def-maclaurin-fn (name derivative-cst-fn &key (steps 10))
   (declare (type integer steps))
   (let* ((x (gensym "x"))       ; source variable that holds the value of function to be calculated
-	 (xpow (gensym "xpow"))         ; where the power of `x' will be accumulated
+	 (xpow (gensym "xpow"))         ; xpow is where the power of `x' will be accumulated
 	 (result (gensym "result"))     ; result that holds the summation the series summation
 	 (calculation-forms
-	  (apply #'append
-		 (loop for n from 0 to steps collect
-                      ;; precalculated coefficient == f'(a) / 1!, f''(a) / 2!, f'''(a) / 3! etc.
-		      (let ((coef (/ (eval `(funcall ,derivative-cst-fn ,n))
-				     (factorial n))))
-                        (check-type coef (or integer ratio) "non-integer or ratio value")
-                        ;; generate plain series of:
-                        ;;   incf... - result accumulating sequences
-                        ;;   setf... - power of x calculation sequences
-			(append
-			 (unless (= 0 coef)
-			   (list `(incf ,result (* ,coef ,xpow))))
-			 (unless (= n steps)
-			   (list `(setf ,xpow (* ,xpow ,x))))))))))
+          (loop for n from 0 to steps collect             
+               (let (;; precalculated coefficient == f'(a) / 1!, f''(a) / 2!, f'''(a) / 3! etc.
+                     (coef (/ (eval `(funcall ,derivative-cst-fn ,n))
+                              (factorial n))))
+                 (check-type coef (or integer ratio) "non-integer or ratio value")
+                 ;; generate plain series of:
+                 ;;   incf... - result accumulating sequences
+                 ;;   setf... - power of x calculation sequences
+                 (append
+                  (unless (= 0 coef)
+                    (list `(incf ,result (* ,coef ,xpow))))
+                  (unless (= n steps)
+                    (list `(setf ,xpow (* ,xpow ,x)))))))))
     `(defun ,name (,x)
        (declare (type (or ratio integer) ,x))
        (let ((,xpow 1)
@@ -82,7 +81,7 @@ where -1 < x < 1. If |x| >> 1 the function will produce increasing error."
 			(lambda (step) (if (evenp step) 0
 					(if (= 1 (mod step 4)) 1 -1)))))
 
-;; Calculates sinus by operating on ratios (no floating point!)
+;; Calculates sinus(x)
 (def-maclaurin-fn ratio-sin
     (lambda (step) (if (evenp step) 0
 		       (if (= 1 (mod step 4)) 1 -1)))
