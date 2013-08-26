@@ -3,14 +3,14 @@
 ;; a short and concise lisp DSL form.
 
 
-(defmacro def-op-semantics (name terms evaluation-relation)
+(defmacro def-semantics (name terms evaluation-relation)
   ;; TODO: analyze
   `(defparameter ,name (list ',terms ',evaluation-relation)))
 
 ;;
 ;; Sample
 
-(def-op-semantics booleans ((:terms
+(def-semantics booleans ((:terms
 			     true
 			     false
 			     (if :term then :term else :term))

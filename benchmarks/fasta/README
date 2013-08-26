@@ -1,0 +1,4 @@
+gcc my-fasta.c -Wall -O3 -fomit-frame-pointer -o mf
+gcc orig-fasta.c -Wall -O3 -fomit-frame-pointer -o of
+time ./mf 25000000 > tmf25000K
+time ./of 25000000 > tof25000K
