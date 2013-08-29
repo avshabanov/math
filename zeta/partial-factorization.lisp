@@ -53,3 +53,10 @@
 	      (format t "[REG]  For n = ~S: liouville sum = ~S, lim = ~S~%"
 		      i liouville-sum (/ liouville-sum (sqrt i)))))
 
+#+repl (loop for i from 30000 to 30010 do
+	    (multiple-value-bind (factors liouville-sum)
+		(produce-partial-factorizations i)
+	      (declare (ignore factors))
+	      (format t "[REG]  For n = ~S: liouville sum = ~S, lim = ~S~%"
+		      i liouville-sum (/ liouville-sum (sqrt i)))))
+
