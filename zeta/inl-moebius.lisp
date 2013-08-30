@@ -21,7 +21,6 @@ pi(n) < [1.25506 * (n / ln(n))] for n >= 17."
 #+repl (upper-bound-count-of-primes 100)
 #+repl (upper-bound-count-of-primes 20000)
 
-;; Error for 77 - false value
 (defun produce-moebius-values (limit)
   (declare (type integer limit))
   (let* ((factorization-flags (make-array limit :element-type 'bit))
