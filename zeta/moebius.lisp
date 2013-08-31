@@ -51,8 +51,8 @@
 ;; Dump big distribution to file
 #+repl (progn
 	 (format t "Start writing file...~%")
-	 (with-open-file (stream "/tmp/moebius-distribution.txt" :direction :output)
-	   (let ((moebius-values (build-moebius-distribution 100000))
+	 (with-open-file (stream "/tmp/moebius-distribution-big.txt" :direction :output)
+	   (let ((moebius-values (build-moebius-distribution 10000000))
 		 (liouville-sum 0))
 	     (loop
 		for mv being the element of moebius-values

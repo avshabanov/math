@@ -69,6 +69,11 @@ pi(n) < [1.25506 * (n / ln(n))] for n >= 17."
                                  (format t "~S x ~S = ~S, cf=~S~%"
                                          num product new-product
                                          (1+ count-of-factors)))
+		      ;; add product that is not beyond limits;
+		      ;; actually we have a room for optimizations here: if we can count
+		      ;; on the sorted products collection we'd interrupt loop as soon as
+		      ;; the product is greater than the limit; also we need not to search for
+		      ;; a products for numbers greater than [limit/2].
                       (if (< new-product limit)
                           (add-product new-product (1+ count-of-factors)))))))))
     ;; return calculated moebius values
