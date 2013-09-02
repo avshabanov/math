@@ -34,8 +34,15 @@ Space complexity is O(N)."
 #+repl (liouville-values 11)
 #+repl (format t "lv=~S~%" (liouville-values 100))
 
-#+repl (let ((v (liouville-values (+ n 1))))
-	   (loop for e being the element in v sum e))
+#+repl (let* ((n 90000)
+	      (v (liouville-values (+ n 1))))
+	 (format t "===============~%")
+	 (loop
+	    with sum = 0
+	    for u from 1 to n do
+	      (incf sum (aref v u))
+	      (if (>= sum 0)
+		  (format t "L(~S, ~S) = ~S~%" u (aref v u) sum))))
 
 ;; Official sequence at http://oeis.org/A008836
 #+repl (defparameter *sample* (list 0 1 -1 -1 1 -1 1 -1 -1 1 1 -1 -1 -1 1 1 1 -1 -1 -1 -1
