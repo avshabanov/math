@@ -50,7 +50,7 @@ N: 10000000, Misses: 20130318, Total: 29465738, Ratio: 0.6831771
 #+repl (liouville-values 11)
 #+repl (format t "lv=~S~%" (liouville-values 100))
 
-#+repl (let* ((n 100000) (v (liouville-values (+ n 1))))
+#+repl (let* ((n 1000000) (v (liouville-values (+ n 1))))
 	   (loop for e being the element in v sum e))
 
 ;; Official sequence at http://oeis.org/A008836
