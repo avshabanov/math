@@ -8,8 +8,8 @@ Time complexity is O(N * sum(k for 1 to N, k^-1)),
 Space complexity is O(N)."
   (declare (type integer limit))
   ;; lv values array initialized with illegal arguments
-  (let ((lv-values (make-array limit :element-type 'integer :initial-element 0))
-        #+repl2 (misses 0) #+repl2 (total 0))
+  (let* ((lv-values (make-array limit :element-type 'integer :initial-element 0))
+	 #+repl2 (misses 0) #+repl2 (total 0))
     (setf (aref lv-values 1) 1) ; 1 has no prime factors
     (flet ((add-product (num lv-value)
              (declare (type integer num) (type integer lv-value))
@@ -50,8 +50,15 @@ N: 10000000, Misses: 20130318, Total: 29465738, Ratio: 0.6831771
 #+repl (liouville-values 11)
 #+repl (format t "lv=~S~%" (liouville-values 100))
 
-#+repl (let* ((n 1000000) (v (liouville-values (+ n 1))))
-	   (loop for e being the element in v sum e))
+#+repl (let* ((n 90000)
+	      (v (liouville-values (+ n 1))))
+	 (format t "===============~%")
+	 (loop
+	    with sum = 0
+	    for u from 1 to n do
+	      (incf sum (aref v u))
+	      (if (>= sum 0)
+		  (format t "L(~S, ~S) = ~S~%" u (aref v u) sum))))
 
 ;; Official sequence at http://oeis.org/A008836
 #+repl (defparameter *sample* (list 0 1 -1 -1 1 -1 1 -1 -1 1 1 -1 -1 -1 1 1 1 -1 -1 -1 -1

@@ -39,7 +39,7 @@
               (sum 10)
               (result (represent-sum sum coins)))
          (loop for sums in result do
-              (format t "10 = ")
+              (format t "~S = " sum)
               (loop
                  for (coin-val . coin-pos) in sums
                  for i from 0
