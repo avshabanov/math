@@ -14,17 +14,15 @@
 (defclass eval-context ()
   ((bindings :initform (make-hash-table) :reader bindings)))
 
-(defun binding (sym context)
-  "Helper function for accessing the particular symbolic binding from the evaluation context"
-  (declare (type symbol sym) (type eval-context context))
-  (gethash sym (bindings context)))
-
 
 (defun eval-0 (context form)
-  "Top-level lambda calculus evaluation function extended with special forms,
-provided in the context bindings"
+  "Top-level lambda calculus evaluation function extended with special forms"
   (format t ";;  # evaluating ~S~%" form)
-  (flet ((eval-lambda-form (lambda-form &rest args)
+  (flet ((binding (sym context)
+           "Helper function for accessing the particular symbolic binding from the evaluation context"
+           (declare (type symbol sym) (type eval-context context))
+           (gethash sym (bindings context)))
+         (eval-lambda-form (lambda-form args)
            (assert (= 1 (length args)) (form)
                    "Only one argument expected to invoke lambda form ~S" form)
            (destructuring-bind (lambda-sym var body) lambda-form
@@ -40,20 +38,17 @@ provided in the context bindings"
       ;; special form or lambda application
       ((consp form) (destructuring-bind (fn-id &rest args) form
                       (cond
-                        ;; symbolic leading form
-                        ((symbolp fn-id)
+                        ((symbolp fn-id) ; symbolic leading form
                          (let ((bound-form (binding fn-id context)))
                            (cond
                              ;; special form
                              ((functionp bound-form) (apply bound-form args))
                              ;; lambda application, (lambda {var} {body})
-                             ((consp bound-form)
-                              (eval-lambda-form bound-form args))
+                             ((consp bound-form) (eval-lambda-form bound-form args))
                              ;; form as is, evaluation has not been done
                              ((null bound-form) form)
                              (t (error "Unknown binding for function in form ~S" form)))))
-                        ;; function ID is itself a function call
-                        ((consp fn-id)
+                        ((consp fn-id)  ; function ID is itself a function call
                          (if (eq 'lambda (first fn-id))
                              ;; built-in application form
                              (eval-lambda-form fn-id args)
