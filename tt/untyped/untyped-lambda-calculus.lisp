@@ -17,7 +17,7 @@
 
 (defun eval-0 (context form)
   "Top-level lambda calculus evaluation function extended with special forms"
-  (format t ";;  # evaluating ~S~%" form)
+  #+repl (format t ";;  # evaluating ~S~%" form)
   (flet ((binding (sym context)
            "Helper function for accessing the particular symbolic binding from the evaluation context"
            (declare (type symbol sym) (type eval-context context))
@@ -29,7 +29,8 @@
              (assert (eq lambda-sym 'lambda) (lambda-form)
                      "Unable to evaluate non-lambda form ~S" lambda-form)
              ;; do the necessary substitutions
-             (subst (first args) var body))))
+             (let ((result (subst (first args) var body)))
+               (eval-0 context result)))))
     (cond
       ;; numbers and keywords - evaluated AS IS
       ((typep form '(or keyword number)) form)
@@ -75,27 +76,32 @@
 		    (let (result)
 		      (loop for form in forms do
                            (setf result (eval-0 context form))
-                           (format t ";;    # result -> ~S~%" result))
+                           #+repl (format t ";;  ### result -> ~S~%" result))
 		      result))
     ;; LET special form
     (put-fn-binding let (sym val)
 		    (check-type sym symbol "Symbol expected")
-		    (setf (gethash sym (bindings context)) val))))
+		    (setf (gethash sym (bindings context)) val))
+    ;; TRACE special form
+    (put-fn-binding trace (form)
+                    (format t ";; # ~S -> ~S~%" form (eval-0 context form)))))
 
 
 
 ;;
 ;; REPL tests
 
-#+repl (defmacro eval-in-context (eval-sym &body body)
-         (let ((ec (gensym "eval-context"))
-               (expr (gensym "expr")))
-           `(let ((,ec (make-instance 'eval-context)))
-              (bind-special-forms ,ec)
-              (flet ((,eval-sym (,expr)
-                       (format t "=============================~%")
-                       (format t "eval ~S = ~S~%" ,expr (eval-0 ,ec ,expr))))
-                ,@body))))
+;; convenient evaluation for tests
+(defmacro eval-in-context (eval-sym &body body)
+  (let ((ec (gensym "eval-context"))
+        (expr (gensym "expr")))
+    `(let ((,ec (make-instance 'eval-context)))
+       (bind-special-forms ,ec)
+       (flet ((,eval-sym (,expr)
+                (format t "=============================~%") ; for trace
+                #-repl (eval-0 ,ec ,expr)
+                #+repl (format t "eval ~S = ~S~%" ,expr (eval-0 ,ec ,expr))))
+         ,@body))))
 
 #+repl (eval-in-context local-eval
          (local-eval 'a))
