@@ -57,7 +57,8 @@
                              (let ((fev (eval-0 context fn-id)))
                                (if (equal fn-id fev)
                                    ;; unable to evaluate, result is the same as the source form
-                                   form
+                                   (cons fn-id (loop for a in args collect
+						    (eval-0 context a)))
                                    ;; try evaluate again with the 'expanded' form
                                    ;; TODO: what about divergent combinators?
                                    (eval-0 context (cons fev args))))))

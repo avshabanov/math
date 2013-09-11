@@ -26,4 +26,58 @@
                 (trace (((test false) u) v)))))
 
 
+(eval-in-context local-eval
+  (local-eval '(progn
+                ;; Church numerals
+                (let c0 (lambda s (lambda z z)))
+		(let c1 (lambda s (lambda z (s z))))
+		(let c2 (lambda s (lambda z (s (s z)))))
+		(let c3 (lambda s (lambda z (s (s (s z))))))
+		(let c4 (lambda s (lambda z (s (s (s (s z)))))))
+		(let c5 (lambda s (lambda z (s (s (s (s (s z))))))))
+		(let c6 (lambda s (lambda z (s (s (s (s (s (s z)))))))))
+		(let c7 (lambda s (lambda z (s (s (s (s (s (s (s z))))))))))
+		
+		(let scc (lambda n (lambda s (lambda z (s ((n s) z))))))
+		(let plus (lambda m (lambda n
+				      (lambda s
+					(lambda z
+					  ((m s) ((n s) z)))))))
+		(let times (lambda m (lambda n ((m (plus n)) c0))))
+		;; times2 is the alternative representation of times
+		(let times2 (lambda m
+			      (lambda n
+				((m
+				  (n
+				   (lambda k
+				     (lambda s
+				       (lambda z (s ((k s) z)))))) c0)))))
+		;; m^n
+		(let pow (lambda m (lambda n ((n (times m)) c1))))
 
+		(trace (((scc c3) 's) 'z))
+		(trace ((((plus c2) c3) 's) 'z))
+		
+		(trace ((((times c5) c2) 's) 'z))
+		(trace ((((times c2) c3) 's) 'z))
+
+		(trace ((((pow c3) c2) 's) 'z))
+		(trace ((((pow c2) c3) 's) 'z))
+		)))
+
+#|
+
+;; # (((SCC C3) 'S) 'Z) -> ('S ('S ('S ('S 'Z))))
+;; # ((((PLUS C2) C3) 'S) 'Z) -> ('S ('S ('S ('S ('S 'Z)))))
+;; # ((((TIMES C5) C2) 'S) 'Z) -> ('S
+                                   ('S
+                                    ('S
+                                     ('S
+                                      ('S ('S ('S ('S ('S ('S 'Z))))))))))
+;; # ((((TIMES C2) C3) 'S) 'Z) -> ('S ('S ('S ('S ('S ('S 'Z))))))
+;; # ((((POW C3) C2) 'S) 'Z) -> ('S
+                                 ('S
+                                  ('S ('S ('S ('S ('S ('S ('S 'Z)))))))))
+;; # ((((POW C2) C3) 'S) 'Z) -> ('S ('S ('S ('S ('S ('S ('S ('S 'Z))))))))
+
+|#
