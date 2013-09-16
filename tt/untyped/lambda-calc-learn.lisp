@@ -55,6 +55,9 @@
 		;; m^n
 		(let pow (lambda m (lambda n ((n (times m)) c1))))
 
+                ;; is zero?
+                (let iszro (lambda m ((m (lambda x fls)) tru)))
+
 		(trace (((scc c3) 's) 'z))
 		(trace ((((plus c2) c3) 's) 'z))
 		
@@ -63,7 +66,22 @@
 
 		(trace ((((pow c3) c2) 's) 'z))
 		(trace ((((pow c2) c3) 's) 'z))
+
+                (trace (iszro c5))
+                (trace (iszro c0))
 		)))
+
+(eval-in-context local-eval
+  (local-eval '(progn
+                ;; Church lists
+                (let nil (lambda c (lambda n n)))
+                ;; h - list element, t - existing list
+                ;; church list [x, y, z] ==> (c x (c y (c z n))), c - fold function, n - initial arg
+                (let cons (lambda h (lambda t (lambda c (lambda n ((c h) ((t c) n)))))))
+
+                (trace ((nil 'c) 'n))
+                (trace ((((cons 1) ((cons 2) ((cons 3) nil))) 'c) 'n))
+                )))
 
 #|
 
