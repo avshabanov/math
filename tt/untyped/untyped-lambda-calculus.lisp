@@ -12,12 +12,15 @@
 
 
 (defclass eval-context ()
-  ((bindings :initform (make-hash-table) :reader bindings)))
+  ((bindings :initform (make-hash-table) :reader bindings)
+   ;; number of evaluations, for statistics purposes
+   (num-evals :initform 0 :accessor num-evals)))
 
 
 (defun eval-0 (context form)
   "Top-level lambda calculus evaluation function extended with special forms"
   #+repl (format t ";;  # evaluating ~S~%" form)
+  (incf (num-evals context))
   (flet ((binding (sym context)
            "Helper function for accessing the particular symbolic binding from the evaluation context"
            (declare (type symbol sym) (type eval-context context))
@@ -85,7 +88,11 @@
 		    (setf (gethash sym (bindings context)) val))
     ;; TRACE special form
     (put-fn-binding trace (form)
-                    (format t ";; # ~S -> ~S~%" form (eval-0 context form)))))
+                    (format t ";; # ~S -> ~S~%" form (eval-0 context form)))
+    ;; TRACE-AND-RESET-EVALS special form
+    (put-fn-binding trace-and-reset-evals ()
+		    (format t ";; [STAT] num-evals = ~S~%" (num-evals context))
+		    (setf (num-evals context) 0))))
 
 
 

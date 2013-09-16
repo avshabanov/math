@@ -37,6 +37,15 @@
 		(let c5 (lambda s (lambda z (s (s (s (s (s z))))))))
 		(let c6 (lambda s (lambda z (s (s (s (s (s (s z)))))))))
 		(let c7 (lambda s (lambda z (s (s (s (s (s (s (s z))))))))))
+
+		;; Church booleans
+		(let true (lambda tr (lambda fl tr)))
+                (let false (lambda tr (lambda fl fl)))
+
+		;; Church pairs
+		(let pair (lambda f (lambda s (lambda b ((b f) s)))))
+		(let fst (lambda p (p true)))
+		(let snd (lambda p (p false)))
 		
 		(let scc (lambda n (lambda s (lambda z (s ((n s) z))))))
 		(let plus (lambda m (lambda n
@@ -54,6 +63,10 @@
 				       (lambda z (s ((k s) z)))))) c0)))))
 		;; m^n
 		(let pow (lambda m (lambda n ((n (times m)) c1))))
+		;; m-n
+		(let ss (lambda p ((pair (snd p)) (scc (snd p)))))
+		(let prd (lambda m (fst ((m ss) ((pair c0) c0)))))
+		(let sub (lambda m (lambda n ((n prd) m))))
 
 		(trace (((scc c3) 's) 'z))
 		(trace ((((plus c2) c3) 's) 'z))
@@ -63,6 +76,14 @@
 
 		(trace ((((pow c3) c2) 's) 'z))
 		(trace ((((pow c2) c3) 's) 'z))
+		(trace-and-reset-evals)
+
+		(trace (((prd c2) 's) 'z)) (trace-and-reset-evals)
+		(trace (((prd c3) 's) 'z)) (trace-and-reset-evals)
+		(trace (((prd c4) 's) 'z)) (trace-and-reset-evals)
+		(trace (((prd c5) 's) 'z)) (trace-and-reset-evals)
+		
+		(trace ((((sub c7) c3) 's) 'z)) (trace-and-reset-evals)
 		)))
 
 #|
