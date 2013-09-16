@@ -68,6 +68,9 @@
 		(let prd (lambda m (fst ((m ss) ((pair c0) c0)))))
 		(let sub (lambda m (lambda n ((n prd) m))))
 
+                ;; is zero?
+                (let iszro (lambda m ((m (lambda x fls)) tru)))
+
 		(trace (((scc c3) 's) 'z))
 		(trace ((((plus c2) c3) 's) 'z))
 		
@@ -85,6 +88,18 @@
 		
 		(trace ((((sub c7) c3) 's) 'z)) (trace-and-reset-evals)
 		)))
+
+(eval-in-context local-eval
+  (local-eval '(progn
+                ;; Church lists
+                (let nil (lambda c (lambda n n)))
+                ;; h - list element, t - existing list
+                ;; church list [x, y, z] ==> (c x (c y (c z n))), c - fold function, n - initial arg
+                (let cons (lambda h (lambda t (lambda c (lambda n ((c h) ((t c) n)))))))
+
+                (trace ((nil 'c) 'n))
+                (trace ((((cons 1) ((cons 2) ((cons 3) nil))) 'c) 'n))
+                )))
 
 #|
 
