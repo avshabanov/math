@@ -11,9 +11,9 @@
  * gcc -g -Wall -std=c99 -DRINGBUF_TEST=1 ring-buffer.c common/xmalloc.c -o rb
  */
 
-#if RINGBUF_TEST
+#if defined(RINGBUF_TEST) && RINGBUF_TEST
 #include <stdio.h>
-#include <stdlib.h> /* for test */
+#include <stdlib.h>
 #endif
 
 /* = Reusable part = */
@@ -36,7 +36,7 @@ struct ringbuf {
 
 struct ringbuf * ringbuf_alloc(size_t capacity) {
     struct ringbuf * s = xmalloc(sizeof(struct ringbuf));
-    // TODO: if capacity+1 were a power of 2 it may work much faster
+    // TODO: if capacity+1 was a power of 2 it may work much faster
     // capacity + 1 (empty) element
     s->capacity = capacity + 1;
     s->elements = xmalloc(s->capacity * sizeof(ringbuf_elem_t));
@@ -55,12 +55,12 @@ bool ringbuf_is_empty(struct ringbuf * s) {
 }
 
 bool ringbuf_is_full(struct ringbuf * s) {
-    // TODO: if capacity were a power of 2 it may work much faster
+    // TODO: if capacity was a power of 2 it may work much faster
     return s->start_index == ((s->end_index + 1) % s->capacity);
 }
 
 size_t ringbuf_size(struct ringbuf * s) {
-    // TODO: if capacity were a power of 2 it may work much faster
+    // TODO: if capacity was a power of 2 it may work much faster
     return (s->capacity + s->end_index - s->start_index) % s->capacity;
 }
 
@@ -69,7 +69,7 @@ size_t ringbuf_size(struct ringbuf * s) {
  * returns 0 on succeed, -1 otherwise
  */
 bool ringbuf_push_back(struct ringbuf * s, ringbuf_elem_t e) {
-    // TODO: if capacity were a power of 2 it may work much faster
+    // TODO: if capacity was a power of 2 it may work much faster
     size_t new_end_index = (s->end_index + 1) % s->capacity;
     if (new_end_index == s->start_index) {
         return false;
@@ -107,7 +107,7 @@ bool ringbuf_at(struct ringbuf * s, size_t pos, ringbuf_elem_t * er) {
  * Test code
  */
 
-#if RINGBUF_TEST
+#if defined(RINGBUF_TEST) && RINGBUF_TEST
 
 static void pop_and_prn_ringbuf(struct ringbuf * s) {
     int e = -1;
