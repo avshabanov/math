@@ -73,7 +73,11 @@
     (subst a1 arg-name body)))
 
 (defun %eval (context form)
-  (toplev-eval form context))
+  (let ((result (toplev-eval form context)))
+    (cond
+      ((functionp result) form)
+      ((consp result) (if (equal result form) form (toplev-eval result context)))
+      (t result))))
 
 ;; same as LAMBDA special form, but allows multiple arguments
 (defun %lambda* (context arg-names body)
@@ -90,7 +94,8 @@
       (let ((invocation-form lambda-form))
         (loop for arg in args do
              (setf invocation-form (list invocation-form arg)))
-        #-repl (format t ";; * (LAMBDA* ~S ~S) . ~S => ~S~%" arg-names body args invocation-form)
+        #+repl (format t ";; * (LAMBDA* ~S ~S) . ~S => ~S~%"
+		       arg-names body args invocation-form)
         (toplev-eval invocation-form context)))))
 
 (defun add-standard-special-forms (context)
@@ -104,37 +109,65 @@
 ;;
 ;; REPL tests
 
-(defmacro eval-in-context (context-sym eval-sym &body body)
+(defmacro eval-in-context (context-sym eval-sym toplev-eval-fn &body body)
   (let ((form (gensym "form")))
-    `(let ((,context-sym (make-instance 'eval-context :toplev-eval-fn #'eval-0)))
+    `(let ((,context-sym (make-instance 'eval-context
+					:toplev-eval-fn (if (null ,toplev-eval-fn)
+							    #'eval-0
+							    ,toplev-eval-fn))))
        (add-standard-special-forms ,context-sym)
        (flet ((,eval-sym (,form) (toplev-eval ,form ,context-sym)))
          ,@body))))
 
 #+repl (eval-in-context
-           ec ev
+           ec ev nil
          (format t "==============~%")
          (ev '(progn (trace 1))))
 
 #+repl (eval-in-context
-           ec ev
+           ec ev nil
          (format t "==============~%")
          (ev '(progn
                (let id (lambda x x))
                (trace (id 1)))))
 
 #+repl (eval-in-context
-           ec ev
+           ec ev nil
          (format t "==============~%")
          (ev '(progn
                (let tr (lambda tr (lambda fl tr)))
                (trace ((tr 1) 2)))))
 
 #+repl (eval-in-context
-           ec ev
+           ec ev nil
          (format t "==============~%")
          (ev '(progn
-               (let tr (lambda* (tr fl) tr))
-               (let fl (lambda* (tr fl) fl))
-               (let and (lambda* (b c) ((b c) fls)))
-               (trace (and tr fl)))))
+               (let true (lambda* (tr fl) tr))
+               (let false (lambda* (tr fl) fl))
+               (let and (lambda* (b c) ((b c) false)))
+               (trace (eval (and true false))))))
+
+#+repl (eval-in-context
+           ec ev nil
+         (format t "==============~%")
+         (ev '(progn
+               (let true (lambda tr (lambda fl tr)))
+               (let false (lambda tr (lambda fl fl)))
+               (let and (lambda b (lambda c ((b c) false))))
+               (trace (eval ((and true) false))))))
+
+#+repl (eval-in-context
+	   ec ev nil
+	 (format t "==============~%")
+	 (bind-special-form ec 'spy (lambda (ctx v) (declare (ignore ctx v))))
+	 (ev
+	  '(progn
+	    ;; Church lists
+	    (let nil (lambda c (lambda n n)))
+	    ;; h - list element, t - existing list
+	    ;; church list [x, y, z] ==> (c x (c y (c z n))), c - fold function, n - initial arg
+	    (let cons (lambda h (lambda t (lambda c (lambda n ((c h) ((t c) n)))))))
+
+	    (trace ((nil 'c) 'n))
+	    (trace ((((cons 1) ((cons 2) ((cons 3) nil))) cons.) 0))
+	    )))
