@@ -91,14 +91,32 @@
 
 (eval-in-context local-eval
   (local-eval '(progn
+		;; Church booleans
+		(let true (lambda tr (lambda fl tr)))
+                (let false (lambda tr (lambda fl fl)))
+
+		;; Church pairs
+		(let pair (lambda f (lambda s (lambda b ((b f) s)))))
+		(let fst (lambda p (p true)))
+		(let snd (lambda p (p false)))
+		
                 ;; Church lists
-                (let nil (lambda c (lambda n n)))
+                (let null (lambda c (lambda n n)))
                 ;; h - list element, t - existing list
                 ;; church list [x, y, z] ==> (c x (c y (c z n))), c - fold function, n - initial arg
-                (let cons (lambda h (lambda t (lambda c (lambda n ((c h) ((t c) n)))))))
+                (let cons (lambda h (lambda l (lambda c (lambda n ((c h) ((l c) n)))))))
 
-                (trace ((nil 'c) 'n))
-                (trace ((((cons 1) ((cons 2) ((cons 3) nil))) 'c) 'n))
+                (trace ((null 'c) 'n))
+                (trace ((((cons 1) ((cons 2) ((cons 3) null))) 'c) 'n))
+
+		;; head
+		(let head (lambda l ((l true) nil)))
+		;; tail
+		(let lstp (lambda h (lambda n ((pair (snd n)) ((cons h) (snd n))))))
+		(let tail (lambda l (fst ((l lstp) ((pair null) null)))))
+
+		(trace (head ((cons 1) ((cons 2) ((cons 3) null)))))
+		(trace (((tail ((cons 1) ((cons 2) ((cons 3) null)))) 'c) 'n))
                 )))
 
 #|
