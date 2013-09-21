@@ -25,18 +25,19 @@
                 ;; test false u v
                 (trace (((test false) u) v)))))
 
+(defparameter *church-numerals*
+  '((let c0 (lambda s (lambda z z)))
+    (let c1 (lambda s (lambda z (s z))))
+    (let c2 (lambda s (lambda z (s (s z)))))
+    (let c3 (lambda s (lambda z (s (s (s z))))))
+    (let c4 (lambda s (lambda z (s (s (s (s z)))))))
+    (let c5 (lambda s (lambda z (s (s (s (s (s z))))))))
+    (let c6 (lambda s (lambda z (s (s (s (s (s (s z)))))))))
+    (let c7 (lambda s (lambda z (s (s (s (s (s (s (s z))))))))))))
 
 (eval-in-context local-eval
-  (local-eval '(progn
-                ;; Church numerals
-                (let c0 (lambda s (lambda z z)))
-		(let c1 (lambda s (lambda z (s z))))
-		(let c2 (lambda s (lambda z (s (s z)))))
-		(let c3 (lambda s (lambda z (s (s (s z))))))
-		(let c4 (lambda s (lambda z (s (s (s (s z)))))))
-		(let c5 (lambda s (lambda z (s (s (s (s (s z))))))))
-		(let c6 (lambda s (lambda z (s (s (s (s (s (s z)))))))))
-		(let c7 (lambda s (lambda z (s (s (s (s (s (s (s z))))))))))
+  (local-eval `(progn
+                ,@*church-numerals*
 
 		;; Church booleans
 		(let true (lambda tr (lambda fl tr)))
@@ -89,6 +90,23 @@
 		(trace ((((sub c7) c3) 's) 'z)) (trace-and-reset-evals)
 		)))
 
+;; Alternative definitions for multiplication and power functions
+(eval-in-context local-eval
+  (local-eval `(progn
+		,@*church-numerals*
+
+		(let times (lambda m (lambda n (lambda s (lambda z ((m (n s)) z))))))
+		;; m^n
+		(let power (lambda m (lambda n (n m))))
+
+		(trace ((((times c2) c3) 's) 'z))
+		(trace ((((times c2) c2) 's) 'z))
+
+		(trace ((((power c2) c3) 's) 'z))
+		(trace ((((power c3) c2) 's) 'z))
+		)))
+
+;; Church lists
 (eval-in-context local-eval
   (local-eval '(progn
 		;; Church booleans
