@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void * xmalloc(size_t size) {
     void * p = malloc(size);
@@ -10,6 +11,12 @@ void * xmalloc(size_t size) {
         abort();
     }
     return p;
+}
+
+void * xmallocz(size_t size) {
+  void * p = xmalloc(size);
+  memset(p, 0, size);
+  return p;
 }
 
 void * xrealloc(void * p, size_t size) {

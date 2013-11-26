@@ -6,3 +6,11 @@ target
 *.ipr
 *.iws
 .idea
+
+# Temporary files
+*.swp
+*.out
+
+# Mac temp binary
+*.dSYM
+
