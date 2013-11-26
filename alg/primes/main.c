@@ -6,6 +6,8 @@
  *  pi(1000) = 168
  *  pi(10000) = 1229
  *  pi(100000) = 9592
+ *
+ *  pi(1000000000) = 50847534
  */
 
 #include <bitset.h>
@@ -13,9 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-
-typedef unsigned long ulong;
-
 
 struct primes_sieve_context_t {
   struct bitset_t * sieve;
