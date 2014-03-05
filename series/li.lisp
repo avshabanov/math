@@ -14,7 +14,7 @@
 (defun log-integral (x)
   "Calculates Logarithm Integral by using straightforward implementation of the
 Ramanujan series"
-  (setf x (coerce x 'double-float))  
+  ;;(setf x (coerce x 'double-float))  
   (+ emg
      (log (log x))
      (*
@@ -27,7 +27,11 @@ Ramanujan series"
 
 
 ;; li(1000000) = 78627.549159462181919862910747947261161321874382421767 (wolframalpha)
-#+repl (let ((v (log-integral 1000000)))
+#+repl (let ((v (log-integral (coerce 1000000 'double-float))))
 	 (format t "li(1000000) = ~S~%" v))
+
+;; li(2 + i) = 1.411259042017801005684... + 1.224706938410302713497 * i
+#+repl (let ((v (log-integral #C(2.0d0 1.0d0))))
+	 (format t "li(2 + i) = ~S~%" v))
 
 
