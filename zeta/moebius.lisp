@@ -1,36 +1,47 @@
 ;;
 ;; Möbius function summations.
+;; 
+;; odd prime factors: -1, even prime factors: 1, square prime: 0
 
 #+repl (declaim (optimize (safety 0) (debug 0) (speed 3) (space 2)))
 
-#+repl (load "primes.lisp")
-
-;; modified moebius function: only 1 and -1 values are taken into an account
-(defun build-moebius-distribution (limit)
+(defun build-squarefree-products (limit)
   (declare (type integer limit))
-  (let* ((primes (produce-primes 1 limit))
-	 (last-prime-index (- (length primes) 1))
-	 (moebius-values (make-array limit :element-type 'fixnum))
-	 (productions (make-array limit :element-type 'bit)))
-    (labels ((fill-prime-productions (index prev-production odd-factors)
-	       (declare (type integer index)
-			(type integer prev-production)
-			(type boolean odd-factors))
-	       (setf (aref productions prev-production) 1)
-	       (setf (aref moebius-values prev-production) (if odd-factors -1 1))
-	       (loop for i from index to last-prime-index do
-		    (let ((production (* prev-production (aref primes i))))
-		      (if (< production limit)
-			  (progn
-			    (assert (= 0 (aref productions production)))
-			    (fill-prime-productions i production (not odd-factors))))))))
-      (setf (aref productions 1) 1)	; 1 is always factorized
-      (setf (aref moebius-values 1) 1)	; 1 has zero prime factors, so count it as 1
-      (loop for i from 0 to last-prime-index do
-	   (fill-prime-productions i (aref primes i) t)))
-    moebius-values))
+  (let* ((sentinel (+ limit 1))
+         (arr (make-array (+ 1 limit) :element-type 'fixnum :initial-element sentinel)))
+    (setf (aref arr 0) 0)
+    (setf (aref arr 1) 1)
+    (loop for i from 2 to limit do
+          (when (= sentinel (aref arr i))
+            (setf (aref arr i) (- i))
+            ;; setf product of the next primes
+            (loop for j from 2 to (- i 1) do
+                  (let ((e (aref arr j)))
+                    (unless (= sentinel e)
+                      (let* ((next (* e (- i))) (index (abs next)))
+                        (if (<= index limit)
+                          (setf (aref arr index) next))))))
+            ;; setf to zero all the other square factors
+            (loop with s = (* i i) for j from s to limit by s do
+                  (setf (aref arr j) 0))))
+    arr))
 
-#+repl (compile 'build-moebius-distribution)
+;; Represents moebius "mu" function - e.g. http://www.wolframalpha.com/input/?i=mu%5B9998%5D
+;; builds moebius sums for each element from 0 to limit, inclusive.
+(defun build-moebius-distribution (limit)
+  (loop
+    with products = (build-squarefree-products limit)
+    for i from 0 to limit do
+    (let ((elem (aref products i)))
+      (setf (aref products i)
+            (cond
+              ((= elem 0) 0)
+              ((> elem 0) (progn
+                            ;; additional paranoidal verification
+                            (if (> elem limit) (error "FATAL: element is greater than limit"))
+                            1))
+              (t -1))))
+    finally (return products)))
 
 ;;
 ;; REPL test
