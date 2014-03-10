@@ -15,8 +15,9 @@
           (when (= sentinel (aref arr i))
             (setf (aref arr i) (- i))
             ;; setf product of the next primes
-            (loop for j from 2 to (- i 1) do
+            (loop for j from 2 to (min (- i 1) (floor (/ limit i))) do
                   (let ((e (aref arr j)))
+                    #+repl (format t "## i=~S, j=~S, target=~S~%" i j (min (- i 1) (floor (/ limit i))))
                     (unless (= sentinel e)
                       (let* ((next (* e (- i))) (index (abs next)))
                         (if (<= index limit)
@@ -47,6 +48,15 @@
 ;; REPL test
 
 #+repl (build-moebius-distribution 20)
+
+#+repl (let ((mu (build-moebius-distribution 10000)))
+         (assert (= (aref mu 10) 1))
+         (assert (= (aref mu 117) 0))
+         (assert (= (aref mu 598) -1))
+         (assert (= (aref mu 2001) -1))
+         (assert (= (aref mu 5007) 1))
+         (assert (= (aref mu 9998) 1))
+         (format t "OK~%"))
 
 #+repl (let ((moebius-values (build-moebius-distribution 100))
 	     (liouville-sum 0))
