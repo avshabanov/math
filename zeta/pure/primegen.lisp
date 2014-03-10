@@ -3,8 +3,8 @@
 #+repl (declaim (optimize (safety 0) (debug 0) (speed 3) (space 2)))
 
 (defun next-sieve-state (sieve-state)
-  (let* ((n (+ 1 (first sieve-state)))
-         (s (loop for (prime counter) in (cdr sieve-state)
+  (let ((n (+ 1 (car sieve-state)))
+        (s (loop for (prime counter) in (cdr sieve-state)
                  collect (list prime
                                (let ((counter (+ counter 1)))
                                  (if (= prime counter) 0 counter))))))
@@ -17,7 +17,7 @@
               ;; not a prime
               s))))
 
-#+repl (next-sieve-state '(2 (2 0)))
+#+repl (next-sieve-state '(1))
 #+repl (next-sieve-state '(3 (3 0) (2 1)))
 #+repl (next-sieve-state *)
 
@@ -26,7 +26,7 @@
     (recur-sieve-state (next-sieve-state sieve-state) (- n 1))
     sieve-state))
 
-(defun nth-sieve-state (n) (recur-sieve-state '(2 (2 0)) n))
+(defun nth-sieve-state (n) (recur-sieve-state '(1) n))
 
 #+repl (nth-sieve-state 10)
 
