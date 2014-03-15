@@ -53,6 +53,12 @@ Uses 'Sieve of Erathosphen' algorithm adapted to common lisp"
 #+repl (produce-primes 0 12)
 #+repl (produce-primes 1990 2020)
 
+(defun find-prime-divisors (num prime-arr)
+  (loop with k = nil
+        for p being the elements of prime-arr do
+        (if (= 0 (mod num p)) (setf k (cons p k)))
+        finally (return k)))
+
 ;; Memory-friendly version of count-of-primes
 #+repl (defun count-of-primes2 (from to)
   (declare (type number from) (type number to))

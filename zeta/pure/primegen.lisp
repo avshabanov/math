@@ -28,6 +28,18 @@
 
 (defun nth-sieve-state (n) (recur-sieve-state '(1) n))
 
+(defun print-residue-in-state (state)
+  (format t "~4d -> ~S~%"
+          (car state)
+          (loop for (prime residue) in (cdr state) collect residue)))
+
+(defun print-residues (n)
+  (loop with state = '(1)
+        for k from 1 to n do
+        (progn
+          (setf state (next-sieve-state state))
+          (print-residue-in-state state))))
+
 #+repl (nth-sieve-state 10)
 
 
