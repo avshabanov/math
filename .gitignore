@@ -14,3 +14,5 @@ target
 # Mac temp binary
 *.dSYM
 
+.DS_Store
+
