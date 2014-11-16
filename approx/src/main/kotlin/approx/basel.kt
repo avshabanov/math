@@ -1,24 +1,7 @@
 package approx.basel
 
-import java.util.ArrayList
-import java.math.BigDecimal
-import java.math.BigInteger
 import java.util.HashSet
-
-data class Ratio private (val numerator : Int, val denominator : Int) {
-  class object {
-    fun invoke(numerator : Int, denominator : Int) : Ratio {
-      val gcd = BigInteger.valueOf(numerator.toLong()).gcd(BigInteger.valueOf(denominator.toLong())).intValue();
-      return Ratio(numerator / gcd, denominator / gcd)
-    }
-  }
-
-  // this enables clients to write `a * b` for two ratios
-  fun times(other: Ratio) = invoke(this.numerator * other.numerator, this.denominator * other.denominator)
-
-  // custom toString(), the automatically generated one would be giving "Ratio(numerator=2, denominator=3)"
-  override fun toString() = "$numerator/$denominator"
-}
+import ratio.Ratio
 
 fun approx(value : Double, base : Double, epsilon : Double = 0.000001, ratioLim : Int = 10000) : Collection<Ratio> {
   val result = HashSet<Ratio>()
