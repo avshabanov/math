@@ -1,7 +1,5 @@
 package ratio
 
-import java.math.BigInteger
-
 /**
  * An abstraction over rational number, i.e. number which is represented as a ratio of an integer numerator
  * to integer non-zero denominator.
