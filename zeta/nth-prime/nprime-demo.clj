@@ -101,6 +101,8 @@
 ;; 101-th prime number == 547
 (assert (= 547 (let [[x y] (first (next-pdna 2 100 0 []))] (+ x y))))
 
+;; (dotimes [i 100] (println "pi(" i ") =" (next-pdna 2 i 0 [])))
+
 ;;
 ;; Tests
 ;;
