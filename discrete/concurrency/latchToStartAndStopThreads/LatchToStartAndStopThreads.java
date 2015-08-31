@@ -2,7 +2,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Example from 'Java Concurrency in Practice' - 5.5 FutureTask -
+ * Example from 'Java Concurrency in Practice' - 5.5.1. Latches -
  * Using CountDownLatch for starting and stopping threads in timing tests.
  */
 public final class LatchToStartAndStopThreads {
