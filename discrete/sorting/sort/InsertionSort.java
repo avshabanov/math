@@ -1,5 +1,11 @@
+import util.SortUtil;
+
 import java.util.Arrays;
 
+/**
+ * Illustration on how to implement insertion sort,
+ * see also https://en.wikipedia.org/wiki/Insertion_sort
+ */
 public class InsertionSort {
   public static void main(String[] args) {
     SortUtil.runStandardFixture(new SortUtil.InplaceSortAlgorithm() {

@@ -10,6 +10,7 @@ target
 # Temporary files
 *.swp
 *.out
+out
 
 # Mac temp binary
 *.dSYM
