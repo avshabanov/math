@@ -1,9 +1,6 @@
 package support;
 
-import java.util.AbstractCollection;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -90,18 +87,42 @@ public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<
     return true;
   }
 
-  // O(n) complexity
   @Override
-  public boolean remove(Object o) {
-    throw new UnsupportedOperationException();
+  public void clear() {
+    Arrays.fill(values, null);
+    size = 0;
   }
 
-  // TODO: make removeAll more efficient than remove(element)
-//    @SuppressWarnings("NullableProblems")
-//    @Override
-//    public boolean removeAll(Collection<?> c) {
-//      throw new UnsupportedOperationException();
-//    }
+  // O(n) complexity
+  @Override
+  public boolean remove(Object valueToRemove) {
+    // TODO: don't use casts like this
+    @SuppressWarnings("unchecked") final V value = (V) valueToRemove;
+    final K key = getKeyFromValue(value);
+
+    final int hashCode = key.hashCode();
+    int removeIndex = -1;
+    for (int pos = getPositiveHashCode(hashCode, values.length), count = 0; count < values.length; ++count) {
+      @SuppressWarnings("unchecked") final V objValue = (V) values[pos];
+      if (objValue == null) {
+        break; // no such value
+      }
+
+      final K otherKey = getKeyFromValue(objValue);
+      if (otherKey.hashCode() == hashCode && otherKey.equals(key)) {
+        removeIndex = pos;
+        break;
+      }
+    }
+
+    if (removeIndex < 0) {
+      return false;
+    }
+
+    removeElementAtIndex(removeIndex);
+
+    return true;
+  }
 
   // O(1) amortized complexity, O(n) - worst case
   @Override
@@ -172,6 +193,49 @@ public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<
   //
   // Private
   //
+
+  // remove this element and rearrange elements starting from removeIndex+1 to the next value
+  private void removeElementAtIndex(int removeIndex) {
+    values[removeIndex] = null;
+    size -= 1;
+
+    final int readjustCount = getReadjustCount(removeIndex);
+    if (readjustCount <= 1) {
+      return; // no need to readjust if count of elements that need to be readjusted is zero or one
+    }
+
+    // remove elements from these positions and insert them back again to resolve collisions, if any
+    final Object[] elements = new Object[readjustCount];
+    final int count = values.length;
+    for (int i = 0; i < readjustCount; ++i) {
+      final int pos = (removeIndex + i + 1) % count;
+      elements[i] = values[pos];
+      values[pos] = null;
+    }
+
+    // insert elements back again
+    final int oldSize = size;
+    size -= readjustCount;
+    for (int i = 0; i < readjustCount; ++i) {
+      @SuppressWarnings("unchecked") final V newValue = (V) elements[i];
+      add(newValue);
+    }
+    assert size == oldSize;
+  }
+
+  private int getReadjustCount(int removeIndex) {
+    int readjustCount = 0;
+    final int count = values.length;
+    for (int i = removeIndex + 1;; i = (i + 1) % count) {
+      if (values[i] == null) {
+        break;
+      }
+
+      ++readjustCount;
+    }
+
+    return readjustCount;
+  }
 
   private void resizeIfNeeded() {
     final int newSize = size + 1;

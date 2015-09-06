@@ -25,6 +25,15 @@ public class SimpleArrayBasedHashTableExample {
     System.out.println("personMap=" + personMap);
 
     System.out.println("Dave from personMap=" + personMap.getByKey("dave"));
+
+    // more sofisticated example - use remove operation + initial capacity and load factor
+    final IntrusiveHashTable<String, String> strSet = SimpleIntrusiveHashTable.createSet(5, 0.99f);
+    strSet.add("A");
+    strSet.add("B");
+    strSet.add("C");
+    strSet.add("D");
+    strSet.remove("B");
+    System.out.println("strSet=" + strSet);
   }
 
   private static final class Person {
