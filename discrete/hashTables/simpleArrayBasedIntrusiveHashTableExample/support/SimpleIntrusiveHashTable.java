@@ -325,10 +325,13 @@ public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<
       return value;
     }
 
-    @Override
-    public void remove() {
-      parent.remove(getElementAtPos());
-    }
+    // remove operation breaks the structure and can not be easily implemented without making a lot of
+    // copying
+//    @Override
+//    public void remove() {
+//      parent.remove(getElementAtPos()); // potentially breaks the structure
+//      setNextPos(pos); // will likely break
+//    }
 
     //
     // Private
