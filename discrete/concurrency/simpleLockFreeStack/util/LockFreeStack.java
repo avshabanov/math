@@ -3,9 +3,10 @@ package util;
 import java.util.List;
 
 /**
- * Interface, representing an interface to the simplest lock free stack.
+ * An interface to the simplest lock free stack.
  */
 public interface LockFreeStack<T> {
+
   void push(T element);
 
   T pop(T defaultElement);
