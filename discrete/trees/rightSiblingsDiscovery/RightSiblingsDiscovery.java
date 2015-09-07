@@ -69,7 +69,7 @@ public class RightSiblingsDiscovery extends SimpleTreeSupport {
       target.put(siblings.get(i - 1).getValue(), siblings.get(i).getValue());
     }
 
-    // construct next layer of siblings - avoid reallocation, so reuse original array
+    // construct next layer of siblings
     // implementation note - it is possible to avoid unnecessary reallocations at all if original size of the tree is
     // known - in this case siblings can be modified right here
     final List<Node> nextSiblings = new ArrayList<>();
