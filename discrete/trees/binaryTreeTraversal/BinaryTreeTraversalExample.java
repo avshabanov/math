@@ -81,8 +81,8 @@ public final class BinaryTreeTraversalExample {
   /**
    * Simple intrusive tree, no balancing.
    */
-  public static final class SimpleBinaryTree<TKey extends Comparable<TKey>> {
-    public static final class Node<TKey> {
+  private static final class SimpleBinaryTree<TKey extends Comparable<TKey>> {
+    private static final class Node<TKey> {
       private final TKey key;
       private Node<TKey> left;
       private Node<TKey> right;

@@ -1,10 +1,58 @@
+import support.SimpleTreeSupport;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Sample output:
+ *
+ * <code>
+ * [ORIGINAL]     tree1=
+ *     2
+ *   7
+ *     9
+ * 5
+ *     11
+ *   8
+ *     1
+ *
+ * [DESERIALIZED] tree1=
+ *     2
+ *   7
+ *     9
+ * 5
+ *     11
+ *   8
+ *     1
+ *
+ * ---
+ *
+ * [ORIGINAL]     tree2=
+ * 5
+ *   1
+ *     9
+ *       17
+ *
+ * [DESERIALIZED] tree2=
+ * 5
+ *   1
+ *     9
+ *       17
+ *
+ * ---
+ *
+ * [ORIGINAL]     tree3=
+ * 9
+ *
+ * [DESERIALIZED] tree3=
+ * 9
+ *
+ * ---
+ * </code>
+ *
  * @author Alexander Shabanov
  */
-public class TreeSerialization {
+public class TreeSerialization extends SimpleTreeSupport {
 
   public static void main(String[] args) {
     // [1]
@@ -27,53 +75,6 @@ public class TreeSerialization {
     final List<SerializedNode> snl3 = toSerializedForm(tree3);
     System.out.println("[DESERIALIZED] tree3=\n" + asString(fromSerializedForm(snl3)));
     System.out.println("---\n");
-  }
-
-  //
-  // Tree structure
-  //
-
-  private static Node n(int value, Node left, Node right) {
-    return new Node(value, left, right);
-  }
-
-  private static Node n(int value) {
-    return n(value, null, null);
-  }
-
-  private static final class Node {
-    int value;
-    Node left;
-    Node right;
-
-    public Node(int value, Node left, Node right) {
-      this.value = value;
-      this.left = left;
-      this.right = right;
-    }
-  }
-
-  private static String asString(Node node) {
-    final StringBuilder result = new StringBuilder(200);
-    printNode(0, node, result);
-    return result.toString();
-  }
-
-  // strinify helper
-
-  private static void printNode(int indent, Node node, StringBuilder builder) {
-    if (node == null) {
-      return;
-    }
-    
-    printNode(indent + 2, node.left, builder);
-
-    for (int i = 0; i < indent; ++i) {
-      builder.append(' ');
-    }
-    builder.append(node.value).append('\n');
-
-    printNode(indent + 2, node.right, builder);
   }
 
   //
@@ -103,10 +104,10 @@ public class TreeSerialization {
 
     final int index = result.size();
     final SerializedNode sn = new SerializedNode();
-    sn.value = node.value;
+    sn.value = node.getValue();
     result.add(sn);
-    sn.leftIndex = putNode(node.left, result);
-    sn.rightIndex = putNode(node.right, result);
+    sn.leftIndex = putNode(node.getLeft(), result);
+    sn.rightIndex = putNode(node.getRight(), result);
     return index;
   }
 
