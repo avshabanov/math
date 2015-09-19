@@ -3,6 +3,57 @@ import support.SimpleTreeSupport;
 /**
  * An implementation of an algorithm that finds next element in the tree which is strictly greater than the given one.
  *
+ * Sample output:
+ * <code>
+ * tree1=
+ *     10
+ *   30
+ *     40
+ * 50
+ *     60
+ *   70
+ *     80
+ *
+ * 	next for 30 = 40
+ * 	next for 55 = 60
+ * 	next for 75 = 80
+ * 	next for 80 = &lt;none&gt;
+ * 	next for 85 = &lt;none&gt;
+ * tree2=
+ *       10
+ *     20
+ *       30
+ *   40
+ *       50
+ *     60
+ *       70
+ * 80
+ *       90
+ *     100
+ *       110
+ *   120
+ *       130
+ *     140
+ *       150
+ *
+ * 	next for 5 = 10
+ * 	next for 15 = 20
+ * 	next for 25 = 30
+ * 	next for 35 = 40
+ * 	next for 45 = 50
+ * 	next for 55 = 60
+ * 	next for 65 = 70
+ * 	next for 75 = 80
+ * 	next for 85 = 90
+ * 	next for 95 = 100
+ * 	next for 105 = 110
+ * 	next for 115 = 120
+ * 	next for 125 = 130
+ * 	next for 135 = 140
+ * 	next for 145 = 150
+ * 	next for 155 = &lt;none&gt;
+ * </code>
+ *
  * @author Alexander Shabanov
  */
 public final class FindNextElementExample extends SimpleTreeSupport {
