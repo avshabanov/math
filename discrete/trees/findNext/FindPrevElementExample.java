@@ -1,14 +1,14 @@
 import support.SimpleTreeSupport;
 
 /**
- * An implementation of an algorithm that finds next element in the tree which is strictly greater than the given one.
+ * An implementation of an algorithm that finds next element in the tree which is strictly less than the given one.
  *
  * @author Alexander Shabanov
  */
-public final class FindNextElementExample extends SimpleTreeSupport {
-
+public class FindPrevElementExample extends SimpleTreeSupport {
   public static void main(String[] args) {
-    demo("tree1", n(50, n(30, n(10), n(40)), n(70, n(60), n(80))), 30, 55, 75, 80, 85);
+    demo("tree1", n(50, n(30, n(10), n(40)), n(70, n(60), n(80))), 10, 30, 55, 75, 80, 85);
+
     demo("tree2",
         n(80,
             n(40,
@@ -25,25 +25,26 @@ public final class FindNextElementExample extends SimpleTreeSupport {
   //
 
   private static void demo(String treeName, Node node, int... values) {
+    System.out.println("----");
     System.out.println(treeName + "=\n" + asString(node));
     for (final int val : values) {
-      final Node result = findNodeWithValueGreaterThan(node, val);
+      final Node result = findNodeWithValueLessThan(node, val);
       System.out.println("\tnext for " + val + " = " + (result != null ? result.getValue() : "<none>"));
     }
   }
 
-  private static Node findNodeWithValueGreaterThan(Node root, int element) {
+  private static Node findNodeWithValueLessThan(Node root, int element) {
     if (root == null) {
       return null;
     }
 
-    if (element >= root.getValue()) {
-      // element is not smaller than current value - go to the right subtree which contains greater elements
-      return findNodeWithValueGreaterThan(root.getRight(), element);
+    if (element <= root.getValue()) {
+      // element is not greater than current value - go to the left subtree which contains smaller elements
+      return findNodeWithValueLessThan(root.getLeft(), element);
     }
 
-    // element is strictly less than the given one - try to find something in the left subtree
-    final Node candidateValue = findNodeWithValueGreaterThan(root.getLeft(), element);
+    // element is strictly greater than the given one - try to find something in the right subtree
+    final Node candidateValue = findNodeWithValueLessThan(root.getRight(), element);
     return candidateValue != null ? candidateValue : root;
   }
 }

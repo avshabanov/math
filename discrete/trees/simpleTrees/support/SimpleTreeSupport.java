@@ -29,6 +29,13 @@ public abstract class SimpleTreeSupport {
     public Node getRight() {
       return right;
     }
+
+    public String toString() {
+      return "(v: " + value +
+          (left != null ? ", left: " + left : "") +
+          (right != null ? ", right: " + right : "") +
+          ')';
+    }
   }
 
   protected static String asString(Node node) {
@@ -37,7 +44,7 @@ public abstract class SimpleTreeSupport {
     return result.toString();
   }
 
-  // strinify helper
+  // stringify helper
 
   protected static void printNode(int indent, Node node, StringBuilder builder) {
     if (node == null) {
