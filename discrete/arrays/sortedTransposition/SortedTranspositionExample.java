@@ -1,9 +1,16 @@
 import java.util.Arrays;
 
 /**
+ * Sample run:
+ *
+ * <code>
+ * arr=[3, 4, 5, 6, 7, 8, 1, 2], index=6
+ * arr=[6, 7, 8, 1, 2, 3, 4, 5], index=3
+ * </code>
+ *
  * @author Alexander Shabanov
  */
-public class SortedTranspositionExample {
+public final class SortedTranspositionExample {
 
   public static void main(String[] args) {
     int[] arr = splitArray(new int[]{1, 2, 3, 4, 5, 6, 7, 8}, 2);
