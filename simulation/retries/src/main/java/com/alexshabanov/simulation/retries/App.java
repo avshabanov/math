@@ -3,6 +3,7 @@ package com.alexshabanov.simulation.retries;
 import com.alexshabanov.simulation.retries.logic.Client;
 import com.alexshabanov.simulation.retries.logic.Reporter;
 import com.alexshabanov.simulation.retries.logic.Server;
+import com.alexshabanov.simulation.retries.logic.support.ExponentialBackoffClient;
 import com.alexshabanov.simulation.retries.logic.support.ImmediateRetryClient;
 import com.alexshabanov.simulation.retries.logic.support.LinearBackoffClient;
 import com.alexshabanov.simulation.retries.logic.support.ServerImpl;
@@ -48,6 +49,12 @@ public final class App implements Runnable, Reporter {
 
     System.out.println("== Linear Backoff Retry ==");
     clientFactory = LinearBackoffClient::new;
+    runSimulation(5, 5, 100000, clientFactory); // 1:1
+    runSimulation(10, 5, 100000, clientFactory); // 2x overload
+    runSimulation(20, 5, 100000, clientFactory); // 4x overload
+
+    System.out.println("== Exponential Backoff Retry ==");
+    clientFactory = ExponentialBackoffClient::new;
     runSimulation(5, 5, 100000, clientFactory); // 1:1
     runSimulation(10, 5, 100000, clientFactory); // 2x overload
     runSimulation(20, 5, 100000, clientFactory); // 4x overload
