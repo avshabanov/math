@@ -3,6 +3,7 @@ package util;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,7 +20,8 @@ public final class LockFreeQueueVerifier {
   }
 
   public void start() {
-    addElementsToStackAndVerify();
+    addRemoveElementsToQueue();
+    addElementsToQueueAndVerify();
     removeElementsFromQueueAndVerify();
   }
 
@@ -27,7 +29,105 @@ public final class LockFreeQueueVerifier {
   // Private
   //
 
-  private void addElementsToStackAndVerify() {
+  private void addRemoveElementsToQueue() {
+    final CountDownLatch startGate = new CountDownLatch(1);
+    final CountDownLatch p0StopGate = new CountDownLatch(numThreads);
+
+    final CountDownLatch p1Gate = new CountDownLatch(1);
+    final CountDownLatch p1StopGate = new CountDownLatch(numThreads);
+
+    final CountDownLatch p2Gate = new CountDownLatch(1);
+    final CountDownLatch stopGate = new CountDownLatch(numThreads);
+
+    final List<Integer> removedElements = new CopyOnWriteArrayList<>();
+
+    for (int i = 0; i < numThreads; ++i) {
+      final Integer num = i; // make boxed version to avoid extra boxing costs
+      final Thread thread = new Thread(() -> {
+        try {
+          // P0: Even threads are adding, odd threads are doing nothing
+          // this tests simultaneous add
+          startGate.await();
+          if (num % 2 == 0) {
+            queue.add(num);
+          }
+          p0StopGate.countDown();
+
+          // P1: Even threads are removing, odd threads are adding
+          // this tests simultaneous add-remove
+          p1Gate.await();
+          Integer p1Removed = null;
+          if (num % 2 == 0) {
+            p1Removed = queue.remove();
+          } else {
+            queue.add(num);
+          }
+          p1StopGate.countDown();
+
+          // P2: Even threads are doing nothing, odd threads are removing
+          // this tests simultaneous remove
+          p2Gate.await();
+          Integer p2Removed = null;
+          if (num % 2 != 0) {
+            p2Removed = queue.remove();
+          } else {
+            Thread.sleep(1);
+          }
+
+          // add removed elements
+          if (p1Removed != null) {
+            removedElements.add(p1Removed);
+          }
+          if (p2Removed != null) {
+            removedElements.add(p2Removed);
+          }
+
+          // signal that operation has been completed
+          stopGate.countDown();
+        } catch (InterruptedException e) {
+          System.err.println("Unexpected interruption of push thread #" + num);
+          Thread.currentThread().interrupt();
+        }
+      });
+
+      thread.start();
+    }
+
+    // signal that all threads can start modifying queue simultaneously
+    long delta = System.nanoTime();
+    try {
+
+      startGate.countDown();
+      p0StopGate.await(); // P0 completion
+      p1Gate.countDown();
+      p1StopGate.await(); // P1 completion
+      p2Gate.countDown();
+      stopGate.await(); // P2 completion
+
+      delta = System.nanoTime() - delta;
+    } catch (InterruptedException e) {
+      Thread.interrupted();
+      throw new RuntimeException(e);
+    }
+
+    System.out.print("dTime: " + delta + "ns ");
+
+    // then verify the queue
+    if (queue.isEmpty()) {
+      System.out.println("[PASSED] Queue is empty after simultaneous add-remove");
+      final Integer[] elements = removedElements.toArray(new Integer[removedElements.size()]);
+      Arrays.sort(elements, (lhs, rhs) -> lhs - rhs);
+      for (int i = 0; i < elements.length; ++i) {
+        if (i != elements[i]) {
+          throw new AssertionError("Element " + i + " doesn't match: " + elements[i]);
+        }
+      }
+    } else {
+      System.out.println("[FAILED] Queue is not empty, queueSize=" + queue.size());
+    }
+  }
+
+  private void addElementsToQueueAndVerify() {
     final CountDownLatch startGate = new CountDownLatch(1);
     final CountDownLatch stopGate = new CountDownLatch(numThreads);
 
@@ -61,12 +161,18 @@ public final class LockFreeQueueVerifier {
     System.out.print("dTime: " + delta + "ns ");
 
     // then verify the queue
-    final List<Integer> elements = Arrays.asList(queue.toArray(new Integer[queue.size()]));
-    if (elements.size() == numThreads) {
+    final Integer[] elements = queue.toArray(new Integer[queue.size()]);
+    if (elements.length == numThreads) {
       System.out.println("[PASSED] Queue contains the same amount of elements that have been passed");
+      Arrays.sort(elements, (lhs, rhs) -> lhs - rhs);
+      for (int i = 0; i < elements.length; ++i) {
+        if (i != elements[i]) {
+          throw new AssertionError("Element " + i + " doesn't match: " + elements[i]);
+        }
+      }
     } else {
       System.out.println("[FAILED] Queue contains different amount of elements that have been passed, actual=" +
-          elements.size() + ", expected=" + numThreads);
+          elements.length + ", expected=" + numThreads);
     }
   }
 

@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public final class StandardConcurrentLinkedQueueExample {
   public static void main(String[] args) {
-    final LockFreeQueueVerifier verifier = new LockFreeQueueVerifier(1000, new ConcurrentLinkedQueue<>());
-    verifier.start();
+    new LockFreeQueueVerifier(1000, new ConcurrentLinkedQueue<>()).start();
+    new LockFreeQueueVerifier(1000, new ConcurrentLinkedQueue<>()).start();
   }
 }
