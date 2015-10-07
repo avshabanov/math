@@ -1,8 +1,6 @@
 package com.alexshabanov.simulation.retries.logic.support;
 
-import com.alexshabanov.simulation.retries.logic.*;
-
-import java.util.concurrent.ThreadLocalRandom;
+import com.alexshabanov.simulation.retries.logic.Reporter;
 
 /**
  * @author Alexander Shabanov
@@ -10,7 +8,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class LinearBackoffClient extends AbstractClient {
 
   public int initRetryTime = 50;
-  public double randMultiplier = 0.2;
 
   public LinearBackoffClient(int taskId, Reporter reporter) {
     super(taskId, reporter);
@@ -18,8 +15,7 @@ public final class LinearBackoffClient extends AbstractClient {
 
   @Override
   protected int getNextWaitTime(int attempt) {
-    int time = initRetryTime * (attempt + 1);
-    time = time + ThreadLocalRandom.current().nextInt((int) (time * randMultiplier));
+    final int time = initRetryTime * (attempt + 1);
     return time;
   }
 }

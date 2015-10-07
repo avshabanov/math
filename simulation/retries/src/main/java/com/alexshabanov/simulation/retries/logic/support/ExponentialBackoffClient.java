@@ -9,7 +9,6 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class ExponentialBackoffClient extends AbstractClient {
   public int initRetryTime = 50;
-  public double randMultiplier = 0.2;
 
   public ExponentialBackoffClient(int taskId, Reporter reporter) {
     super(taskId, reporter);
@@ -17,8 +16,7 @@ public final class ExponentialBackoffClient extends AbstractClient {
 
   @Override
   protected int getNextWaitTime(int attempt) {
-    int time = (int) (initRetryTime * Math.pow(2, attempt));
-    time = time + ThreadLocalRandom.current().nextInt((int) (time * randMultiplier));
+    final int time = (1 + ThreadLocalRandom.current().nextInt(2 << attempt)) * initRetryTime;
     return time;
   }
 }
