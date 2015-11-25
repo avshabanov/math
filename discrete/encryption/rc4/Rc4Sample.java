@@ -1,6 +1,13 @@
+
 import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static support.EncryptionUtils.intFromByteArray;
+import static support.EncryptionUtils.longFromByteArray;
+import static support.EncryptionUtils.writeInt;
+import static support.EncryptionUtils.writeLong;
 
 /**
  * RC4 demo.
@@ -30,6 +37,11 @@ public final class Rc4Sample {
     encryptDecrypt("bbcdefj", "a");
     encryptDecrypt("abcdefj", "b");
     encryptDecrypt("bbcdefj", "b");
+
+    obfuscateDeobfuscate(0);
+    obfuscateDeobfuscate(1);
+    obfuscateDeobfuscate(-1);
+    obfuscateDeobfuscate(ThreadLocalRandom.current().nextLong());
   }
 
   //
@@ -38,8 +50,63 @@ public final class Rc4Sample {
 
   private static void encryptDecrypt(String text, String key) {
     final byte[] buf = SimpleRC4.encrypt(text, key);
+    final String decryptedText = SimpleRC4.decrypt(buf, key);
+    if (!text.equals(decryptedText)) {
+      throw new AssertionError("Failed to decrypt text=" + text + " with key=" + key +
+          " from buf=" + Arrays.toString(buf));
+    }
     System.out.println(String.format("Source text=%s, key=%s\nencrypted=%s\ndecrypted=%s", text, key,
-        DatatypeConverter.printHexBinary(buf), SimpleRC4.decrypt(buf, key)));
+        DatatypeConverter.printHexBinary(buf), decryptedText));
+  }
+
+  private static void obfuscateDeobfuscate(long id) {
+    final String token = RC4Obfuscator.obfuscate(id);
+    final long newId = RC4Obfuscator.deobfuscate(token);
+    if (id != newId) {
+      throw new AssertionError("Obfuscation mismatch for id=" + id + ", deobfuscatedId=" + newId + ", token=" + token);
+    }
+    System.out.println("[OBFUSCATE] id=" + id + ", token=" + token);
+  }
+}
+
+final class RC4Obfuscator {
+  private RC4Obfuscator() {}
+
+  private static final byte[] OBFUSCATE_KEY = { 12, -125, 65, -99, 7, 85, 1, 29 };
+  private static final int DEFAULT_TOKEN = 0xab5bead3;
+  private static final int OBFUSCATE_BUFFER_LENGTH = 12; // 8 bytes for long, 4 bytes for token
+
+  public static String obfuscate(final long id, final int token) {
+    final byte[] result = new byte[OBFUSCATE_BUFFER_LENGTH];
+    final int nextOffset = writeLong(result, 0, id);
+    writeInt(result, nextOffset, token);
+
+    new SimpleRC4(OBFUSCATE_KEY).pass(result, true);
+    return DatatypeConverter.printBase64Binary(result);
+  }
+
+  public static String obfuscate(long id) {
+    return obfuscate(id, DEFAULT_TOKEN);
+  }
+
+  public static long deobfuscate(String str, int token) {
+    final byte[] bytes = DatatypeConverter.parseBase64Binary(str);
+    if (bytes.length != OBFUSCATE_BUFFER_LENGTH) {
+      throw new IllegalArgumentException("Malformed obfuscated string=" + str);
+    }
+
+    new SimpleRC4(OBFUSCATE_KEY).pass(bytes, false);
+
+    final long id = longFromByteArray(bytes, 0);
+    final int resultToken = intFromByteArray(bytes, 8);
+    if (resultToken != token) {
+      throw new IllegalArgumentException("Invalid obfuscated string=" + str);
+    }
+    return id;
+  }
+
+  public static long deobfuscate(String str) {
+    return deobfuscate(str, DEFAULT_TOKEN);
   }
 }
 
@@ -60,7 +127,7 @@ final class SimpleRC4 {
     int j = 0;
     for (int shuffles = 0; shuffles < shuffleCount; ++shuffles) {
       final int i = shuffles % CONTEXT_LENGTH;
-      j = (j + scheduledKey[i] + key[shuffles % key.length]) % CONTEXT_LENGTH;
+      j = (CONTEXT_LENGTH + j + scheduledKey[i] + key[shuffles % key.length]) % CONTEXT_LENGTH;
       final int tmp = scheduledKey[i];
       scheduledKey[i] = scheduledKey[j];
       scheduledKey[j] = tmp;
@@ -93,7 +160,7 @@ final class SimpleRC4 {
       final int encryptedByte = scheduledKey[i] ^ sourceByte;
       text[pos] = (byte) encryptedByte;
 
-      j = ((j + scheduledKey[i] + (encrypt ? encryptedByte : sourceByte)) % CONTEXT_LENGTH);
+      j = (CONTEXT_LENGTH + j + scheduledKey[i] + (encrypt ? encryptedByte : sourceByte)) % CONTEXT_LENGTH;
       //System.out.println("encryptedByte=" + encryptedByte + ", scheduledKey[i]=" + scheduledKey[i] + ", scheduledKey[j]=" + scheduledKey[j] + ", j=" + j);
     }
   }
