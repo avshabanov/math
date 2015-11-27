@@ -8,15 +8,24 @@ import java.util.Objects;
 public final class SimpleFiniteAutomata {
 
   public static void main(String[] args) {
-    final FooStateImpl s2 = new FooStateImpl("second-last");
+    final FooStateImpl s4 = new FooStateImpl("s4");
 
-    final FooStateImpl s1 = new FooStateImpl("first");
-    s1.addMoveStateData(FooInput.A, s2, () -> {
-      System.out.println("[Moving to second state]");
-    });
+    final FooStateImpl s3_2 = new FooStateImpl("s3_2");
+    s3_2.addMoveStateData(FooInput.D, s4, () -> System.out.println("[Moving to state 4]"));
+
+    final FooStateImpl s3_1 = new FooStateImpl("s3_1");
+    s3_1.addMoveStateData(FooInput.D, s4, () -> System.out.println("[Moving to state 4]"));
+
+    final FooStateImpl s2 = new FooStateImpl("s2");
+    s2.addMoveStateData(FooInput.B, s3_1, () -> System.out.println("[Moving to state 3-1]"));
+    s2.addMoveStateData(FooInput.C, s3_2, () -> System.out.println("[Moving to state 3-2]"));
+
+    final FooStateImpl s1 = new FooStateImpl("s1");
+    s1.addMoveStateData(FooInput.A, s2, () -> System.out.println("[Moving to state 2]"));
     final FooFiniteAutomataImpl fooFiniteAutomata = new FooFiniteAutomataImpl(s1);
 
-    runAutomata(fooFiniteAutomata, FooInput.A);
+    runAutomata(fooFiniteAutomata, FooInput.A, FooInput.B, FooInput.D);
+    runAutomata(fooFiniteAutomata, FooInput.A, FooInput.C, FooInput.D);
   }
 
   //
@@ -43,12 +52,15 @@ public final class SimpleFiniteAutomata {
   private static <TInput extends Input, TState extends State> void runAutomata(
       FiniteAutomata<? extends State<TInput, TState>> finiteAutomata, TInput... inputSequence) {
     State<TInput, TState> next = finiteAutomata.getInitialState();
+    System.out.println("First state=" + next);
 
     for (final TInput input : inputSequence) {
       //noinspection unchecked
       next = next.next(input);
       System.out.println("Next state=" + next + ", isFinite=" + next.isFinite() + " for input=" + input);
     }
+
+    System.out.println("===");
   }
 
   //
