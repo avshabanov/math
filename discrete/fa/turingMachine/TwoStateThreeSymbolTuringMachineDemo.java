@@ -49,15 +49,28 @@ public final class TwoStateThreeSymbolTuringMachineDemo {
     System.out.println("== Turing Machine Demo ==");
 
     demo1();
+    demo2();
   }
 
   private static void demo1() {
     System.out.println("State=A, pos=0, tape=[All Zeroes]");
 
     final Tape tape = new SparseTape(0, Collections.emptyList());
-    final Interpreter interpreter = new Interpreter(State.A, tape);
+    final Interpreter interpreter = new TwoStateThreeSymbolTuringMachineInterpreter(State.A, tape);
 
-    // run 10 steps of machine
+    // run a few steps of turing machine
+    interpreter.steps(16);
+
+    System.out.println("===");
+  }
+
+  private static void demo2() {
+    System.out.println("State=B, pos=0, tape=[1]");
+
+    final Tape tape = new SparseTape(0, Collections.singletonList(Symbol.ONE));
+    final Interpreter interpreter = new TwoStateThreeSymbolTuringMachineInterpreter(State.B, tape);
+
+    // run a few steps of turing machine
     interpreter.steps(16);
 
     System.out.println("===");
@@ -89,6 +102,17 @@ public final class TwoStateThreeSymbolTuringMachineDemo {
     Symbol read();
 
     void print(Symbol symbol);
+  }
+
+  private interface Interpreter {
+
+    void step();
+
+    default void steps(int n) {
+      for (int i = 0; i < n; ++i) {
+        step();
+      }
+    }
   }
 
   // implementation
@@ -154,26 +178,22 @@ public final class TwoStateThreeSymbolTuringMachineDemo {
             break;
         }
       }
+      builder.append(", leftmostIndex=").append(String.format("%3d", leftmostKnownPos));
 
       return builder.toString();
     }
   }
 
-  private static final class Interpreter {
+  private static final class TwoStateThreeSymbolTuringMachineInterpreter implements Interpreter {
     private final Tape tape;
     private State state;
 
-    public Interpreter(State initialState, Tape tape) {
+    public TwoStateThreeSymbolTuringMachineInterpreter(State initialState, Tape tape) {
       this.state = initialState;
       this.tape = tape;
     }
 
-    public void steps(int maxSteps) {
-      for (int i = 0; i < maxSteps; ++i) {
-        step();
-      }
-    }
-
+    @Override
     public void step() {
       final Symbol symbol = this.tape.read();
       switch (state) {
