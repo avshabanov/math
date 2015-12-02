@@ -6,21 +6,30 @@ import java.util.List;
  *
  * @author Alexander Shabanov
  */
-public interface UnidirectionalGraph {
-  int getVertexCount();
+public interface UnidirectionalGraph extends Graph {
 
-  boolean isConnected(int from, int to);
+  default int length(int from, int to) {
+    if (from == to) {
+      return 0;
+    }
 
-  UnidirectionalGraph edge(int from, int to, boolean exists);
+    if (isConnected(from, to)) {
+      return 1;
+    }
+
+    return Integer.MAX_VALUE;
+  }
 
   default List<Integer> getAdjacentVertices(int from) {
     final List<Integer> result = new ArrayList<>();
     final int vertexCount = getVertexCount();
+
     for (int i = 0; i < vertexCount; ++i) {
       if (isConnected(from, i)) {
         result.add(i);
       }
     }
+
     return result;
   }
 }
