@@ -15,7 +15,7 @@ import java.util.Arrays;
  *
  * @author Alexander Shabanov
  */
-public final class FindMaxRepetitionExample {
+public final class NaiveFindMaxRepetitionExample {
 
   public static void main(String[] args) {
     demo(new int[] { 10 });
