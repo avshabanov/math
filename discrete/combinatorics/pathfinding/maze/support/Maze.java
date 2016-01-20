@@ -1,11 +1,16 @@
 package maze.support;
 
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Shabanov
  */
 public final class Maze {
+  private static final int PRINT_SIZE_LIMIT = 30;
+
   private final BitSet bitSet;
   private final int width;
   private final int height;
@@ -30,8 +35,17 @@ public final class Maze {
     return this;
   }
 
+  public int getMaxPathIndex() {
+    return width * height;
+  }
+
+  public boolean isFree(int pathIndex) {
+    assert pathIndex < getMaxPathIndex();
+    return !bitSet.get(pathIndex);
+  }
+
   public boolean isFree(int x, int y) {
-    return !bitSet.get(x + y * width);
+    return isFree(x + y * width);
   }
 
   public boolean isFree(PathNode pathNode) {
@@ -40,9 +54,34 @@ public final class Maze {
 
   public void print() {
     System.out.println("Maze:");
+    if (getHeight() > PRINT_SIZE_LIMIT || getWidth() > PRINT_SIZE_LIMIT) {
+      System.out.println("width=" + getWidth() + ", height=" + getHeight());
+      return;
+    }
+
     for (int y = 0; y < getHeight(); ++y) {
       for (int x = 0; x < getWidth(); ++x) {
         System.out.print(isFree(x, y) ? "0" : "1");
+      }
+      System.out.println();
+    }
+  }
+
+  public void printPath(List<PathNode> path) {
+    System.out.println("path=" + path);
+    if (getHeight() > PRINT_SIZE_LIMIT || getWidth() > PRINT_SIZE_LIMIT) {
+      return;
+    }
+
+    final Map<PathNode, Integer> pathPointIndexes = new HashMap<>(path.size() * 2);
+    for (int i = 0; i < path.size(); ++i) {
+      pathPointIndexes.put(path.get(i), i);
+    }
+
+    for (int y = 0; y < getHeight(); ++y) {
+      for (int x = 0; x < getWidth(); ++x) {
+        Integer pathPointIndex = pathPointIndexes.get(new PathNode(x, y));
+        System.out.print(pathPointIndex == null ? "[XX]" : String.format(" %02d ", pathPointIndex));
       }
       System.out.println();
     }

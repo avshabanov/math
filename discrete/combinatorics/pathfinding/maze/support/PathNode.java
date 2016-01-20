@@ -23,6 +23,22 @@ public final class PathNode {
     return y;
   }
 
+  public int getIndex(Maze maze) {
+    return getX() + getY() * maze.getWidth();
+  }
+
+  public static int xFromIndex(Maze maze, int index) {
+    return index % maze.getWidth();
+  }
+
+  public static int yFromIndex(Maze maze, int index) {
+    return index / maze.getWidth();
+  }
+
+  public static PathNode fromIndex(Maze maze, int index) {
+    return new PathNode(xFromIndex(maze, index), yFromIndex(maze, index));
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
