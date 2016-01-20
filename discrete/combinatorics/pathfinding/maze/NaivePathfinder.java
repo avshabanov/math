@@ -129,7 +129,7 @@ public final class NaivePathfinder {
         if (current.getY() > 0) {
           visit(new PathNode(current.getX(), current.getY() - 1), depth + 1);
         }
-        // try left
+        // try down
         if (current.getY() < (maze.getHeight() - 1)) {
           visit(new PathNode(current.getX(), current.getY() + 1), depth + 1);
         }
