@@ -24,7 +24,6 @@ import support.SimpleTreeSupport;
  * 	value greater than=55 is 60
  * 	value greater than=65 is 70
  * 	value greater than=75 is 80
- * Disconnected from the target VM, address: '127.0.0.1:53820', transport: 'socket'
  * 	value greater than=85 is (none)
  * tree=
  * 50
