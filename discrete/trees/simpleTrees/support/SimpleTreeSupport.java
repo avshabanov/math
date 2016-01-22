@@ -72,6 +72,10 @@ public abstract class SimpleTreeSupport {
   }
 
   protected static String asString(INode<?> node) {
+    if (node == null) {
+      return "(null)";
+    }
+
     final StringBuilder result = new StringBuilder(200);
     printNode(0, node, result);
     return result.toString();
