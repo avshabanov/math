@@ -1,5 +1,5 @@
-import support.SimpleIntrusiveHashTable;
-import support.IntrusiveHashTable;
+import support.SimpleIntrusiveHashMap;
+import support.IntrusiveHashMap;
 
 /**
  * Illustration of simple, array-based hash table implementation (ideal for immutable hash tables).
@@ -9,13 +9,13 @@ import support.IntrusiveHashTable;
 public class SimpleArrayBasedHashTableExample {
 
   public static void main(String[] args) {
-    final IntrusiveHashTable<Integer, Integer> intSet = SimpleIntrusiveHashTable.createSet();
+    final IntrusiveHashMap<Integer, Integer> intSet = SimpleIntrusiveHashMap.createSet();
     intSet.add(1);
     intSet.add(2);
 
     System.out.println("intSet=" + intSet);
 
-    final IntrusiveHashTable<String, Person> personMap = SimpleIntrusiveHashTable.createMap((person) -> person.name);
+    final IntrusiveHashMap<String, Person> personMap = SimpleIntrusiveHashMap.createMap((person) -> person.name);
     personMap.add(new Person("alice", 19));
     personMap.add(new Person("bob", 37));
     personMap.add(new Person("dave", 42));
@@ -27,7 +27,7 @@ public class SimpleArrayBasedHashTableExample {
     System.out.println("Dave from personMap=" + personMap.getByKey("dave"));
 
     // more sofisticated example - use remove operation + initial capacity and load factor
-    final IntrusiveHashTable<String, String> strSet = SimpleIntrusiveHashTable.createSet(5, 0.99f);
+    final IntrusiveHashMap<String, String> strSet = SimpleIntrusiveHashMap.createSet(5, 0.99f);
     strSet.add("A");
     strSet.add("B");
     strSet.add("C");

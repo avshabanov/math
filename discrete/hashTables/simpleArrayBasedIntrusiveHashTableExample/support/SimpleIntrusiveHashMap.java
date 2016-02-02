@@ -14,8 +14,8 @@ import java.util.function.Function;
  *
  * @author Alexander Shabanov
  */
-public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<V>
-    implements IntrusiveHashTable<K, V> {
+public abstract class SimpleIntrusiveHashMap<K, V> extends AbstractCollection<V>
+    implements IntrusiveHashMap<K, V> {
   public static final int DEFAULT_INITIAL_CAPACITY = 4;
   public static final float DEFAULT_LOAD_FACTOR = 0.75f;
   public static final int MAX_CAPACITY = 1 << 30;
@@ -26,33 +26,33 @@ public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<
 
   // Factory methods
 
-  public static <E> IntrusiveHashTable<E, E> createSet(int initialCapacity, float loadFactor) {
+  public static <E> IntrusiveHashMap<E, E> createSet(int initialCapacity, float loadFactor) {
     return new InternalSet<>(initialCapacity, loadFactor);
   }
 
-  public static <E> IntrusiveHashTable<E, E> createSet(int initialCapacity) {
+  public static <E> IntrusiveHashMap<E, E> createSet(int initialCapacity) {
     return createSet(initialCapacity, DEFAULT_LOAD_FACTOR);
   }
 
-  public static <E> IntrusiveHashTable<E, E> createSet() {
+  public static <E> IntrusiveHashMap<E, E> createSet() {
     return createSet(DEFAULT_INITIAL_CAPACITY);
   }
 
-  public static <K, V> IntrusiveHashTable<K, V> createMap(int initialCapacity,
+  public static <K, V> IntrusiveHashMap<K, V> createMap(int initialCapacity,
                                                           float loadFactor,
                                                           Function<V, K> keyExtractor) {
     return new InternalMap<>(initialCapacity, loadFactor, keyExtractor);
   }
 
-  public static <K, V> IntrusiveHashTable<K, V> createMap(int initialCapacity, Function<V, K> keyExtractor) {
+  public static <K, V> IntrusiveHashMap<K, V> createMap(int initialCapacity, Function<V, K> keyExtractor) {
     return createMap(initialCapacity, DEFAULT_LOAD_FACTOR, keyExtractor);
   }
 
-  public static <K, V> IntrusiveHashTable<K, V> createMap(Function<V, K> keyExtractor) {
+  public static <K, V> IntrusiveHashMap<K, V> createMap(Function<V, K> keyExtractor) {
     return createMap(DEFAULT_INITIAL_CAPACITY, keyExtractor);
   }
 
-  protected SimpleIntrusiveHashTable(int initialCapacity, float loadFactor) {
+  protected SimpleIntrusiveHashMap(int initialCapacity, float loadFactor) {
     this.loadFactor = loadFactor;
 
     if (initialCapacity < 0) {
@@ -276,7 +276,7 @@ public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<
   }
 
   // represents K->V map, where key extractor function is represented by the provided function
-  private static final class InternalMap<K, V> extends SimpleIntrusiveHashTable<K, V> {
+  private static final class InternalMap<K, V> extends SimpleIntrusiveHashMap<K, V> {
     private final Function<V, K> keyExtractor;
 
     public InternalMap(int initialCapacity, float loadFactor, Function<V, K> keyExtractor) {
@@ -291,7 +291,7 @@ public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<
   }
 
   // represents simple set
-  private static final class InternalSet<E> extends SimpleIntrusiveHashTable<E, E> {
+  private static final class InternalSet<E> extends SimpleIntrusiveHashMap<E, E> {
 
     public InternalSet(int initialCapacity, float loadFactor) {
       super(initialCapacity, loadFactor);
@@ -305,10 +305,10 @@ public abstract class SimpleIntrusiveHashTable<K, V> extends AbstractCollection<
 
   // iterator
   private static final class Iter<V> implements Iterator<V> {
-    private final SimpleIntrusiveHashTable parent;
+    private final SimpleIntrusiveHashMap parent;
     private int pos;
 
-    public Iter(SimpleIntrusiveHashTable parent) {
+    public Iter(SimpleIntrusiveHashMap parent) {
       this.parent = parent;
       setNextPos(0);
     }

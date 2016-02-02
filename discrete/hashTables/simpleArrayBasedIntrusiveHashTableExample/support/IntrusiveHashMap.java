@@ -11,7 +11,7 @@ import java.util.Collection;
  *
  * @author Alexander Shabanov
  */
-public interface IntrusiveHashTable<K, V> extends Collection<V> {
+public interface IntrusiveHashMap<K, V> extends Collection<V> {
 
   V putValue(V value);
 
