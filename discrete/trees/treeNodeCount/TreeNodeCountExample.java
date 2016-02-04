@@ -40,6 +40,17 @@ import java.util.Deque;
  *     7
  *       8
  *         9
+ * ---
+ * Node count=9 for tree:
+ *         1
+ *       2
+ *         3
+ *   4
+ *       5
+ *     6
+ * 7
+ *     8
+ *   9
  * </pre>
  *
  * @author Alexander Shabanov
@@ -52,6 +63,7 @@ public final class TreeNodeCountExample extends SimpleTreeSupport {
     demo(n(2, n(1), n(3)), 3);
     demo(treeFromArray(50, 25, 75, 10, 30, 60, 80), 7);
     demo(treeFromArray(5, 4, 6, 3, 7, 2, 8, 1, 9), 9);
+    demo(treeFromArray(7, 4, 9, 2, 6, 8, 1, 3, 5), 9);
   }
 
   public static void demo(Node node, int expectedCount) {
