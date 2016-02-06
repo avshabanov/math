@@ -42,8 +42,8 @@ import support.SimpleTreeSupport;
 public final class CloseValuesExample extends SimpleTreeSupport {
 
   public static void main(String[] args) {
-    //demo(null, 0, null);
-    //demo(n(1), 10, 1);
+    demo(null, 0, null);
+    demo(n(1), 10, 1);
 
     final Node tree = treeFromArray(20, 15, 40, 12, 18, 30, 50, 14, 17, 25, 35);
     demo(tree, 100, 50);
