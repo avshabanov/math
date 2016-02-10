@@ -11,12 +11,7 @@ import java.util.List;
  */
 public final class StableCountingSort {
   public static void main(String[] args) {
-    SortUtil.runStandardFixture(new SortUtil.InplaceSortAlgorithm() {
-      @Override
-      public void sort(int[] arr) {
-        inplaceCountingSort(arr);
-      }
-    });
+    SortUtil.runStandardFixture(StableCountingSort::inplaceCountingSort);
   }
 
   public static void inplaceCountingSort(int[] input) {

@@ -4,12 +4,7 @@ import java.util.Arrays;
 
 public class QuickSort {
   public static void main(String[] args) {
-    SortUtil.runStandardFixture(new SortUtil.InplaceSortAlgorithm() {
-      @Override
-      public void sort(int[] arr) {
-        quickSort(arr);
-      }
-    });
+    SortUtil.runStandardFixture(QuickSort::quickSort);
   }
 
   private static void quickSort(int[] arr) {

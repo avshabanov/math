@@ -5,12 +5,7 @@ import java.util.Arrays;
 public class MergeSort {
 
   public static void main(String[] args) {
-    SortUtil.runStandardFixture(new SortUtil.InplaceSortAlgorithm() {
-      @Override
-      public void sort(int[] arr) {
-        inplaceMergeSort(arr);
-      }
-    });
+    SortUtil.runStandardFixture(MergeSort::inplaceMergeSort);
   }
 
 
