@@ -44,7 +44,7 @@ public final class IntersectionExample {
     Arrays.sort(a2);
 
     // prepare the result
-    final int[] result = new int[Math.min(arr1.length, arr2.length)];
+    final int[] result = new int[Math.max(arr1.length, arr2.length)];
     int rs = 0; // rs = result size
 
     for (int i1 = 0, i2 = 0; i1 < a1.length; ++i1) {
@@ -68,6 +68,7 @@ public final class IntersectionExample {
       if (i2 == a2.length) {
         break; // done with the second array
       }
+
       if (!found) {
         continue;
       }
@@ -81,6 +82,6 @@ public final class IntersectionExample {
       ++rs;
     }
 
-    return Arrays.copyOf(result, rs); // copy intersection
+    return Arrays.copyOf(result, rs);
   }
 }
