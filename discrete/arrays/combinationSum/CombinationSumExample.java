@@ -1,3 +1,4 @@
+import java.lang.UnsupportedOperationException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,6 +8,16 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
+ * Sample output:
+ * <pre>
+ * Given array=[] and value=1 sum combinations=[]
+ * Given array=[1] and value=1 sum combinations=[[1]]
+ * Given array=[1, 2] and value=7 sum combinations=[]
+ * Given array=[3, 3, 2, 1, 2] and value=3 sum combinations=[[1, 2], [3]]
+ * Given array=[5, 4, 3, 2, 1, 6, 5, 4, 8, 1, 7, 2] and value=7 sum combinations=[[1, 2, 4], [3, 4], [2, 5], [1, 6], [7]]
+ * </pre>
+ *
+ * @author Alexander Shabanov
  */
 public final class CombinationSumExample {
 
@@ -19,11 +30,11 @@ public final class CombinationSumExample {
   }
 
   public static void demo(List<Integer> ints, int value) {
-    final List<List<Integer>> result = getCombinationSum(ints, value);
+    final List<List<Integer>> result = getCombinationSumRecursive(ints, value);
     System.out.println("Given array=" + ints + " and value=" + value + " sum combinations=" + result);
   }
 
-  public static List<List<Integer>> getCombinationSum(List<Integer> ints, int value) {
+  public static List<List<Integer>> getCombinationSumRecursive(List<Integer> ints, int value) {
     final Set<Integer> s = new TreeSet<>(ints);
     final List<Integer> sortedListWithoutDuplicates = new ArrayList<>(s);
 
@@ -46,13 +57,19 @@ public final class CombinationSumExample {
     for (int i = pos; i < ints.size(); ++i) {
       final Integer val = ints.get(i);
       final int newSum = sum + val;
+
       if (newSum > value) {
         break;
       }
-      //System.out.println("> newSum=" + newSum + ", i=" + i + ", current=" + current);
+
       current.add(val);
       findRecursive(newSum, current, i + 1, ints, value, result);
       current.remove(current.size() - 1);
     }
+  }
+
+  public static List<List<Integer>> getCombinationSumNonRecursive(List<Integer> ints, int value) {
+    // TODO: impl
+    throw new UnsupportedOperationException();
   }
 }
