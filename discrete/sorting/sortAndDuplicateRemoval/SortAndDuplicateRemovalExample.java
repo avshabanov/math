@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
  * Sorted=[], arr=[]
  * Sorted=[1], arr=[1]
  * Sorted=[1, 2], arr=[1, 2]
+ * Sorted=[1], arr=[1, 1, 1]
+ * Sorted=[1, 4], arr=[4, 1, 4, 1]
+ * Sorted=[1, 2, 3, 4, 5], arr=[1, 2, 3, 4, 5]
  * Sorted=[1, 2, 3], arr=[1, 2, 2, 3, 3, 3]
  * Sorted=[1, 2, 3, 4, 5], arr=[5, 5, 4, 3, 2, 2, 3, 1]
  * Sorted=[0, 1, 2], arr=[0, 1, 2, 2, 1, 0, 1, 2, 0]
@@ -29,7 +32,11 @@ public final class SortAndDuplicateRemovalExample {
     demo();
     demo(1);
     demo(1, 2);
+    demo(1, 1, 1);
+    demo(4, 1, 4, 1);
+    demo(1, 2, 3, 4, 5);
     demo(1, 2, 2, 3, 3, 3);
+    demo(1, 2, 2, 1, 2, 1, 1);
     demo(5, 5, 4, 3, 2, 2, 3, 1);
     demo(0, 1, 2, 2, 1, 0, 1, 2, 0);
     demo(Arrays.stream(new int[100]).map(operand -> random.nextInt(10)).toArray());
@@ -38,7 +45,7 @@ public final class SortAndDuplicateRemovalExample {
   }
 
   public static void demo(int... arr) {
-    // duplicate source array as list
+    // duplicate source array as list of integers
     final List<Integer> original = Arrays.stream(arr).boxed().collect(Collectors.toList());
     // sort inplace
     final int len = duplicateRemovalInsertionSort(arr);
@@ -63,6 +70,7 @@ public final class SortAndDuplicateRemovalExample {
 
   /**
    * Sorts an array inplace and removes duplicates. The duplicates are put at the end of array.
+   * Only the first occurrence of element will be used, and next ones will be discarded.
    *
    * @param arr Array to be sorted inplace
    * @return Length of sorted array without duplicates. All the duplicates are starting at length index.
@@ -71,8 +79,8 @@ public final class SortAndDuplicateRemovalExample {
   public static int duplicateRemovalInsertionSort(int[] arr) {
     int length = arr.length;
 
-    LOuter:
-    for (int i = 0; i < length; ++i) {
+    OuterLoop:
+    for (int i = 0; i < length;) {
       int elem = arr[i];
 
       // find place to insert given element into
@@ -84,14 +92,13 @@ public final class SortAndDuplicateRemovalExample {
           // update length
           --length;
           if (i == length) {
-            break LOuter; // end of array? - break
+            break OuterLoop; // end of array? - break
           }
 
           System.arraycopy(arr, i + 1, arr, i, length - i);
           arr[length] = elem; // move duplicate element outside of the sorted array range
 
-          --i;
-          continue LOuter;
+          continue OuterLoop;
         }
 
         if (elem > arr[j]) {
@@ -110,6 +117,7 @@ public final class SortAndDuplicateRemovalExample {
 
         arr[insertionIndex] = elem;
       }
+      ++i; // move to the next position
     }
 
     return length;
