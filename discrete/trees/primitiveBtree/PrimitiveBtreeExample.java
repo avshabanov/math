@@ -81,8 +81,9 @@ public final class PrimitiveBtreeExample {
       }
     }
 
+    // verify values
     for (final KeyValue<Integer, String> kv : pairs) {
-      final String v = btree.put(kv.key, kv.value);
+      final String v = btree.get(kv.key);
       if (!kv.value.equals(v)) {
         throw new AssertionError("mismatch for key=" + kv.key);
       }
@@ -132,8 +133,8 @@ public final class PrimitiveBtreeExample {
           final int nextIndex = index + 1;
           final int rangeSize = n.size - index;
           if (rangeSize > 0) {
-            System.arraycopy(n.keyValues, index, n.keyValues, nextIndex, n.size - index);
-            System.arraycopy(n.children, index, n.children, nextIndex, n.size - nextIndex);
+            System.arraycopy(n.keyValues, index, n.keyValues, nextIndex, rangeSize);
+            System.arraycopy(n.children, index, n.children, nextIndex, rangeSize);
           }
           ++n.size;
           n.keyValues[index] = new KeyValue<>(key, value);
