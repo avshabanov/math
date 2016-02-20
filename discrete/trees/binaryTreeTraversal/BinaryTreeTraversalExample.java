@@ -8,6 +8,43 @@ import java.util.Queue;
  * acyclic directed graph where each vertex is connected with at most two other vertices and
  * each but one vertex has exactly one other vertex which is connected with it.
  *
+ * Sample output:
+ * <pre>
+ * [3<-5->7] tree =
+ * (null)
+ * (3)
+ * (null)
+ * (5)
+ * (null)
+ * (7)
+ * (null)
+ * :: dfs=[5, 3, 7]
+ * :: bfs=[5, 3, 7]
+*
+ * [1,3,4<-5->6,7,8] tree =
+ * (null)
+ * (1)
+ * (null)
+ * (2)
+ * (null)
+ * (3)
+ * (null)
+ * (4)
+ * (null)
+ * (5)
+ * (null)
+ * (6)
+ * (null)
+ * (7)
+ * (null)
+ * (8)
+ * (null)
+ * (9)
+ * (null)
+ * :: dfs=[5, 3, 2, 1, 4, 7, 6, 8, 9]
+ * :: bfs=[5, 3, 7, 2, 4, 6, 8, 1, 9]
+ * </pre>
+ *
  * @author Alexander Shabanov
  */
 public final class BinaryTreeTraversalExample {
