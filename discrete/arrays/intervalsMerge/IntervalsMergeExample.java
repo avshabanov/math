@@ -8,6 +8,7 @@ import java.util.List;
  * Merging [(10->20), (40->50)] with [(25->35), (45->55)] : [(10->20), (25->35), (40->55)]
  * Merging [(1->2), (7->8)] with [(3->4), (5->6)] : [(1->2), (3->4), (5->6), (7->8)]
  * Merging [(1->2), (3->4)] with [(2->3), (4->5)] : [(1->5)]
+ * Merging [(3->11), (17->25), (58->73)] with [(6->18), (40->47)] : [(3->25), (40->47), (58->73)]
  * </pre>
  *
  * @author Alexander Shabanov
@@ -18,6 +19,7 @@ public final class IntervalsMergeExample {
     demo(Arrays.asList(r(10, 20), r(40, 50)), Arrays.asList(r(25, 35), r(45, 55)));
     demo(Arrays.asList(r(1, 2), r(7, 8)), Arrays.asList(r(3, 4), r(5, 6)));
     demo(Arrays.asList(r(1, 2), r(3, 4)), Arrays.asList(r(2, 3), r(4, 5)));
+    demo(Arrays.asList(r(3, 11), r(17, 25), r(58, 73)), Arrays.asList(r(6, 18), r(40, 47)));
   }
 
   public static void demo(List<Range> arr1, List<Range> arr2) {
