@@ -21,6 +21,7 @@
  * Neg2 representation of -8 is 1000
  * Neg2 representation of -12 is 110100
  * </pre>
+ *
  * @author Alexander Shabanov
  */
 public final class Neg2RepresentationExample {
@@ -36,6 +37,7 @@ public final class Neg2RepresentationExample {
     demo(7);
     demo(8);
     demo(16);
+    demo(1000);
     demo(-1);
     demo(-2);
     demo(-3);
@@ -45,10 +47,13 @@ public final class Neg2RepresentationExample {
     demo(-7);
     demo(-8);
     demo(-12);
+    demo(-1000);
   }
 
   public static void demo(int num) {
-    System.out.println("Neg2 representation of " + num + " is " + getNeg2Representation(num));
+    final String representation = getNeg2Representation(num);
+    checkNeg2Representation(representation, num);
+    System.out.println("Neg2 representation of " + num + " is " + representation);
   }
 
   public static String getNeg2Representation(int num) {
@@ -71,5 +76,32 @@ public final class Neg2RepresentationExample {
 
     sb.reverse();
     return sb.toString();
+  }
+
+  private static void checkNeg2Representation(String str, int num) {
+    int actualNum = 0;
+
+    int pow = 1;
+    for (int i = str.length() - 1; i >= 0; --i) {
+      final char ch = str.charAt(i);
+      switch (ch) {
+        case '0':
+          break;
+
+        case '1':
+          actualNum += pow;
+          break;
+
+        default:
+          throw new AssertionError("Unknown digit=" + ch + " in neg2 representation=" + str);
+      }
+
+      pow *= -2;
+    }
+
+    if (actualNum != num) {
+      throw new AssertionError("Returned neg2 representation=" + str + " for number=" + num +
+          " but it corresponds to " + actualNum);
+    }
   }
 }
