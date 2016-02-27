@@ -26,6 +26,9 @@ public final class StringMatch2Example {
   public static void main(String[] args) {
     demo("aaa", "a*");
     demo("abc", "a.*");
+    demo("abc", "a*");
+    demo("abc", "a*bc");
+    //demo("abc", "abc*"); - bug
     demo("", "");
     demo("a", "a");
     demo("a", "b");
@@ -58,7 +61,7 @@ public final class StringMatch2Example {
       this.pattern = pattern;
     }
 
-    private boolean matches(int textPos, int patternPos) {
+    boolean matches(int textPos, int patternPos) {
       int tp = textPos;
 
       for (int pp = patternPos; pp < pattern.length(); ++pp) {
