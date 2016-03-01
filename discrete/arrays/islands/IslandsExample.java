@@ -2,22 +2,47 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Sample run:
+ * <pre>
+ * Number of islands= 3, optNumber=3 in ocean=
+ * |X    XX   |
+ * |  X  X    |
+ * |  X       |
+ * |          |
+ *
+ *
+ * Number of islands= 4, optNumber=4 in ocean=
+ * |X  X|
+ * |    |
+ * |    |
+ * |X  X|
+ *
+ *
+ * Number of islands= 1, optNumber=1 in ocean=
+ * |XX |
+ * |X  |
+ * |   |
+ * </pre>
+ *
  * @author Alexander Shabanov
  */
 public final class IslandsExample {
 
   public static void main(String[] args) {
     demo(new Ocean(10, 4).set(0, 0).set(2, 1).set(2, 2).set(5, 0).set(6, 0).set(5, 1));
+    demo(new Ocean(4, 4).set(0, 0).set(0, 3).set(3, 3).set(3, 0));
+    demo(new Ocean(3, 3).set(0, 0).set(0, 1).set(1, 0));
   }
 
   public static void demo(Ocean ocean) {
-    System.out.println("Number of islands= " + getNumberOfIslands(ocean) + " in ocean=\n" + ocean);
+    System.out.println("Number of islands= " + getNumberOfIslands(ocean) +
+        ", optNumber=" + optGetNumberOfIslands(ocean) +
+        " in ocean=\n" + ocean);
   }
 
   private static int getNumberOfIslands(Ocean ocean) {
     final IslandHolder islandHolder = new IslandHolder();
 
-    // TODO: optimization - can be just 2 * height
     final Islands islands = new Islands(ocean.getWidth(), ocean.getHeight());
 
     for (int h = 0; h < ocean.getHeight(); ++h) {
@@ -52,6 +77,50 @@ public final class IslandsExample {
         }
 
         islands.set(w, h, curIsland);
+      }
+    }
+
+    return islandHolder.map.size();
+  }
+
+  private static int optGetNumberOfIslands(Ocean ocean) {
+    final IslandHolder islandHolder = new IslandHolder();
+
+    final Islands islands = new Islands(ocean.getWidth(), Math.min(2, ocean.getHeight()));
+
+    for (int h = 0; h < ocean.getHeight(); ++h) {
+      for (int w = 0; w < ocean.getWidth(); ++w) {
+        if (!ocean.get(w, h)) {
+          islands.set(w, h % 2, null); // reset prev island
+          continue; // water, continue
+        }
+
+        final Island leftIsland = (w > 0 ? islands.get(w - 1, h % 2) : null);
+        final Island topIsland = (h > 0 ? islands.get(w, (h - 1) % 2) : null);
+
+        // try unite islands
+        Island curIsland;
+        if (leftIsland != null && topIsland != null) {
+          // unite islands
+          final Integer leftId = leftIsland.holder.id;
+          if (!leftId.equals(topIsland.holder.id)) {
+            islandHolder.map.remove(leftId);
+
+            // override holder, so that all the left cells will refer to the same one
+            leftIsland.holder = topIsland.holder;
+          }
+          curIsland = topIsland;
+        } else {
+          curIsland = (topIsland != null ? topIsland : leftIsland);
+        }
+
+        if (curIsland == null) {
+          curIsland = new Island();
+          curIsland.holder = new Island.Holder(islandHolder.id++);
+          islandHolder.map.put(curIsland.holder.id, curIsland);
+        }
+
+        islands.set(w, h % 2, curIsland);
       }
     }
 
