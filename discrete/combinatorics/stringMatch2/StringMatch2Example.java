@@ -6,6 +6,14 @@
  * <pre>
  * A pattern=a* matches text=aaa
  * A pattern=a.* matches text=abc
+ * A pattern=a* does not match text=abc
+ * A pattern=a*bc matches text=abc
+ * A pattern=abc* matches text=abc
+ * A pattern=abc* matches text=abcc
+ * A pattern=abc* does not match text=abccd
+ * A pattern=abc* does not match text=abcd
+ * A pattern=a.*f.h*i.*m matches text=abcdefghijklm
+ * A pattern=a.*f.i*i.*m does not match text=abcdefghijklm
  * A pattern= matches text=
  * A pattern=a matches text=a
  * A pattern=b does not match text=a
@@ -28,7 +36,12 @@ public final class StringMatch2Example {
     demo("abc", "a.*");
     demo("abc", "a*");
     demo("abc", "a*bc");
-    //demo("abc", "abc*"); - bug
+    demo("abc", "abc*");
+    demo("abcc", "abc*");
+    demo("abccd", "abc*");
+    demo("abcd", "abc*");
+    demo("abcdefghijklm", "a.*f.h*i.*m");
+    demo("abcdefghijklm", "a.*f.i*i.*m");
     demo("", "");
     demo("a", "a");
     demo("a", "b");
@@ -83,11 +96,11 @@ public final class StringMatch2Example {
         // lookahead for quantifier
         final int patternLookaheadPos = pp + 1;
         if (patternLookaheadPos < pattern.length() && pattern.charAt(patternLookaheadPos) == '*') {
-          if (matches(textPos, patternLookaheadPos + 1)) {
+          if (matches(tp, patternLookaheadPos + 1)) {
             return true;
           }
 
-          return charMatches && matches(textPos + 1, pp);
+          return charMatches && matches(tp + 1, pp);
         }
 
         if (!charMatches) {
