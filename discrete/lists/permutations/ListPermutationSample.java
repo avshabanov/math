@@ -56,15 +56,14 @@ public class ListPermutationSample extends SingleLinkedListSupport {
     demo(fromArray(new Integer[] { 1, 2, 3, 4 }));
     demo(fromArray(new Integer[] { 1, 2, 3, 4, 5 }));
     demo(fromArray(new Integer[] { 1, 2, 3, 4, 5, 6 }));
+    demo(fromArray(new Integer[] { 1, 2, 3, 4, 5, 6, 7 }));
   }
 
   public static void demo(Node<Integer> list) {
     final int expectedPermutationCount = factorial(getLength(list)) - 1;
-
     System.out.println("Combinations for list=" + list + ":");
-
-    final int maxRows = expectedPermutationCount > 100 ? 20 : 10;
-    final SimplePrintListOutput<Integer> output = new SimplePrintListOutput<>(PRINT_INDENT, maxRows);
+    final SimplePrintListOutput<Integer> output = new SimplePrintListOutput<>(PRINT_INDENT,
+        getMaxRows(expectedPermutationCount));
     PermutationFinder<Integer> permutationFinder = new PermutationFinder<>(list, output);
     permutationFinder.gen(list, list.getNext(), 0);
 
@@ -74,6 +73,15 @@ public class ListPermutationSample extends SingleLinkedListSupport {
     }
 
     System.out.println(output.outputBuilder.toString() + "\nTotal: " + expectedPermutationCount + "\n---");
+  }
+
+  private static int getMaxRows(int expectedPermutationCount) {
+    if (expectedPermutationCount > 1000) {
+      return 40;
+    } else if (expectedPermutationCount > 100) {
+      return 20;
+    }
+    return 10;
   }
 
   private static final class PermutationFinder<T> {
