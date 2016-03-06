@@ -1,44 +1,35 @@
 import support.SingleLinkedListSupport;
 
-import java.util.*;
-
-
 /**
  * Prints all the permutations of a given linked list, excluding original list's representation.
  *
  * Sample run (up to list=[1, 2, 3, 4]):
  * <pre>
- * Combinations for list=[1]:
+ * Combinations for list=[a]:
  *
  * Total: 0
  * ---
- * Combinations for list=[1, 2]:
- * 21
+ * Combinations for list=[a, b]:
+ * ba
  * Total: 1
  * ---
- * Combinations for list=[1, 2, 3]:
- * 132 213 231 321 312
+ * Combinations for list=[a, b, c]:
+ * acb bac bca cba cab
  * Total: 5
  * ---
- * Combinations for list=[1, 2, 3, 4]:
- * 1243 1324 1342 1432 1423 2134 2143 2314 2341 2431
- * 2413 3214 3241 3124 3142 3412 3421 4231 4213 4321
- * 4312 4132 4123
+ * Combinations for list=[a, b, c, d]:
+ * abdc acbd acdb adcb adbc bacd badc bcad bcda bdca
+ * bdac cbad cbda cabd cadb cdab cdba dbca dbac dcba
+ * dcab dacb dabc
  * Total: 23
  * ---
- * Combinations for list=[1, 2, 3, 4, 5]:
- * 12354 12435 12453 12543 12534 13245 13254 13425 13452 13542
- * 13524 14325 14352 14235 14253 14523 14532 15342 15324 15432
- * 15423 15243 15234 21345 21354 21435 21453 21543 21534 23145
- * 23154 23415 23451 23541 23514 24315 24351 24135 24153 24513
- * 24531 25341 25314 25431 25413 25143 25134 32145 32154 32415
- * 32451 32541 32514 31245 31254 31425 31452 31542 31524 34125
- * 34152 34215 34251 34521 34512 35142 35124 35412 35421 35241
- * 35214 42315 42351 42135 42153 42513 42531 43215 43251 43125
- * 43152 43512 43521 41325 41352 41235 41253 41523 41532 45312
- * 45321 45132 45123 45213 45231 52341 52314 52431 52413 52143
- * 52134 53241 53214 53421 53412 53142 53124 54321 54312 54231
- * 54213 54123 54132 51342 51324 51432 51423 51243 51234
+ * Combinations for list=[a, b, c, d, e]:
+ * abced abdce abdec abedc abecd acbde acbed acdbe acdeb acedb acebd adcbe adceb adbce adbec adebc adecb aecdb aecbd aedcb
+ * aedbc aebdc aebcd bacde baced badce badec baedc baecd bcade bcaed bcdae bcdea bceda bcead bdcae bdcea bdace bdaec bdeac
+ * bdeca becda becad bedca bedac beadc beacd cbade cbaed cbdae cbdea cbeda cbead cabde cabed cadbe cadeb caedb caebd cdabe
+ * cdaeb cdbae cdbea cdeba cdeab ceadb ceabd cedab cedba cebda cebad dbcae dbcea dbace dbaec dbeac dbeca dcbae dcbea dcabe
+ * dcaeb dceab dceba dacbe daceb dabce dabec daebc daecb decab decba deacb deabc debac debca ebcda ebcad ebdca ebdac ebadc
+ * ebacd ecbda ecbad ecdba ecdab ecadb ecabd edcba edcab edbca edbac edabc edacb eacdb eacbd eadcb eadbc eabdc eabcd
  * Total: 119
  * ---
  * ... (omitted) ...
@@ -47,25 +38,25 @@ import java.util.*;
  * @author Alexander Shabanov
  */
 public class ListPermutationSample extends SingleLinkedListSupport {
-  private static boolean PRINT_INDENT = Boolean.parseBoolean(System.getProperty("ListPermutationSample.printIndent"));
 
   public static void main(String[] args) {
-    demo(fromArray(new Integer[] { 1 }));
-    demo(fromArray(new Integer[] { 1, 2 }));
-    demo(fromArray(new Integer[] { 1, 2, 3 }));
-    demo(fromArray(new Integer[] { 1, 2, 3, 4 }));
-    demo(fromArray(new Integer[] { 1, 2, 3, 4, 5 }));
-    demo(fromArray(new Integer[] { 1, 2, 3, 4, 5, 6 }));
-    demo(fromArray(new Integer[] { 1, 2, 3, 4, 5, 6, 7 }));
+    demo(fromArray(new Character[] { 'a' }));
+    demo(fromArray(new Character[] { 'a', 'b' }));
+    demo(fromArray(new Character[] { 'a', 'b', 'c' }));
+    demo(fromArray(new Character[] { 'a', 'b', 'c', 'd' }));
+    demo(fromArray(new Character[] { 'a', 'b', 'c', 'd', 'e' }));
+    demo(fromArray(new Character[] { 'a', 'b', 'c', 'd', 'e', 'f' }));
+    demo(fromArray(new Character[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g' }));
   }
 
-  public static void demo(Node<Integer> list) {
+  public static void demo(Node<Character> list) {
     final int expectedPermutationCount = factorial(getLength(list)) - 1;
     System.out.println("Combinations for list=" + list + ":");
-    final SimplePrintListOutput<Integer> output = new SimplePrintListOutput<>(PRINT_INDENT,
-        getMaxRows(expectedPermutationCount));
-    PermutationFinder<Integer> permutationFinder = new PermutationFinder<>(list, output);
-    permutationFinder.gen(list, list.getNext(), 0);
+    final SimplePrintListOutput<Character> output = new SimplePrintListOutput<>(getMaxRows(expectedPermutationCount));
+    PermutationFinder<Character> permutationFinder = new PermutationFinder<>(list, output);
+    if (list != null) {
+      permutationFinder.gen(list, list.getNext());
+    }
 
     if (expectedPermutationCount != output.curIndex) {
       throw new AssertionError("ERROR: unexpected permutation count for given list, actual=" +
@@ -93,21 +84,21 @@ public class ListPermutationSample extends SingleLinkedListSupport {
       this.output = output;
     }
 
-    public void gen(Node<T> prev, Node<T> cur, int level) {
+    public void gen(Node<T> prev, Node<T> cur) {
       if (cur == null) {
         return;
       }
 
-      gen(cur, cur.getNext(), level + 1);
-      swapRecursive(prev, cur, level);
+      gen(cur, cur.getNext());
+      swapRecursive(prev, cur);
     }
 
-    private void swapRecursive(Node<T> prev, Node<T> cur, int level) {
+    private void swapRecursive(Node<T> prev, Node<T> cur) {
       for (Node<T> it = cur; it != null; it = it.getNext()) {
         swapValues(it, prev);
-        output.print(root, level);
+        output.print(root);
 
-        gen(cur, cur.getNext(), level + 1);
+        gen(cur, cur.getNext());
 
         swapValues(it, prev); // restore changed value
       }
@@ -129,19 +120,13 @@ public class ListPermutationSample extends SingleLinkedListSupport {
   }
 
   private interface ListOutput<T> {
-    void print(Node<T> root, int level);
+    void print(Node<T> root);
   }
 
   private static abstract class AbstractPrintListOutput<T> implements ListOutput<T> {
 
-    protected final String asString(final Node<T> root, final int level) {
+    protected final String asString(final Node<T> root) {
       final StringBuilder builder = new StringBuilder();
-
-      if (isPrintIndent()) {
-        for (int i = 0; i < level; ++i) {
-          builder.append(' ');
-        }
-      }
 
       for (Node<T> it = root; it != null; it = it.getNext()) {
         builder.append(it.getValue());
@@ -149,25 +134,21 @@ public class ListPermutationSample extends SingleLinkedListSupport {
 
       return builder.toString();
     }
-
-    protected abstract boolean isPrintIndent();
   }
 
   private static final class SimplePrintListOutput<T> extends AbstractPrintListOutput<T> {
     private final StringBuilder outputBuilder;
-    private final boolean printIndent;
     private final int maxRows;
     private int curIndex = 0;
 
-    public SimplePrintListOutput(boolean printIndent, int maxRows) {
-      this.printIndent = printIndent;
+    public SimplePrintListOutput(int maxRows) {
       this.maxRows = maxRows;
       this.outputBuilder = new StringBuilder();
     }
 
     @Override
-    public void print(Node < T > root,int level){
-      outputBuilder.append(asString(root, level));
+    public void print(Node < T > root){
+      outputBuilder.append(asString(root));
 
       ++curIndex;
       if (curIndex % maxRows == 0) {
@@ -175,11 +156,6 @@ public class ListPermutationSample extends SingleLinkedListSupport {
       } else {
         outputBuilder.append(' ');
       }
-    }
-
-    @Override
-    protected boolean isPrintIndent() {
-      return printIndent;
     }
   }
 }
