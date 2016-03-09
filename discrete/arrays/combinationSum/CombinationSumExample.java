@@ -1,6 +1,3 @@
-import sun.jvm.hotspot.utilities.Assert;
-
-import java.lang.UnsupportedOperationException;
 import java.util.*;
 
 /**
@@ -28,8 +25,9 @@ public final class CombinationSumExample {
   public static void demo(List<Integer> ints, int value) {
     final List<List<Integer>> result = getCombinationSumRecursive(ints, value);
     final List<List<Integer>> result2 = getCombinationSumNonRecursive(ints, value);
-    if (!result.equals(result2)) {
-      throw new AssertionError("Mismatch for ints=" + ints + ", value=" + value);
+    if (!new HashSet<>(result).equals(new HashSet<>(result2))) {
+      throw new AssertionError("Mismatch for ints=" + ints + ", value=" + value +
+              ", result1=" + result + ", result2=" + result2);
     }
 
     System.out.println("Given array=" + ints + " and value=" + value + " sum combinations=" + result);
@@ -69,18 +67,19 @@ public final class CombinationSumExample {
     }
   }
 
+  // Option 2: Non-recursive (but also non-space efficient solution)
+
   public static List<List<Integer>> getCombinationSumNonRecursive(List<Integer> unsortedInts, int value) {
     if (unsortedInts.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final Set<Integer> s = new TreeSet<>(unsortedInts);
-    final List<Integer> ints = new ArrayList<>(s);
+    final List<Integer> ints = new ArrayList<>(new TreeSet<>(unsortedInts)); // sort and remove duplicates
 
     // TODO: optimize (arrays?)
     final Deque<NonRecursiveEntry> nextPosDeque = new ArrayDeque<>();
     final List<Integer> elements = new ArrayList<>();
-    final Set<List<Integer>> result = new HashSet<>();
+    final List<List<Integer>> result = new ArrayList<>();
 
     for (int firstPos = 0; firstPos < ints.size(); ++firstPos) {
 
@@ -92,12 +91,11 @@ public final class CombinationSumExample {
       while (!nextPosDeque.isEmpty()) {
         if (sum == value) {
           result.add(new ArrayList<>(elements));
-
         }
 
         final NonRecursiveEntry entry = nextPosDeque.pollLast();
         entry.nextPos += 1;
-        if (sum > value || entry.nextPos >= ints.size()) {
+        if (sum >= value || entry.nextPos >= ints.size()) {
           sum -= ints.get(entry.pos);
           elements.remove(elements.size() - 1);
           continue;
@@ -111,7 +109,7 @@ public final class CombinationSumExample {
       }
     }
 
-    return new ArrayList<>(result);
+    return result;
   }
 
   private static final class NonRecursiveEntry {
