@@ -1,6 +1,19 @@
 import java.util.*;
 
 /**
+ * Sample output:
+ * <pre>
+ * OK: input=, balanced?=true
+ * OK: input=a, balanced?=true
+ * OK: input=(a), balanced?=true
+ * OK: input=([{}]), balanced?=true
+ * OK: input=([{]}), balanced?=false
+ * OK: input=[({]}), balanced?=false
+ * OK: input=(a, balanced?=false
+ * OK: input=a), balanced?=false
+ * OK: input=(a(b(c[1]{2(3 4)}))), balanced?=true
+ * </pre>
+ *
  * @author Alexander Shabanov
  */
 public final class BalancedBraceCheckExample {
