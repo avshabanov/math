@@ -44,6 +44,13 @@ public abstract class SingleLinkedListSupport {
     }
   }
 
+  public static <T> Node<T> newNode(T value, Node<T> next) {
+    final Node<T> result = new Node<>();
+    result.setValue(value);
+    result.setNext(next);
+    return result;
+  }
+
   public static <T> Node<T> fromArray(T[] values) {
     Node<T> result = null;
     Node<T> it = null;
