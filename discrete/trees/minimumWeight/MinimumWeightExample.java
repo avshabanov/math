@@ -31,6 +31,7 @@ import java.util.List;
  *     10
  * </pre>
  *
+ * @author Alexander Shabanov
  */
 public final class MinimumWeightExample extends SimpleTreeSupport {
 
