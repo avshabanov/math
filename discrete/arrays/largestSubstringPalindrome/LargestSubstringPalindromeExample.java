@@ -10,7 +10,7 @@
  * Largest substring palindrome=tabat in input=tabat
  * Largest substring palindrome=abba in input=qabbapp
  * </pre>
- * 
+ *
  * @author Alexander Shabanov
  */
 public final class LargestSubstringPalindromeExample {

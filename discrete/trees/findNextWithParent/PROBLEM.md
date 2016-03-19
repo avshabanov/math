@@ -1,0 +1,1 @@
+Find element greater than given one in a BST where every node has a link to its parent.
