@@ -5,6 +5,7 @@ import support.SimpleTreeSupport;
  * <pre>
  * There are no duplicate subtrees in a tree
  * There are no duplicate subtrees in a tree
+ * There are no duplicate subtrees in a tree
  * There are duplicate subtrees in a tree
  * There are duplicate subtrees in a tree
  * </pre>
@@ -18,6 +19,9 @@ public final class DuplicateSubtreesExample extends SimpleTreeSupport {
   public static void main(String[] args) {
     demo(n(1));
     demo(n(3, n(1), n(1)));
+    demo(n(3,
+        n(7, n(9), n(9)),
+        n(7, n(9), n(9))));
     demo(n(8,
         n(5, n(3, n(1), n(1)), n(7, n(9), n(9))),
         n(5, n(3, n(1), n(1)), n(7, n(9), n(9)))));
@@ -55,7 +59,7 @@ public final class DuplicateSubtreesExample extends SimpleTreeSupport {
 
   private static boolean sameTrees(Node lhs, Node rhs, int depth) {
     if (lhs == null) {
-      return rhs == null && depth >= MIN_HEIGHT_OF_SUBTREE;
+      return rhs == null && depth > MIN_HEIGHT_OF_SUBTREE;
     }
 
     if (rhs == null) {
