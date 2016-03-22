@@ -5,15 +5,27 @@ package support;
  *
  * @author Alexander Shabanov
  */
-public abstract class SimpleTreeSupport extends BaseTreeSupport {
+public final class SimpleTreeWithParentSupport extends BaseTreeSupport {
 
   protected static final class Node extends AbstractNode<Node> {
+    private Node parent;
+
     public Node(int value, Node left, Node right) {
       super(value, left, right);
     }
 
+    public Node getParent() {
+      return parent;
+    }
+
+    public void setParent(Node parent) {
+      this.parent = parent;
+    }
+
     @Override
-    protected void onSetChild(Node child) { /* do nothing */ }
+    protected void onSetChild(Node child) {
+      child.setParent(this);
+    }
   }
 
   //
