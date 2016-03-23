@@ -5,7 +5,7 @@ package support;
  *
  * @author Alexander Shabanov
  */
-public final class SimpleTreeWithParentSupport extends BaseTreeSupport {
+public abstract class SimpleTreeWithParentSupport extends BaseTreeSupport {
 
   protected static final class Node extends AbstractNode<Node> {
     private Node parent;
