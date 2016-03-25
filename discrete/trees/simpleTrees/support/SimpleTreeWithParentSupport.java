@@ -7,11 +7,13 @@ package support;
  */
 public abstract class SimpleTreeWithParentSupport extends BaseTreeSupport {
 
-  protected static final class Node extends AbstractNode<Node> {
+  protected static final class Node extends AbstractNode<Node, Integer> {
     private Node parent;
 
-    public Node(int value, Node left, Node right) {
-      super(value, left, right);
+    public Node(Integer value, Node left, Node right) {
+      super(value);
+      setLeft(left);
+      setRight(right);
     }
 
     public Node getParent() {
@@ -24,6 +26,7 @@ public abstract class SimpleTreeWithParentSupport extends BaseTreeSupport {
 
     @Override
     protected void onSetChild(Node child) {
+      assert child.getParent() == null;
       child.setParent(this);
     }
   }
@@ -32,7 +35,7 @@ public abstract class SimpleTreeWithParentSupport extends BaseTreeSupport {
   // Tree structure
   //
 
-  protected static Node treeFromArray(int... values) {
+  protected static Node treeFromArray(Integer... values) {
     return createTreeFromValues(value -> new Node(value, null, null), values);
   }
 

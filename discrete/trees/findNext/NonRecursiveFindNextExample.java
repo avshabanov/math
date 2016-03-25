@@ -38,15 +38,15 @@ import support.SimpleTreeSupport;
 public final class NonRecursiveFindNextExample extends SimpleTreeSupport {
 
   public static void main(String[] args) {
-    demo(new int[] {50, 30, 70, 20, 40, 60, 80}, new int[] {15, 25, 35, 45, 55, 65, 75, 85});
-    demo(new int[] {50}, new int[] {40, 50, 60});
+    demo(new Integer[] {50, 30, 70, 20, 40, 60, 80}, new int[] {15, 25, 35, 45, 55, 65, 75, 85});
+    demo(new Integer[] {50}, new int[] {40, 50, 60});
   }
 
   //
   // Private
   //
 
-  private static void demo(int[] treeValues, int[] valuesGreaterThan) {
+  private static void demo(Integer[] treeValues, int[] valuesGreaterThan) {
     final Node tree = treeFromArray(treeValues);
     System.out.println("tree=\n" + asString(tree));
     for (final int value : valuesGreaterThan) {

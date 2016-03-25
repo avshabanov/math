@@ -31,7 +31,7 @@ public final class FindNextWithParentExample extends SimpleTreeWithParentSupport
       final int count = 100;
       final List<Integer> values = IntStream.range(0, count).map((x) -> 2 * x + 1).boxed().collect(Collectors.toList());
       Collections.shuffle(values, random);
-      final Node tree = treeFromArray(values.stream().mapToInt(x -> x).toArray());
+      final Node tree = treeFromArray(values.toArray(new Integer[values.size()]));
       for (int lookupValueIndex = 0; lookupValueIndex < count; ++lookupValueIndex) {
         final int lookupValue = lookupValueIndex * 2;
         final Node next = findNodeWithValueGreaterThan(tree, lookupValue);

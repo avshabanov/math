@@ -7,27 +7,25 @@ import java.util.Arrays;
  */
 public abstract class BaseTreeSupport {
 
-  protected interface INode<N extends INode> {
-    int getValue();
+  protected interface INode<N extends INode, V> {
+    V getValue();
     N getLeft();
     N getRight();
     void setLeft(N left);
     void setRight(N right);
   }
 
-  protected static abstract class AbstractNode<N extends INode> implements INode<N> {
-    private final int value;
+  protected static abstract class AbstractNode<N extends INode, V> implements INode<N, V> {
+    private final V value;
     private N left;
     private N right;
 
-    protected AbstractNode(int value, N left, N right) {
+    protected AbstractNode(V value) {
       this.value = value;
-      this.left = left;
-      this.right = right;
     }
 
     @Override
-    public int getValue() {
+    public V getValue() {
       return value;
     }
 
@@ -61,14 +59,14 @@ public abstract class BaseTreeSupport {
   }
 
 
-  protected static String asSinglelineString(INode<?> node) {
+  protected static String asSinglelineString(INode<?, ?> node) {
     return "(v: " + node.getValue() +
         (node.getLeft() != null ? ", left: " + asSinglelineString(node.getLeft()) : "") +
         (node.getRight() != null ? ", right: " + asSinglelineString(node.getRight()) : "") +
         ')';
   }
 
-  protected static String asString(INode<?> node) {
+  protected static String asString(INode<?, ?> node) {
     if (node == null) {
       return "(null)";
     }
@@ -80,7 +78,7 @@ public abstract class BaseTreeSupport {
 
   // stringify helper
 
-  protected static void printNode(int indent, INode<?> node, StringBuilder builder) {
+  protected static void printNode(int indent, INode<?, ?> node, StringBuilder builder) {
     if (node == null) {
       return;
     }
@@ -99,20 +97,24 @@ public abstract class BaseTreeSupport {
   // Creation methods
   //
 
-  protected interface INodeCreator<N> {
-    N create(int value);
+  protected interface INodeCreator<N, V> {
+    N create(V value);
   }
 
-  protected static <N extends INode<N>> N createTreeFromValues(INodeCreator<N> creator, int... values) {
+  @SafeVarargs
+  protected static <V extends Comparable<V>, N extends INode<N, V>> N createTreeFromValues(
+          INodeCreator<N, V> creator,
+          V... values) {
     N root = null;
-    for (final int value : values) {
+    for (final V value : values) {
       if (root == null) {
         root = creator.create(value);
       } else {
         // lookup for insertion place and put this value
         N node = root;
         for (;;) {
-          if (value < node.getValue()) {
+          final int comparisonResult = value.compareTo(node.getValue());
+          if (comparisonResult < 0) {
             // goto left subtree
             if (node.getLeft() != null) {
               node = node.getLeft();
@@ -120,7 +122,7 @@ public abstract class BaseTreeSupport {
               node.setLeft(creator.create(value)); // parent=node
               break;
             }
-          } else if (value > node.getValue()) {
+          } else if (comparisonResult > 0) {
             // goto right subtree
             if (node.getRight() != null) {
               node = node.getRight();
