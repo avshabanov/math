@@ -3,7 +3,7 @@ Given a string S and string U, find the smallest substring in S that contains al
 Notes:
 
 * Order of characters doesn't matter.
-* Count of same characters matter.
+* Count of same characters does matter.
 
 Example:
 

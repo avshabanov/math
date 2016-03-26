@@ -69,7 +69,6 @@ public final class SmallestMatchingSubstringExample {
       return false;
     }
 
-
     return it == template.length;
   }
 }
