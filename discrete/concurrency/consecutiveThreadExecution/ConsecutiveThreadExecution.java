@@ -22,34 +22,31 @@ public class ConsecutiveThreadExecution {
 
     for (int i = 0; i < n; ++i) {
       final int current = i;
-      final Thread thread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            synchronized (monitors[current]) {
-              monitors[current].wait();
-            }
-          } catch (InterruptedException e) {
-            System.err.println("ERROR: Spurious wakeup?");
-            // TODO: CountDownLatch or the like is probably more preferred over monitors here, see also JDK docs:
-            //          A thread can also wake up without being notified, interrupted, or
-            //          timing out, a so-called <i>spurious wakeup</i>.  While this will rarely
-            //          occur in practice, applications must guard against it by testing for
-            //          the condition that should have caused the thread to be awakened, and
-            //          continuing to wait if the condition is not satisfied.
-            Thread.currentThread().interrupt(); // TODO: Incomplete, protection from spurious wakeups is required!
+      final Thread thread = new Thread(() -> {
+        try {
+          synchronized (monitors[current]) {
+            monitors[current].wait();
           }
-
-          System.out.println("Data: " + data[current]);
-
-          // notify next
-          final int nextIndex = current + 1;
-          synchronized (monitors[nextIndex]) {
-            monitors[nextIndex].notify();
-          }
-
-          System.out.println("Thread " + current + " finishes");
+        } catch (InterruptedException e) {
+          System.err.println("ERROR: Spurious wakeup?");
+          // TODO: CountDownLatch or the like is probably more preferred over monitors here, see also JDK docs:
+          //          A thread can also wake up without being notified, interrupted, or
+          //          timing out, a so-called <i>spurious wakeup</i>.  While this will rarely
+          //          occur in practice, applications must guard against it by testing for
+          //          the condition that should have caused the thread to be awakened, and
+          //          continuing to wait if the condition is not satisfied.
+          Thread.currentThread().interrupt(); // TODO: Incomplete, protection from spurious wakeups is required!
         }
+
+        System.out.println("Data: " + data[current]);
+
+        // notify next
+        final int nextIndex = current + 1;
+        synchronized (monitors[nextIndex]) {
+          monitors[nextIndex].notify();
+        }
+
+        System.out.println("Thread " + current + " finishes");
       });
 
       thread.start();

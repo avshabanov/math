@@ -25,12 +25,9 @@ public final class FutureTaskBasics {
   //
 
   private static final class DeferredDataProvider {
-    private final FutureTask<Integer> futureTask = new FutureTask<Integer>(new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        Thread.sleep(2000L); // 2 sec delay, imitate long calculation...
-        return 123;
-      }
+    private final FutureTask<Integer> futureTask = new FutureTask<Integer>(() -> {
+      Thread.sleep(2000L); // 2 sec delay, imitate long calculation...
+      return 123;
     });
 
     public DeferredDataProvider() {
