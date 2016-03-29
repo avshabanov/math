@@ -1,95 +1,10 @@
-import java.util.AbstractList;
+import support.Matrix2DSupport;
+
 import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("NullableProblems")
-public class TwoDimensionMatrixSort {
-  private interface Matrix2D {
-    int getRows();
-    int getColumns();
-    int get(int row, int column);
-    Matrix2D set(int row, int column, int value);
-  }
-
-  private static final class Matrix2DImpl implements Matrix2D {
-    private final int[] arr;
-    private final int rows;
-    private final int columns;
-
-    public Matrix2DImpl(int rows, int columns) {
-      this.rows = rows;
-      this.columns = columns;
-      this.arr = new int[rows * columns];
-    }
-
-    @Override
-    public int getRows() {
-      return this.rows;
-    }
-
-    @Override
-    public int getColumns() {
-      return this.columns;
-    }
-
-    @Override
-    public int get(int row, int column) {
-      if (row >= this.rows || column >= this.columns) {
-        throw new IllegalArgumentException();
-      }
-      return this.arr[this.rows * column + row];
-    }
-
-    @Override
-    public Matrix2D set(int row, int column, int value) {
-      if (row >= this.rows || column >= this.columns) {
-        throw new IllegalArgumentException();
-      }
-      this.arr[this.rows * column + row] = value;
-      return this;
-    }
-
-    @Override
-    public String toString() {
-      final StringBuilder builder = new StringBuilder(rows * columns * 5 + 10);
-
-      for (int r = 0; r < getRows(); ++r) {
-        for (int c = 0; c < getColumns(); ++c) {
-          final int val = get(r, c);
-          builder.append(' ').append(val);
-        }
-        builder.append('\n');
-      }
-
-      return builder.toString();
-    }
-  }
-
-  private static List<Integer> asList(final Matrix2D m) {
-    return new AbstractList<Integer>() {
-      @Override
-      public Integer get(int index) {
-        final int row = index / m.getColumns();
-        final int column = index - (row * m.getColumns());
-        return m.get(row, column);
-      }
-
-      @Override
-      public Integer set(int index, Integer element) {
-        final int row = index / m.getColumns();
-        final int column = index - (row * m.getColumns());
-
-        final int prevVal = get(index);
-        m.set(row, column, element);
-        return prevVal;
-      }
-
-      @Override
-      public int size() {
-        return m.getColumns() * m.getRows();
-      }
-    };
-  }
+public class TwoDimensionMatrixSort extends Matrix2DSupport {
 
   private static void displaySortedMatrix(Matrix2D m) {
     System.out.println("Matrix=\n" + m);
