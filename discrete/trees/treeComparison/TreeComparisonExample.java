@@ -5,7 +5,13 @@ import java.util.Objects;
 /**
  * Sample run:
  * <pre>
- *
+ * Tree null1 and null2	are equal
+ * Tree null1 and n(1)	are not equal
+ * Tree n(1) and null2	are not equal
+ * Tree n(1) and n(1)	are equal
+ * Tree n(321) and n(321)	are equal
+ * Tree n(321) and n(322)	are not equal
+ * Tree n(321) and n(31n)	are not equal
  * </pre>
  *
  * @author Alexander Shabanov
