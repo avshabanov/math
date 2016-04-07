@@ -8,12 +8,7 @@ import java.util.Arrays;
  */
 public class InsertionSort {
   public static void main(String[] args) {
-    SortUtil.runStandardFixture(new SortUtil.InplaceSortAlgorithm() {
-      @Override
-      public void sort(int[] arr) {
-        insertionSort(arr);
-      }
-    });
+    SortUtil.runStandardFixture(InsertionSort::insertionSort);
   }
 
   private static void insertionSort(int[] arr) {
