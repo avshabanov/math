@@ -5,3 +5,7 @@ seats so that the couples can seat together, please calculate the minimal swap n
 1. E.g. AABCCDB -> AADCCBB, ans is 1
 
 Taken from https://careercup.com/question?id=5677533959815168
+
+Assumptions:
+
+* There should be no more than two entries of the same letter in a string (e.g. triplets are not allowed)
