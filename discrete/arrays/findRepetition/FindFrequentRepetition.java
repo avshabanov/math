@@ -1,7 +1,20 @@
 import java.util.Arrays;
 
 /**
- * TBD.
+ * Sample run:
+ * <pre>
+ * Max repetition in arr=[1] is 1
+ * Max repetition in arr=[1, 2, 1] is 1
+ * Max repetition in arr=[1, 2, 1, 2, 1] is 1
+ * Max repetition in arr=[1, 2, 1, 2, 2, 1, 2] is 2
+ * Max repetition in arr=[1, 1, 2, 2, 2, 2, 2, 1, 1] is 2
+ * Max repetition in arr=[1, 1, 2, 2, 2, 1, 1] is 1
+ * Max repetition in arr=[1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1] is 1
+ * Max repetition in arr=[2, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2] is 1
+ * Max repetition in arr=[2, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 2] is 2
+ * </pre>
+ *
+ * @author Alexander Shabanov
  */
 public final class FindFrequentRepetition {
 
@@ -19,7 +32,7 @@ public final class FindFrequentRepetition {
 
   public static void demo(int[] arr) {
     System.out.println("Max repetition in arr=" + Arrays.toString(arr) +
-        " is " + findN2Repetition(arr));
+        " is " + findMostFrequentRepetition(arr));
   }
 
   /**
@@ -29,7 +42,7 @@ public final class FindFrequentRepetition {
    * @param arr Array, to look repetition in
    * @return Element, that repeats more than ceil(arr.length / 2) times
    */
-  public static int findN2Repetition(int[] arr) {
+  public static int findMostFrequentRepetition(int[] arr) {
     if (arr.length == 0) {
       throw new IllegalArgumentException("Given array is empty");
     }
