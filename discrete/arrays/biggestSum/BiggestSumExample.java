@@ -10,7 +10,7 @@ import java.util.Arrays;
  * Biggest subarray in [1, 2, 2, -10, 3, 1] is [1, 2, 2]
  * Biggest subarray in [-2, 5, -1, 7, -3] is [5, -1, 7]
  * </pre>
- * 
+ *
  * @author Alexander Shabanov
  */
 public final class BiggestSumExample {
