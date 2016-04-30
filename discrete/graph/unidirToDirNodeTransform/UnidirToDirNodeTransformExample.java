@@ -28,7 +28,7 @@ public final class UnidirToDirNodeTransformExample {
   }
 
   public static void demo1() {
-    final BidirectionalGraph graph = new BidirectionalSparseGraph();
+    final BidirectionalGraph graph = new BidirectionalAdjacencyMatrixGraph(3);
     graph.edge(0, 1, true).edge(1, 2, true);
 
     final UnidirectionalGraph result = toUnidirectional(graph, 1);

@@ -1,12 +1,10 @@
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+
 /**
- * TODO: optimize! 3x3 field search takes forever
- *
  * Sample run:
  * <pre>
  * Count of lock pattern combinations in area 1x2 is 2
@@ -24,7 +22,8 @@ public final class LockScreenPatternCountExample {
     demo(2, 1);
     demo(1, 3);
     demo(2, 2);
-    //demo(3, 3);
+    demo(3, 2);
+    demo(3, 3);
   }
 
   static void demo(int width, int height) {
@@ -39,10 +38,14 @@ public final class LockScreenPatternCountExample {
   }
 
   static final class LockPatternFinder {
+    static final int REPORT_THESHOLD_STEP = 10000000;
     final int width;
     final int height;
     final Set<Edge> edges;
     int counter;
+    int reportThreshold = REPORT_THESHOLD_STEP;
+    long startTime = System.currentTimeMillis();
+    int currentVertex;
 
     public LockPatternFinder(int width, int height, Set<Edge> edges) {
       this.width = width;
@@ -53,6 +56,7 @@ public final class LockScreenPatternCountExample {
     void doCount() {
       for (int w = 0; w < width; ++w) {
         for (int h = 0; h < height; ++h) {
+          currentVertex = w + width * h;
           searchFromCoord(w, h);
         }
       }
@@ -68,6 +72,13 @@ public final class LockScreenPatternCountExample {
       for (final Edge edge : targets) {
         edges.remove(edge);
         ++counter;
+        if (counter > reportThreshold) {
+          final long now = System.currentTimeMillis();
+          System.out.println(" ... " + counter + " combinations found so far, start vertex=" + currentVertex +
+              ", timeDelta=" + (now - startTime) + "ms");
+          reportThreshold += REPORT_THESHOLD_STEP;
+          startTime = now;
+        }
 
         final int destVertex = (edge.getTo() == vertex ? edge.getFrom() : edge.getTo());
         final int wd = destVertex % width;
@@ -78,8 +89,6 @@ public final class LockScreenPatternCountExample {
       }
     }
   }
-
-
 
   //
   // Private
@@ -118,7 +127,7 @@ public final class LockScreenPatternCountExample {
     }
   }
 
-  private static long gcd(int a, int b) {
+  private static int gcd(int a, int b) {
     while (b > 0) {
       final int temp = b;
       b = a % b; // % is remainder

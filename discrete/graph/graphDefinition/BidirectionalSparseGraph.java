@@ -59,10 +59,9 @@ public final class BidirectionalSparseGraph implements BidirectionalGraph {
       if (this == o) return true;
       if (!(o instanceof Entry)) return false;
 
-      Entry entry = (Entry) o;
+      final Entry entry = (Entry) o;
 
-      if (from != entry.from) return false;
-      return to == entry.to;
+      return from == entry.from && to == entry.to;
 
     }
 
