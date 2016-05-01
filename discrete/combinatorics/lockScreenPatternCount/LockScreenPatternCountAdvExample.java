@@ -72,6 +72,8 @@ public final class LockScreenPatternCountAdvExample {
       final BitSet visitedEdges = new BitSet(vertexCount * vertexCount);
 
       for (int v = 0; v < vertexCount; ++v) {
+        final long prevCount = counter;
+
         int stackPos = 0;
         vertexStack[stackPos].init(v);
 
@@ -102,7 +104,11 @@ public final class LockScreenPatternCountAdvExample {
             if (counter == reportThreshold) {
               final long now = System.currentTimeMillis();
               System.out.println(" ... " + counter + " combinations found so far, start vertex=" + v +
-                  ", timeDelta=" + (now - startTime) + "ms");
+                  ", timeDelta=" + (now - startTime) + "ms, state=" + Arrays
+                  .stream(vertexStack)
+                  .limit(stackPos + 1)
+                  .map(vertexPos -> vertexPos.vertex)
+                  .collect(Collectors.toList()));
               reportThreshold += REPORT_THRESHOLD_STEP;
               startTime = now;
             }
@@ -129,7 +135,9 @@ public final class LockScreenPatternCountAdvExample {
             visitedEdges.set(edgeIndex, false); // restore edges state
           }
         }
-      }
+
+        System.out.println(" [DBG] total count of combinations for vertex=" + v + " is " + (counter - prevCount));
+      } // for (vertex)
     } // do count
 
     int getEdgeIndex(int from, int to) {
