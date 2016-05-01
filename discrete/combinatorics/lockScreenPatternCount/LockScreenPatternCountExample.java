@@ -31,19 +31,19 @@ public final class LockScreenPatternCountExample {
         " is " + getLockPatternCombinations(width, height, getEdges(width, height)));
   }
 
-  static int getLockPatternCombinations(int width, int height, Set<Edge> edges) {
+  static long getLockPatternCombinations(int width, int height, Set<Edge> edges) {
     final LockPatternFinder finder = new LockPatternFinder(width, height, edges);
     finder.doCount();
     return finder.counter;
   }
 
   static final class LockPatternFinder {
-    static final int REPORT_THESHOLD_STEP = 10000000;
+    static final long REPORT_THESHOLD_STEP = 10000000;
     final int width;
     final int height;
     final Set<Edge> edges;
-    int counter;
-    int reportThreshold = REPORT_THESHOLD_STEP;
+    long counter;
+    long reportThreshold = REPORT_THESHOLD_STEP;
     long startTime = System.currentTimeMillis();
     int currentVertex;
 

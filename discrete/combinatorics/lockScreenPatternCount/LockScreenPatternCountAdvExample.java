@@ -33,24 +33,24 @@ public final class LockScreenPatternCountAdvExample {
         " is " + getLockPatternCombinations(width, height));
   }
 
-  static int getLockPatternCombinations(int width, int height) {
+  static long getLockPatternCombinations(int width, int height) {
     final Set<Edge> edges = getEdges(width, height);
     return getLockPatternCombinations(width, height, edges);
   }
 
-  static int getLockPatternCombinations(int width, int height, Set<Edge> edges) {
+  static long getLockPatternCombinations(int width, int height, Set<Edge> edges) {
     final LockPatternFinder finder = new LockPatternFinder(width, height, edges);
     finder.doCount();
     return finder.counter;
   }
 
   static final class LockPatternFinder {
-    static final int REPORT_THESHOLD_STEP = 10000000;
+    static final long REPORT_THRESHOLD_STEP = 10000000;
 
     final int vertexCount;
     final Edge[] edges;
     final BitSet visitedEdges;
-    int counter;
+    long counter;
 
     public LockPatternFinder(int width, int height, Set<Edge> edges) {
       this.vertexCount = width * height;
@@ -59,7 +59,7 @@ public final class LockScreenPatternCountAdvExample {
     }
 
     void doCount() {
-      int reportThreshold = REPORT_THESHOLD_STEP;
+      long reportThreshold = REPORT_THRESHOLD_STEP;
       long startTime = System.currentTimeMillis();
 
       // deque as an array for performance reasons
@@ -103,7 +103,7 @@ public final class LockScreenPatternCountAdvExample {
               final long now = System.currentTimeMillis();
               System.out.println(" ... " + counter + " combinations found so far, start vertex=" + v +
                   ", timeDelta=" + (now - startTime) + "ms");
-              reportThreshold += REPORT_THESHOLD_STEP;
+              reportThreshold += REPORT_THRESHOLD_STEP;
               startTime = now;
             }
             ++counter;
