@@ -8,9 +8,30 @@ import java.util.stream.Collectors;
  * Sample run:
  * <pre>
  * Count of lock pattern combinations in area 1x2 is 2
+ * [DBG] total count of combinations for vertex=0 is 1
+ * [DBG] total count of combinations for vertex=1 is 1
  * Count of lock pattern combinations in area 2x1 is 2
+ * [DBG] total count of combinations for vertex=0 is 2
+ * [DBG] total count of combinations for vertex=1 is 2
+ * [DBG] total count of combinations for vertex=2 is 2
  * Count of lock pattern combinations in area 1x3 is 6
+ * [DBG] total count of combinations for vertex=0 is 3
+ * [DBG] total count of combinations for vertex=1 is 3
+ * [DBG] total count of combinations for vertex=2 is 3
+ * [DBG] total count of combinations for vertex=3 is 3
+ * Count of lock pattern combinations in area 1x4 is 12
+ * [DBG] total count of combinations for vertex=0 is 57
+ * [DBG] total count of combinations for vertex=1 is 57
+ * [DBG] total count of combinations for vertex=2 is 57
+ * [DBG] total count of combinations for vertex=3 is 57
  * Count of lock pattern combinations in area 2x2 is 228
+ * [DBG] total count of combinations for vertex=0 is 33514
+ * [DBG] total count of combinations for vertex=1 is 47713
+ * [DBG] total count of combinations for vertex=2 is 33514
+ * [DBG] total count of combinations for vertex=3 is 33514
+ * [DBG] total count of combinations for vertex=4 is 47713
+ * [DBG] total count of combinations for vertex=5 is 33514
+ * Count of lock pattern combinations in area 3x2 is 229482
  * </pre>
  *
  * @author Alexander Shabanov
@@ -25,6 +46,7 @@ public final class LockScreenPatternCountAdvExample {
     demo(1, 4);
     demo(2, 2);
     demo(3, 2);
+    demo(4, 2);
     demo(3, 3);
   }
 
