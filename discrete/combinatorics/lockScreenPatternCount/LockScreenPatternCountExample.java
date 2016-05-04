@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,7 @@ public final class LockScreenPatternCountExample {
     static final long REPORT_THESHOLD_STEP = 10000000;
     final int width;
     final int height;
-    final Set<Edge> edges;
+    final List<Edge> edges;
     long counter;
     long reportThreshold = REPORT_THESHOLD_STEP;
     long startTime = System.currentTimeMillis();
@@ -50,7 +51,7 @@ public final class LockScreenPatternCountExample {
     public LockPatternFinder(int width, int height, Set<Edge> edges) {
       this.width = width;
       this.height = height;
-      this.edges = new HashSet<>(edges);
+      this.edges = new ArrayList<>(edges);
     }
 
     void doCount() {
