@@ -147,7 +147,6 @@ public final class LockScreenPatternCountExample {
    * </pre>
    *
    * So, the following vertexes are reachable from vertex 0: 1, 3, 4, 7, 5
-   *
    */
   private static final class Edge {
     private final int from;
