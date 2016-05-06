@@ -1,14 +1,15 @@
 import java.util.*;
 
 /**
- * TODO: complete implementation
+ * Brute-force tower of hanoi example.
+ * TODO: optimize
  * 
  * @author Alexander Shabanov
  */
 public final class TowerOfHanoiExample {
 
   public static void main(String[] args) {
-    demo(4, 3, 2, 1);
+    demo(3, 2, 1);
   }
 
   public static void demo(Integer... disks) {
@@ -19,131 +20,90 @@ public final class TowerOfHanoiExample {
   }
 
   private static final class Hanoi {
-    final List<Deque<Integer>> state = new ArrayList<>();
+    List<List<Integer>> state = new ArrayList<>();
+    // TODO: can be folded into long
+    final Set<List<List<Integer>>> prevStates = new LinkedHashSet<>();
 
     public Hanoi(Integer[] disks) {
-      state.add(new ArrayDeque<>(Arrays.asList(disks)));
-      state.add(new ArrayDeque<>());
-      state.add(new ArrayDeque<>());
+      state.add(Collections.unmodifiableList(Arrays.asList(disks)));
+      state.add(Collections.emptyList());
+      state.add(Collections.emptyList());
     }
 
     public boolean solve() {
-      System.out.println(" I " + this);
+      //System.out.println(" I " + this);
 
       // check if end state reached
-      int empty = 0;
-      int ascending = 0;
-      for (final Deque<Integer> deque : state) {
-        if (deque.isEmpty()) {
-          ++empty;
-          continue;
+      if (isFinalStateReached()) {
+        for (final List<List<Integer>> deque : prevStates) {
+          System.out.println(" I " + deque);
         }
-
-        if (isAscending(deque)) {
-          ++ascending;
-        }
-      }
-
-      if ((empty + ascending) == state.size() && ascending == 1) {
-        System.out.println("END state");
+        System.out.println("Reached END state: " + state);
         return true;
       }
 
       // try moving disks
-      for (int i = 0; i < state.size(); ++i) {
-        final Deque<Integer> deque = state.get(i);
-        if (deque.isEmpty()) {
+      for (int sourceIndex = 0; sourceIndex < state.size(); ++sourceIndex) {
+        final List<Integer> source = state.get(sourceIndex);
+        if (source.isEmpty()) {
           continue;
         }
 
-        final Integer last = deque.pollLast();
-        for (int j = 0; j < state.size(); ++j) {
-          if (i == j) {
+        final WithoutLastResult withoutLast = withoutLast(source);
+        final Integer last = withoutLast.last;
+        for (int targetIndex = 0; targetIndex < state.size(); ++targetIndex) {
+          if (sourceIndex == targetIndex) {
             continue;
           }
 
-          final Deque<Integer> other = state.get(j);
-          if (!other.isEmpty() && last >= other.peekLast()) {
+          final List<Integer> target = state.get(targetIndex);
+          if (!target.isEmpty() && last > target.get(target.size() - 1)) {
             continue;
           }
 
-          other.push(last);
+          final List<Integer> newTarget = withLast(target, last);
+
+          final List<List<Integer>> newState = new ArrayList<>(state);
+          newState.set(sourceIndex, withoutLast.newList);
+          newState.set(targetIndex, newTarget);
+
+          if (prevStates.contains(newState)) {
+            continue;
+          }
+
+          prevStates.add(newState);
+
+          final List<List<Integer>> oldState = state;
+          state = newState;
           if (solve()) {
             return true;
           }
-          other.pop();
-        }
 
-        deque.push(last);
+          prevStates.remove(newState);
+          state = oldState;
+        }
       }
 
       return false;
     }
 
-    public boolean isReachedFinalState() {
-      // check if end state reached
-      int empty = 0;
-      int ascending = 0;
-      for (final Deque<Integer> deque : state) {
+    public boolean isFinalStateReached() {
+      int ascendingIndex = -1;
+      for (int i = 0; i < state.size(); ++i) { // state.stream().filter(List::isEmpty).count();
+        final List<Integer> deque = state.get(i);
         if (deque.isEmpty()) {
-          ++empty;
           continue;
         }
 
-        if (isAscending(deque)) {
-          ++ascending;
+        if (ascendingIndex < 0) {
+          ascendingIndex = i;
+          continue;
         }
-      }
 
-      if ((empty + ascending) == state.size() && ascending == 1) {
-        System.out.println("END state");
-        return true;
-      }
-
-      return false;
-    }
-
-    public boolean swap(int from, int to) {
-      final Deque<Integer> fromDeque = state.get(from);
-      if (fromDeque.isEmpty()) {
         return false;
       }
 
-      final Integer last = fromDeque.pollLast();
-
-      final Deque<Integer> toDeque = state.get(to);
-      if (!toDeque.isEmpty() && last > toDeque.peekLast()) {
-        return false;
-      }
-
-      throw new UnsupportedOperationException();
-//      // try moving disks
-//      for (int i = 0; i < state.size(); ++i) {
-//        final Deque<Integer> deque = state.get(i);
-//        if (deque.isEmpty()) {
-//          continue;
-//        }
-//
-//        final Integer last = deque.pollLast();
-//        for (int j = 0; j < state.size(); ++j) {
-//          if (i == j) {
-//            continue;
-//          }
-//
-//          final Deque<Integer> other = state.get(j);
-//          if (!other.isEmpty() && last >= other.peekLast()) {
-//            continue;
-//          }
-//
-//          other.push(last);
-//          if (solve()) {
-//            return true;
-//          }
-//          other.pop();
-//        }
-//
-//        deque.push(last);
-//      }
+      return ascendingIndex > 0;
     }
 
     @Override
@@ -154,14 +114,42 @@ public final class TowerOfHanoiExample {
     }
   }
 
-  private static boolean isAscending(Iterable<Integer> iterable) {
-    final Iterator<Integer> it = iterable.iterator();
-    for (Integer prev = it.next(); it.hasNext();) {
-      final Integer cur = it.next();
-      if (prev > cur) {
-        return false;
-      }
+  private static final class WithoutLastResult {
+    final List<Integer> newList;
+    final Integer last;
+
+    public WithoutLastResult(List<Integer> newList, Integer last) {
+      this.newList = newList;
+      this.last = last;
     }
-    return true;
+  }
+
+  private static WithoutLastResult withoutLast(List<Integer> list) {
+    if (list.isEmpty()) {
+      throw new IllegalStateException();
+    }
+
+    final int newSize = list.size() - 1;
+    final Integer last = list.get(newSize);
+    final List<Integer> newList;
+    if (newSize == 0) {
+      newList = Collections.emptyList();
+    } else if (newSize == 1) {
+      newList = Collections.singletonList(list.get(0));
+    } else {
+      newList = Collections.unmodifiableList(new ArrayList<>(list.subList(0, newSize)));
+    }
+    return new WithoutLastResult(newList, last);
+  }
+
+  private static List<Integer> withLast(List<Integer> list, Integer element) {
+    if (list.size() == 0) {
+      return Collections.singletonList(element);
+    }
+
+    final List<Integer> result = new ArrayList<>(list.size() + 1);
+    result.addAll(list);
+    result.add(element);
+    return Collections.unmodifiableList(result);
   }
 }
