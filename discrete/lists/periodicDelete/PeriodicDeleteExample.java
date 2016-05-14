@@ -1,5 +1,7 @@
 import support.SingleLinkedListSupport;
 
+import java.util.Objects;
+
 /**
  * Sample run:
  * <pre>
@@ -21,6 +23,10 @@ public final class PeriodicDeleteExample extends SingleLinkedListSupport {
   public static void demo(Integer[] arr, int m, int n) {
     final Node<Integer> source = fromArray(arr);
     final Node<Integer> result = periodicDelete(source, m, n);
+    final Node<Integer> result2 = periodicDelete2(source, m, n);
+    if (!Objects.equals(result, result2)) {
+      throw new AssertionError("mismatched periodic delete result for source=" + source);
+    }
     System.out.println("source=" + source + ", result=" + result);
   }
 
@@ -73,5 +79,42 @@ public final class PeriodicDeleteExample extends SingleLinkedListSupport {
 
       return delete(source.getNext(), --counter);
     }
+  }
+
+  public static <T> Node<T> periodicDelete2(Node<T> list, int retainCount, int deleteCount) {
+    if (retainCount < 0 || deleteCount < 0 || (retainCount == 0 && deleteCount == 0)) {
+      throw new IllegalArgumentException("Illegal retainCount=" + retainCount +
+          ", deleteCount=" + deleteCount);
+    }
+
+    Node<T> result = null;
+    Node<T> it = null;
+
+    while (list != null) {
+      for (int i = 0; i < retainCount; ++i) {
+        if (list == null) {
+          break;
+        }
+        final Node<T> next = new Node<>();
+        next.setValue(list.getValue());
+        if (it == null) {
+          it = next;
+          result = it;
+        } else {
+          it.setNext(next);
+          it = next;
+        }
+        list = list.getNext();
+      }
+
+      for (int i = 0; i < deleteCount; ++i) {
+        if (list == null) {
+          break;
+        }
+        list = list.getNext();
+      }
+    }
+
+    return result;
   }
 }

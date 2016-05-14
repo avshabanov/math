@@ -1,6 +1,7 @@
 package support;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Provides helpers for operating with single linked lists.
@@ -41,6 +42,27 @@ public abstract class SingleLinkedListSupport {
       }
       sb.append(']');
       return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Node)) return false;
+
+      Node<?> node = (Node<?>) o;
+
+      if (!Objects.equals(getValue(), node.getValue())) {
+        return false;
+      }
+
+      return Objects.equals(node.getNext(), getNext());
+    }
+
+    @Override
+    public int hashCode() {
+      int result = value != null ? value.hashCode() : 0;
+      result = 31 * result + (next != null ? next.hashCode() : 0);
+      return result;
     }
   }
 
