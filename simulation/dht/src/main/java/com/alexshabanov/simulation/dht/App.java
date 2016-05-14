@@ -19,9 +19,13 @@ public final class App {
     demo(new SimpleDht());
   }
 
-  private static void demo(Dht dht) throws ExecutionException, InterruptedException {
-    Future<DhtResponse.Get> responseFuture = dht.run(DhtRequest.Get.byKey("key"));
-    final byte[] bytes = responseFuture.get().getContentAsBytes();
-    System.out.println("key associated with " + Arrays.toString(bytes));
+  private static void demo(Dht dht) {
+    dht.put("key", new byte[] {1, 2, 3});
+    byte[] bytes = dht.get("key");
+    System.out.println("[1] key associated with " + Arrays.toString(bytes));
+
+    dht.put("key", new byte[] {4, 5});
+    bytes = dht.get("key");
+    System.out.println("[2] key associated with " + Arrays.toString(bytes));
   }
 }

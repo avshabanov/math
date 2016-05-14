@@ -21,4 +21,21 @@ public abstract class DhtResponse {
       return content;
     }
   }
+
+  public static final class Put extends DhtResponse {
+
+    private final byte[] prevContent;
+
+    public Put(byte[] prevContent) {
+      this.prevContent = prevContent;
+    }
+
+    public static Put fromBytes(byte[] content) {
+      return new Put(content);
+    }
+
+    public byte[] getPreviousContentAsBytes() {
+      return prevContent;
+    }
+  }
 }

@@ -14,10 +14,10 @@ import java.util.concurrent.Future;
  * TODO: implement
  */
 public class SimpleDht implements Dht {
-  private final Map<String, byte[]> map = new HashMap<>();
+  private final Map<String, byte[]> map;
 
   public SimpleDht() {
-    this.map.put("key", new byte[] { 1, 2, 3 });
+    map = new HashMap<>(100);
   }
 
   @Override
@@ -25,7 +25,17 @@ public class SimpleDht implements Dht {
     return request.apply(new DhtRequest.Visitor<Future<TResponse>>() {
       @Override
       public Future<TResponse> visitGet(DhtRequest.Get request) {
-        final Future<?> response = new ImmediateFuture<>(DhtResponse.Get.fromBytes(map.get(request.getKey())));
+        final Future<DhtResponse.Get> response = new ImmediateFuture<>(DhtResponse.Get.fromBytes(map.get(request.getKey())));
+        //noinspection unchecked
+        return (Future<TResponse>) response;
+      }
+
+      @Override
+      public Future<TResponse> visitPut(DhtRequest.Put request) {
+        final byte[] prevContent = map.put(request.getKey(), request.getValue());
+        final byte[] includedContent = request.isIncludePrevContent() ? prevContent : null;
+
+        final Future<DhtResponse.Put> response = new ImmediateFuture<>(DhtResponse.Put.fromBytes(includedContent));
         //noinspection unchecked
         return (Future<TResponse>) response;
       }
