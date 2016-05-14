@@ -6,7 +6,7 @@ import support.SingleLinkedListSupport;
  * source=[1, 2, 3, 4, 5, 6, 7, 8], result=[1, 2, 4, 5, 7, 8]
  * source=[1, 2, 3, 4, 5, 6, 7, 8], result=[1, 4, 7]
  * </pre>
- * 
+ *
  * @author Alexander Shabanov
  */
 public final class PeriodicDeleteExample extends SingleLinkedListSupport {
@@ -14,6 +14,8 @@ public final class PeriodicDeleteExample extends SingleLinkedListSupport {
   public static void main(String[] args) {
     demo(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 }, 2, 1);
     demo(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 }, 1, 2);
+    demo(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 }, 0, 1);
+    demo(new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 }, 1, 0);
   }
 
   public static void demo(Integer[] arr, int m, int n) {
@@ -32,7 +34,7 @@ public final class PeriodicDeleteExample extends SingleLinkedListSupport {
     final int deleteCount;
 
     public Finder(int retainCount, int deleteCount) {
-      if (retainCount < 0 || deleteCount < 0 || (retainCount == 0 || deleteCount == 0)) {
+      if (retainCount < 0 || deleteCount < 0 || (retainCount == 0 && deleteCount == 0)) {
         throw new IllegalArgumentException("Illegal retainCount=" + retainCount +
             ", deleteCount=" + deleteCount);
       }
