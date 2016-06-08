@@ -59,7 +59,8 @@ public final class PrimitiveBtreeExample extends SimpleBtreeSupport {
   }
 
   public static void demo3() {
-    final RandomShuffleResult randomShuffleResult = createRandomShuffleBtree(1000, 12);
+    final RandomShuffleResult<Btree<Integer, String>> randomShuffleResult = createRandomShuffleBtree(1000,
+        () -> new Btree<>(12));
     final Btree<Integer, String> btree = randomShuffleResult.getBtree();
     final List<KeyValue<Integer, String>> pairs = randomShuffleResult.getPairs();
 

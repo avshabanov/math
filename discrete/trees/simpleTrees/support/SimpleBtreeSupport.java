@@ -1,22 +1,23 @@
 package support;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Shabanov
  */
 public abstract class SimpleBtreeSupport {
 
-  protected static final class RandomShuffleResult {
-    private final Btree<Integer, String> btree;
+  protected static final class RandomShuffleResult<B extends Btree<Integer, String>> {
+    private final B btree;
     private final List<KeyValue<Integer, String>> pairs;
 
-    public RandomShuffleResult(Btree<Integer, String> btree, List<KeyValue<Integer, String>> pairs) {
+    public RandomShuffleResult(B btree, List<KeyValue<Integer, String>> pairs) {
       this.btree = btree;
       this.pairs = pairs;
     }
 
-    public Btree<Integer, String> getBtree() {
+    public B getBtree() {
       return btree;
     }
 
@@ -25,7 +26,9 @@ public abstract class SimpleBtreeSupport {
     }
   }
 
-  protected static RandomShuffleResult createRandomShuffleBtree(int size, int nodeSize) {
+  protected static <B extends Btree<Integer, String>> RandomShuffleResult<B> createRandomShuffleBtree(
+      int size,
+      Supplier<B> btreeSupplier) {
     // initialize shuffled values
     final List<KeyValue<Integer, String>> pairs = new ArrayList<>(size);
     for (int i = 0; i < size; ++i) {
@@ -37,7 +40,7 @@ public abstract class SimpleBtreeSupport {
     }
 
     // add values
-    final Btree<Integer, String> btree = new Btree<>(nodeSize);
+    final B btree = btreeSupplier.get();
     final BtreeStatistics statistics = new SimpleBtreeStatistics();
     btree.setStatistics(statistics);
     for (final KeyValue<Integer, String> kv : pairs) {
@@ -47,16 +50,16 @@ public abstract class SimpleBtreeSupport {
       }
     }
 
-    return new RandomShuffleResult(btree, pairs);
+    return new RandomShuffleResult<>(btree, pairs);
   }
 
   // TODO: complete (balancing, removal, iteration)
 
-  protected static final class Btree<K extends Comparable<K>, V> {
-    private Node<K, V> root;
-    private final int nodeSize;
+  protected static class Btree<K extends Comparable<K>, V> {
+    protected Node<K, V> root;
+    protected final int nodeSize;
 
-    private BtreeStatistics statistics = BtreeStatistics.EMPTY;
+    protected BtreeStatistics statistics = BtreeStatistics.EMPTY;
 
     public Btree(int nodeSize) {
       this.nodeSize = nodeSize;
