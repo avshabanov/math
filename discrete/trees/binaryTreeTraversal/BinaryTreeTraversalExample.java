@@ -1,7 +1,4 @@
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * Examples of BFS and DFS for a binary search tree -
@@ -52,12 +49,14 @@ public final class BinaryTreeTraversalExample {
   public static void main(String[] args) {
     final SimpleBinaryTree<Integer> tree = new SimpleBinaryTree<>();
     tree.add(5).add(3).add(7);
-    System.out.println("[3<-5->7] tree =\n" + tree + ":: dfs=" + dfs(tree) + "\n" +
-        ":: bfs=" + bfs(tree) + "\n");
+    System.out.println("[3<-5->7] tree =\n" + tree + "; dfs=" + dfs(tree) + "\n" +
+        "; nonRecursiveDfs=" + nonRecursiveDfs(tree) + "\n" +
+        "; bfs=" + bfs(tree) + "\n");
 
     tree.add(2).add(4).add(6).add(8).add(1).add(9);
-    System.out.println("[1,3,4<-5->6,7,8] tree =\n" + tree + ":: dfs=" + dfs(tree) + "\n" +
-        ":: bfs=" + bfs(tree) + "\n");
+    System.out.println("[1,3,4<-5->6,7,8] tree =\n" + tree + "; dfs=" + dfs(tree) + "\n" +
+        "; nonRecursiveDfs=" + nonRecursiveDfs(tree) + "\n" +
+        "; bfs=" + bfs(tree) + "\n");
   }
 
   //
@@ -94,6 +93,29 @@ public final class BinaryTreeTraversalExample {
   //
   // Depth-First Search
   //
+
+  public static <TKey extends Comparable<TKey>> List<TKey> nonRecursiveDfs(SimpleBinaryTree<TKey> tree) {
+    final List<TKey> result = new ArrayList<>();
+    final Deque<SimpleBinaryTree.Node<TKey>> stack = new ArrayDeque<>();
+    visitLeftSubtree(tree.root, result, stack);
+
+    while (!stack.isEmpty()) {
+      visitLeftSubtree(stack.pop(), result, stack);
+    }
+
+    return result;
+  }
+
+  private static <TKey extends Comparable<TKey>> void visitLeftSubtree(SimpleBinaryTree.Node<TKey> node,
+                                                                       List<TKey> result,
+                                                                       Deque<SimpleBinaryTree.Node<TKey>> stack) {
+    for (; node != null; node = node.left) {
+      result.add(node.key);
+      if (node.right != null) {
+        stack.add(node.right);
+      }
+    }
+  }
 
   public static <TKey extends Comparable<TKey>> List<TKey> dfs(SimpleBinaryTree<TKey> tree) {
     final List<TKey> result = new ArrayList<>();
