@@ -9,6 +9,8 @@ import java.util.Objects;
 public abstract class SingleLinkedListSupport {
 
   public static class Node<T> {
+    private static final int MAX_TO_STRING = 32;
+
     T value;
     Node<T> next;
 
@@ -33,13 +35,18 @@ public abstract class SingleLinkedListSupport {
       final StringBuilder sb = new StringBuilder();
       sb.append('[');
       boolean next = false;
-      for (Node<T> n = this; n != null; n = n.getNext()) {
+      int cap = 0;
+      for (Node<T> n = this; n != null && cap < MAX_TO_STRING; n = n.getNext(), ++cap) {
         if (next) {
           sb.append(", ");
         }
         next = true;
         sb.append(n.getValue());
       }
+      if (cap == MAX_TO_STRING) {
+        sb.append("...");
+      }
+
       sb.append(']');
       return sb.toString();
     }
