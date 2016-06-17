@@ -41,7 +41,7 @@ public abstract class SingleLinkedListSupport {
           sb.append(", ");
         }
         next = true;
-        sb.append(n.getValue());
+        n.stringifyNode(sb);
       }
       if (cap == MAX_TO_STRING) {
         sb.append("...");
@@ -49,6 +49,10 @@ public abstract class SingleLinkedListSupport {
 
       sb.append(']');
       return sb.toString();
+    }
+
+    protected void stringifyNode(StringBuilder target) {
+      target.append(getValue());
     }
 
     @Override
