@@ -10,7 +10,7 @@ import java.util.List;
  * Number 1954 as roman is MCMLIV
  * Number 3124 as roman is MMMCXXIV
  * </pre>
- * 
+ *
  * @author Alexander Shabanov
  */
 public class RomanNumeralsConversion {
