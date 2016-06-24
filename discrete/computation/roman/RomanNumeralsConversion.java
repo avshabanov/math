@@ -37,7 +37,8 @@ public class RomanNumeralsConversion {
   private static String toRomanNumber(int num) {
     final List<String> result = new ArrayList<>();
     if (num < 0) {
-      result.add("-"); // Romans didn't know about negative numbers, but let it still be
+      // Romans didn't know about negative numbers
+      throw new IllegalArgumentException("Negative roman numbers are not supported"); // well yes, we can but not here
     }
 
     for (int pos = 0; num != 0; num = num / 10, pos = pos + 1) {
