@@ -35,12 +35,18 @@ public class RomanNumeralsConversion {
   };
 
   private static String toRomanNumber(int num) {
-    final List<String> result = new ArrayList<>();
+    if (num == 0) {
+      // nulla means 'No' or 'Nothing'
+      // this transformation is not historically accurate but this is what people were using in Middle Ages
+      return "nulla";
+    }
+    
     if (num < 0) {
       // Romans didn't know about negative numbers
       throw new IllegalArgumentException("Negative roman numbers are not supported"); // well yes, we can but not here
     }
 
+    final List<String> result = new ArrayList<>();
     for (int pos = 0; num != 0; num = num / 10, pos = pos + 1) {
       if (pos < ROMAN_NUMERALS.length) {
         final String[] numerals = ROMAN_NUMERALS[pos];
