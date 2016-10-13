@@ -1,6 +1,10 @@
 # Maven
 target
 
+# Visual Studio Code / dotnet
+.vscode
+project.lock.json
+
 # Intellij Idea
 *.iml
 *.ipr
