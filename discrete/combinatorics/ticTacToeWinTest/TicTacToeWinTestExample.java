@@ -1,4 +1,7 @@
-import java.util.Arrays;
+import ticTacToeSupport.Cell;
+import ticTacToeSupport.ArrayBasedField;
+import ticTacToeSupport.Field;
+import ticTacToeSupport.WinCondition;
 
 /**
  * Sample run:
@@ -20,137 +23,30 @@ public final class TicTacToeWinTestExample {
   }
 
   private static void demo1() {
-    final Field field = new Field();
-    field
+    expectWinCondition("Demo1", Cell.X, new ArrayBasedField(3)
         .x(0, 1).x(1, 1).x(2, 1)
-        .o(0, 0).o(2, 2);
-
-    final Cell winCondition = field.getWinCondition();
-
-    if (winCondition != Cell.X) {
-      throw new AssertionError("demo1");
-    }
-
-    System.out.println("Demo1 WinCondition=" + winCondition);
+        .o(0, 0).o(2, 2));
   }
 
   private static void demo2() {
-    final Field field = new Field();
-    field
+    expectWinCondition("Demo2", Cell.EMPTY, new ArrayBasedField()
         .x(0, 1).x(2, 1)
-        .o(0, 0).o(2, 2);
-
-    final Cell winCondition = field.getWinCondition();
-
-    if (winCondition != Cell.EMPTY) {
-      throw new AssertionError("demo2");
-    }
-
-    System.out.println("Demo2 WinCondition=" + winCondition);
+        .o(0, 0).o(2, 2));
   }
 
   private static void demo3() {
-    final Field field = new Field();
-    field
+    expectWinCondition("Demo3", Cell.O, new ArrayBasedField()
         .x(0, 1).x(2, 1)
-        .o(0, 2).o(1, 1).o(2, 0);
-
-    final Cell winCondition = field.getWinCondition();
-
-    if (winCondition != Cell.O) {
-      throw new AssertionError("demo3");
-    }
-
-    System.out.println("Demo3 WinCondition=" + winCondition);
+        .o(0, 2).o(1, 1).o(2, 0));
   }
 
-  private enum Cell {
-    X,
-    O,
-    EMPTY
-  }
+  private static void expectWinCondition(String name, Cell expectedWinCondition, Field field) {
+    final Cell winCondition = WinCondition.test(field);
 
-  private static final class Field {
-    final Cell[] cells;
-    final int dim;
-
-    public Field(int dim) {
-      this.dim = dim;
-      this.cells = new Cell[dim * dim];
-      Arrays.fill(this.cells, Cell.EMPTY);
+    if (winCondition != expectedWinCondition) {
+      throw new AssertionError(name + ": win expected=" + expectedWinCondition + ", actual=" + winCondition);
     }
 
-    public Field() {
-      this(3);
-    }
-
-    public Field cell(int w, int h, Cell cell) {
-      cells[w + h * dim] = cell;
-      return this;
-    }
-
-    public Cell cellAt(int w, int h) {
-      return cells[w + h * dim];
-    }
-
-    public Field x(int w, int h) {
-      return cell(w, h, Cell.X);
-    }
-
-    public Field o(int w, int h) {
-      return cell(w, h, Cell.O);
-    }
-
-    public Cell getWinCondition() {
-      horizontal: for (int h = 0; h < dim; ++h) {
-        final Cell res = cellAt(0, h);
-        if (res == Cell.EMPTY) {
-          continue;
-        } for (int w = 1; w < dim; ++w) {
-          if (res != cellAt(w, h)) {
-            continue horizontal;
-          }
-        }
-        return res;
-      }
-
-      vertical: for (int w = 0; w < dim; ++w) {
-        final Cell res = cellAt(w, 0);
-        if (res == Cell.EMPTY) {
-          continue;
-        } for (int h = 1; h < dim; ++h) {
-          if (res != cellAt(w, h)) {
-            continue vertical;
-          }
-        }
-        return res;
-      }
-
-      leftRight: {
-        final Cell res = cellAt(0, 0);
-        if (res == Cell.EMPTY) {
-          break leftRight;
-        } for (int k = 1; k < dim; ++k) {
-          if (res != cellAt(k, k)) {
-            break leftRight;
-          }
-        }
-        return res;
-      }
-
-      rightLeft: {
-        final Cell res = cellAt(0, dim - 1);
-        if (res == Cell.EMPTY) {
-          break rightLeft;
-        } else for (int k = 1; k < dim; ++k) {
-          if (res != cellAt(dim - k - 1, k)) {
-            break rightLeft;
-          }
-        }
-        return res;
-      }
-
-      return Cell.EMPTY;
-    }
+    System.out.println(name + " win condition=" + winCondition);
   }
 }
