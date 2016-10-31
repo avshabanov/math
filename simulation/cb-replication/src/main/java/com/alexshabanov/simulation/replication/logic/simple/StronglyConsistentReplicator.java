@@ -5,15 +5,16 @@ import com.alexshabanov.simulation.replication.logic.ReplicationListener;
 import com.alexshabanov.simulation.replication.logic.Replicator;
 import com.alexshabanov.simulation.replication.logic.SubscriptionResult;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Simple strongly consistent replicator, that expects response from all the nodes in the replication group.
  *
  * @author Alexander Shabanov
  */
+@ParametersAreNonnullByDefault
 public final class StronglyConsistentReplicator implements Replicator {
   private List<StronglyConsistentReplicator> group;
   private final String nodeName; // name of this node, shall be unique within the group
