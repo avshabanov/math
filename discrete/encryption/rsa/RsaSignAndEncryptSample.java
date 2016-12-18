@@ -31,7 +31,7 @@ import java.security.spec.X509EncodedKeySpec;
  *
  * @author Alexander Shabanov
  */
-public final class RsaWithSha1SignSample {
+public final class RsaSignAndEncryptSample {
 
   // private signing key (note, that 1024 is too small by modern standards, 2048 bit key length is a standard one)
   // openssl genrsa -out private-key.pem 1024
