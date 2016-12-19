@@ -1,9 +1,9 @@
-package com.alexshabanov.simulation.replication.logic.dummy;
+package com.alexshabanov.simulation.replication.v1.logic.dummy;
 
-import com.alexshabanov.simulation.replication.logic.ReplicatedOperation;
-import com.alexshabanov.simulation.replication.logic.ReplicationListener;
-import com.alexshabanov.simulation.replication.logic.Replicator;
-import com.alexshabanov.simulation.replication.logic.SubscriptionResult;
+import com.alexshabanov.simulation.replication.v1.logic.ReplicatedOperation;
+import com.alexshabanov.simulation.replication.v1.logic.ReplicationListener;
+import com.alexshabanov.simulation.replication.v1.logic.Replicator;
+import com.alexshabanov.simulation.replication.v1.logic.SubscriptionResult;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.Serializable;

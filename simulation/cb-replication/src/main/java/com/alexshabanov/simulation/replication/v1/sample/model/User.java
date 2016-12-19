@@ -1,4 +1,4 @@
-package com.alexshabanov.simulation.replication.sample.model;
+package com.alexshabanov.simulation.replication.v1.sample.model;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 

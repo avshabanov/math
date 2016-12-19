@@ -1,10 +1,10 @@
 package com.alexshabanov.simulation.replication;
 
-import com.alexshabanov.simulation.replication.logic.dummy.DummyReplicator;
-import com.alexshabanov.simulation.replication.sample.dao.UserDao;
-import com.alexshabanov.simulation.replication.sample.dao.support.DefaultUserDao;
-import com.alexshabanov.simulation.replication.sample.dao.support.ReplicatedUserDao;
-import com.alexshabanov.simulation.replication.sample.model.User;
+import com.alexshabanov.simulation.replication.v1.logic.dummy.DummyReplicator;
+import com.alexshabanov.simulation.replication.v1.sample.dao.UserDao;
+import com.alexshabanov.simulation.replication.v1.sample.dao.support.DefaultUserDao;
+import com.alexshabanov.simulation.replication.v1.sample.dao.support.ReplicatedUserDao;
+import com.alexshabanov.simulation.replication.v1.sample.model.User;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

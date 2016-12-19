@@ -16,9 +16,6 @@
     <!-- encoding -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-    <!-- app launcher -->
-    <launcher.mainClass>com.alexshabanov.simulation.</launcher.mainClass>
   </properties>
 
 
@@ -54,7 +51,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>1.4.0</version>
         <configuration>
-          <mainClass>${launcher.mainClass}</mainClass>
+          <mainClass>com.alexshabanov.simulation.replication.v1.CbReplicationAppV1</mainClass>
         </configuration>
       </plugin>
     </plugins>

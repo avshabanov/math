@@ -1,7 +1,7 @@
-package com.alexshabanov.simulation.replication.sample.dao.support;
+package com.alexshabanov.simulation.replication.v1.sample.dao.support;
 
-import com.alexshabanov.simulation.replication.sample.dao.UserDao;
-import com.alexshabanov.simulation.replication.sample.model.User;
+import com.alexshabanov.simulation.replication.v1.sample.dao.UserDao;
+import com.alexshabanov.simulation.replication.v1.sample.model.User;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;

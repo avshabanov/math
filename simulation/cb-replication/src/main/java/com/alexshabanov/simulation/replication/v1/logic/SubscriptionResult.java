@@ -1,4 +1,4 @@
-package com.alexshabanov.simulation.replication.logic;
+package com.alexshabanov.simulation.replication.v1.logic;
 
 /**
  * @author Alexander Shabanov

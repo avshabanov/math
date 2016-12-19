@@ -1,4 +1,4 @@
-package com.alexshabanov.simulation.replication.logic;
+package com.alexshabanov.simulation.replication.v1.logic;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.Serializable;

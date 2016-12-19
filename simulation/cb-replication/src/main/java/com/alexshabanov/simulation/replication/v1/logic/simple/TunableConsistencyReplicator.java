@@ -1,4 +1,4 @@
-package com.alexshabanov.simulation.replication.logic.simple;
+package com.alexshabanov.simulation.replication.v1.logic.simple;
 
 /**
  * Replicator with tuneable consistency, e.g.:
