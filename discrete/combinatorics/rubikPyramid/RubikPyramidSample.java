@@ -1,24 +1,36 @@
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author Alexander Shabanov
  */
 public final class RubikPyramidSample {
 
-  public static void main(String[] args) throws IOException {
-    demo();
-    demo1();
-    System.out.println();
-    System.out.println();
-    System.out.println();
-    System.out.flush();
+  public static void main(String[] args) {
+    final String mode = System.getProperty("RubikPyramidSample.demo", "3");
+    switch (mode) {
+      case "1":
+        demo1();
+        break;
+
+      case "2":
+        demo2();
+        break;
+
+      case "3":
+        demo3();
+        break;
+
+      default:
+        demo();
+    }
   }
 
-  private static void demo() throws IOException {
+  private static void demo() {
     final Pyramid pyramid = new Pyramid();
     pyramid.printTo("id0", System.out);
 
@@ -35,24 +47,59 @@ public final class RubikPyramidSample {
     pyramid.printTo("id4", System.out);
   }
 
-  private static void demo1() throws IOException {
+  private static void demo1() {
     final Pyramid pyramid = new Pyramid();
-    pyramid
-        .setState(1, 27 + 1)
-        .setState(9 + 6, 18 + 6)
-        .setState(18 + 6, 9 + 6)
-        .setState(27 + 1, 1);
+    pyramid.rotate(1);
+    pyramid.rotate(2);
+    pyramid.rotate(-1);
+    pyramid.rotate(-2);
     pyramid.printTo("demo1", System.out);
 
-    trySolve(pyramid);
+    trySolve(pyramid, 4);
   }
 
-  private static void trySolve(Pyramid pyramid) {
-    final Solver solver = new Solver(pyramid, 5);
+  private static void demo2() {
+    final Pyramid pyramid = new Pyramid();
+    pyramid.setState(1, 27 + 1);
+    pyramid.setState(9 + 6, 18 + 6);
+    pyramid.setState(18 + 6, 9 + 6);
+    pyramid.setState(27 + 1, 1);
+    pyramid.printTo("demo2", System.out);
+
+    trySolve(pyramid, 5);
+  }
+
+  private static void demo3() {
+    final Pyramid pyramid = new Pyramid();
+    pyramid.rotate(1);
+    pyramid.rotate(2);
+    pyramid.rotate(3);
+    pyramid.rotate(-4);
+    pyramid.rotate(-2);
+    pyramid.rotate(1);
+    pyramid.rotate(-3);
+    pyramid.printTo("demo3", System.out);
+
+    trySolve(pyramid, 7);
+  }
+
+  private static void trySolve(Pyramid pyramid, int maxDepth) {
+    final Solver solver = new Solver(pyramid, maxDepth);
+    long timeDelta = System.currentTimeMillis();
     if (solver.solve()) {
-      System.out.println("Solution found: " + solver.solution);
+      timeDelta = System.currentTimeMillis() - timeDelta;
+      System.out.println("[" + timeDelta + "ms] Solution found: " + solver.solution);
+
+      // explain solution
+      for (int i = 0; i < solver.solution.size(); ++i) {
+        final int vertexRotation = solver.solution.get(i);
+        pyramid.rotate(vertexRotation);
+        pyramid.printTo("Move #" + i + ": vertexRotation=" + vertexRotation, System.out);
+      }
+
     } else {
-      System.out.println("Solution has not been found, try increase depth. " +
+      timeDelta = System.currentTimeMillis() - timeDelta;
+      System.out.println("[" + timeDelta + "ms] Solution has not been found, try increase depth. " +
           solver.combinations + " combination(s) tried");
     }
   }
@@ -60,13 +107,13 @@ public final class RubikPyramidSample {
   private static final class Solver {
     final Pyramid pyramid;
     List<Integer> solution;
-    final List<Integer> vertexRotations = new ArrayList<>();
-    final int maxDepth;
+    final int[] vertexRotations;
+    int vertexRotationsSize;
     int combinations;
 
     public Solver(Pyramid pyramid, int maxDepth) {
       this.pyramid = pyramid;
-      this.maxDepth = maxDepth;
+      this.vertexRotations = new int[maxDepth];
     }
 
     public boolean solve() {
@@ -76,43 +123,34 @@ public final class RubikPyramidSample {
     public boolean solve(int depth) {
       ++combinations;
 
-      final int vertexRotationsSize = vertexRotations.size();
-      boolean solved = true;
-      for (int i = 0; i < pyramid.state.length; ++i) {
-        if (pyramid.state[i] != i) {
-          solved = false;
-          break;
-        }
-      }
-
+      boolean solved = pyramid.isSimilarToIdentity();
       if (solved) {
         if (solution == null || solution.size() > vertexRotationsSize) {
-          solution = new ArrayList<>(vertexRotations); // copy current rotations - it leads to solution
+          // copy current rotations as they form a solution
+          solution = IntStream.of(vertexRotations).limit(vertexRotationsSize).boxed().collect(Collectors.toList());
         }
         return true;
       }
 
-      if (depth >= maxDepth) {
+      if (depth >= vertexRotations.length) {
         return false;
       }
 
-      //final int previousRotation = vertexRotations.isEmpty() ? 0 : vertexRotations.get(vertexRotationsSize - 1);
-      for (int i = 1; i <= 4; ++i) {
-        vertexRotations.add(i);
-        pyramid.rotate(i);
-        solved = solve(depth + 1);
-        pyramid.rotate(-i); // restore
-        vertexRotations.remove(vertexRotations.size() - 1); // TODO: fix
-        if (solved) {
-          return true;
+      final int previousRotation = vertexRotationsSize > 0 ? vertexRotations[vertexRotationsSize - 1] : 0;
+      for (int i = -4; i <= 4; ++i) {
+        // skip dummy rotations
+        if (i == 0 ||
+            previousRotation == -i ||
+            (previousRotation == i && vertexRotationsSize > 2 && vertexRotations[vertexRotationsSize - 2] == i)) {
+          continue;
         }
 
-        // TODO: remove duplication
-        vertexRotations.add(-i);
-        pyramid.rotate(-i);
+        vertexRotations[vertexRotationsSize] = i;
+        ++vertexRotationsSize;
+        pyramid.rotate(i);
         solved = solve(depth + 1);
-        pyramid.rotate(i); // restore
-        vertexRotations.remove(vertexRotations.size() - 1);
+        pyramid.rotate(-i); // restore pyramid state
+        --vertexRotationsSize;
         if (solved) {
           return true;
         }
@@ -161,15 +199,27 @@ public final class RubikPyramidSample {
       loadIdentity();
     }
 
-    public Pyramid setState(int pos, int value) {
+    public void setState(int pos, int value) {
       this.state[pos] = value;
-      return this;
     }
 
     public void loadIdentity() {
       for (int i = 0; i < state.length; ++i) {
         state[i] = i;
       }
+    }
+
+    public boolean isSimilarToIdentity() {
+      for (int side = 0; side < SIDES; ++side) {
+        final int start = CELLS_ON_SIDE * side;
+        for (int cell = 1; cell < CELLS_ON_SIDE; ++cell) {
+          final int cellIndex = start + cell;
+          if ((this.state[cellIndex - 1] + 1) != this.state[cellIndex]) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
 
     public void rotate(int vertexRotation) {
@@ -229,9 +279,17 @@ public final class RubikPyramidSample {
       }
     }
 
-    public void printTo(String name, PrintStream out) throws IOException {
+    public void printTo(String name, PrintStream out) {
+      try {
+        printToOutputStream(name, out);
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+
+    private void printToOutputStream(String name, PrintStream out) throws IOException {
       out.println();
-      out.println("Pyramid " + name + ":");
+      out.println("Pyramid " + name + " (identitySimilarity=" + isSimilarToIdentity() + "):");
       for (int row = 0; row < CELL_ROWS; ++row) {
         for (int side = 0; side < SIDES; ++side) {
           final int start = CELLS_ON_SIDE * side;
