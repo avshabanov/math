@@ -3,7 +3,7 @@ Order Book Sample
 
 # Overview
 
-Java solution to [rgmadvisors's]( ) order book problem.
+Java solution to [rgmadvisors's](www.rgmadvisors.com/problems/orderbook/) order book problem.
 
 # How to build
 
