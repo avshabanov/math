@@ -61,3 +61,5 @@ Then compare with sample output datasets, e.g.:
 gzcat ~/Downloads/pricer.out.10000.gz > /tmp/expected-out.10000.txt
 diff /tmp/expected-out.10000.txt /tmp/out.10000.txt
 ```
+
+Note: use ``zcat`` instead of ``gzcat`` on certain flavors of Linux.
