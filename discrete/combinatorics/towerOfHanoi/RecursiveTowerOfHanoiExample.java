@@ -1,7 +1,7 @@
 /**
  * @author Alexander Shabanov
  */
-public final class ReversalInductionTowerOfHanoiExample {
+public final class RecursiveTowerOfHanoiExample {
 
   public static void main(String[] args) {
     demo(1);
@@ -14,13 +14,13 @@ public final class ReversalInductionTowerOfHanoiExample {
   private static void demo(int depth) {
     System.out.printf("Solution for depth=%d:\n", depth);
     final OnScreenSolutionPrinter p = new OnScreenSolutionPrinter();
-    p.move(Rod.R1, Rod.R2, Rod.R3, depth);
+    p.move(Rod.S, Rod.M, Rod.T, depth);
   }
 
   private enum Rod {
-    R1,
-    R2,
-    R3
+    S,
+    M,
+    T
   }
 
   private static abstract class SolutionFinder {
