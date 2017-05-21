@@ -28,6 +28,12 @@
       <scope>provided</scope>
     </dependency>
 
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>3.2.0</version>
+    </dependency>
+
     <!-- test scope -->
     <dependency>
       <groupId>junit</groupId>

@@ -34,5 +34,4 @@ public final class EmuReplicator implements Replicator {
   public long getNextSequenceId(String entity, boolean pullPreviousChangesets) {
     return 0;
   }
-
 }
