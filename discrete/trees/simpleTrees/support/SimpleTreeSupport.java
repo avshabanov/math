@@ -21,6 +21,9 @@ public abstract class SimpleTreeSupport extends BaseTreeSupport {
     }
 
     @Override
+    public Node getSelf() { return this; }
+
+    @Override
     protected void onSetChild(Node child) { /* do nothing */ }
   }
 

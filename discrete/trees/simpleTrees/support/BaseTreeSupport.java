@@ -1,6 +1,8 @@
 package support;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Shabanov
@@ -9,10 +11,35 @@ public abstract class BaseTreeSupport {
 
   protected interface INode<N extends INode, V> {
     V getValue();
+    N getSelf();
     N getLeft();
     N getRight();
     void setLeft(N left);
     void setRight(N right);
+
+    @SuppressWarnings("unchecked")
+    default N lookupByValue(V value, Comparator<V> comparator, Supplier<N> defaultNodeSupplier) {
+      N n = getSelf();
+      do {
+        final V nodeValue = (V) n.getValue();
+        final int r = comparator.compare(nodeValue, value);
+        if (r == 0) {
+          return n;
+        } else if (r < 0) {
+          n = (N) n.getRight();
+        } else {
+          n = (N) n.getLeft();
+        }
+      } while (n != null);
+
+      return defaultNodeSupplier.get();
+    }
+
+    default N lookupByValue(V value, Comparator<V> comparator) {
+      return lookupByValue(value, comparator, () -> {
+        throw new IllegalStateException("There is no node with value=" + value);
+      });
+    }
   }
 
   protected static abstract class AbstractNode<N extends INode, V> implements INode<N, V> {

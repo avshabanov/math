@@ -148,6 +148,9 @@ public final class TreeSuperPrinter extends SimpleTreeSupport {
       @Override
       protected void onSetChild(PrintNode child) {}
 
+      @Override
+      public PrintNode getSelf() { return this; }
+
       public String getWrappedValueAsString() {
         return String.valueOf(getValue().getValue());
       }

@@ -16,6 +16,9 @@ public abstract class SimpleTreeWithParentSupport extends BaseTreeSupport {
       setRight(right);
     }
 
+    @Override
+    public Node getSelf() { return this; }
+
     public Node getParent() {
       return parent;
     }
@@ -26,8 +29,10 @@ public abstract class SimpleTreeWithParentSupport extends BaseTreeSupport {
 
     @Override
     protected void onSetChild(Node child) {
-      assert child.getParent() == null;
-      child.setParent(this);
+      if (child != null) {
+        assert child.getParent() == null;
+        child.setParent(this);
+      }
     }
   }
 
