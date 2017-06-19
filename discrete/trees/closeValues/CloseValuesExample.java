@@ -1,5 +1,7 @@
 import support.SimpleTreeSupport;
 
+import java.util.Objects;
+
 /**
  * Sample run:
  * <pre>
@@ -83,7 +85,7 @@ public final class CloseValuesExample extends SimpleTreeSupport {
       return;
     }
 
-    if (resultantNode == null || resultantNode.getValue() != expected) {
+    if (resultantNode == null || !Objects.equals(resultantNode.getValue(), expected)) {
       throw new AssertionError(producedValueDescription +  " didn't return a value=" + expected +
           ", returned=" + resultantNode);
     }
