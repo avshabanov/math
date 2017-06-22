@@ -1,13 +1,25 @@
 package support;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
  * @author Alexander Shabanov
  */
 public abstract class BaseTreeSupport {
+
+  private static <N extends INode<N, V>, V> void addToList(INode<N, V> node, List<V> result) {
+    if (node == null) {
+      return;
+    }
+
+    addToList(node.getLeft(), result);
+    result.add(node.getValue());
+    addToList(node.getRight(), result);
+  }
 
   protected interface INode<N extends INode, V> {
     V getValue();
@@ -39,6 +51,13 @@ public abstract class BaseTreeSupport {
       return lookupByValue(value, comparator, () -> {
         throw new IllegalStateException("There is no node with value=" + value);
       });
+    }
+
+    default List<V> toList() {
+      final List<V> result = new ArrayList<>();
+      //noinspection unchecked
+      addToList(this, result);
+      return result;
     }
   }
 
