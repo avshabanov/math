@@ -6,12 +6,40 @@ import java.util.*;
  *
  * @author Alexander Shabanov
  */
-public final class PrattParserSample {
+public final class PrattParserSample extends Pratt {
 
   public static void main(String[] args) {
+    final Lexer lexer = new FeedLexer(
+        new NameToken("a"),
+        SimpleToken.PLUS,
+        new NameToken("b"),
+        SimpleToken.MUL,
+        new NameToken("c"));
+    final Parser parser = registerAll(new DefaultParser(lexer));
 
+    final Expression expr = parseAll(parser);
+    System.out.println("Parsed expression: " + expr);
   }
 
+  private static Expression parseAll(Parser parser) {
+    final Optional<Expression> expr = parser.parseExpression(0);
+    if (!expr.isPresent()) {
+      throw new ParseException("Nothing to parse");
+    }
+    return expr.get();
+  }
+
+  private static Parser registerAll(DefaultParser parser) {
+    parser.register(SimpleToken.PLUS, new InfixOperatorParselet(1));
+    parser.register(SimpleToken.MINUS, new InfixOperatorParselet(1));
+    parser.register(SimpleToken.MUL, new InfixOperatorParselet(2));
+    parser.register(SimpleToken.DIV, new InfixOperatorParselet(2));
+
+    parser.register(NameToken.TYPE, new NameParselet());
+    parser.register(SimpleToken.TILDE, new PrefixOperatorParselet());
+    parser.register(SimpleToken.BANG, new PrefixOperatorParselet());
+    return parser;
+  }
 }
 
 
@@ -44,10 +72,10 @@ class Pratt {
   }
 
   interface Parser {
-    Optional<Expression> parseExpression();
+    Optional<Expression> parseExpression(int precedence);
 
     default Expression expectNextExpression() {
-      final Optional<Expression> operand = this.parseExpression();
+      final Optional<Expression> operand = this.parseExpression(0);
       if (!operand.isPresent()) {
         throw new ParseException("Abrupt end of construct");
       }
@@ -61,6 +89,8 @@ class Pratt {
 
   interface InfixParselet {
     Expression parse(Parser parser, Expression left, Token token);
+
+    int getPrecedence();
   }
 
   static final class ParseException extends RuntimeException {
@@ -138,7 +168,7 @@ class Pratt {
 
     @Override
     public String getText() {
-      return null;
+      return text;
     }
 
     @Override
@@ -165,7 +195,7 @@ class Pratt {
     }
   }
 
-  static final class LiteralExpression implements Expression {
+  /*static final class LiteralExpression implements Expression {
     final int num;
 
     public LiteralExpression(int num) {
@@ -176,7 +206,7 @@ class Pratt {
     public String toString() {
       return String.format("%d", num);
     }
-  }
+  }*/
 
   static final class BinaryExpression implements Expression {
     final Expression left;
@@ -262,7 +292,7 @@ class Pratt {
     }
 
     @Override
-    public Optional<Expression> parseExpression() {
+    public Optional<Expression> parseExpression(int precedence) {
       Token token = lexer.next();
       if (token == SpecialToken.EOF) {
         return Optional.empty();
@@ -281,6 +311,12 @@ class Pratt {
         return Optional.of(left);
       }
 
+      final int infixParseletPrecedence = infixParselet.getPrecedence();
+      if (precedence >= infixParseletPrecedence) {
+        return Optional.of(left);
+      }
+
+      lexer.next(); // consume lookahead token
       return Optional.of(infixParselet.parse(this, left, token));
     }
   }
@@ -303,6 +339,31 @@ class Pratt {
     public Expression parse(Parser parser, Token token) {
       final Expression operand = parser.expectNextExpression();
       return new UnaryExpression(operand, token.expectSimpleToken());
+    }
+  }
+
+  static final class InfixOperatorParselet implements InfixParselet {
+    private final int precedence;
+
+    public InfixOperatorParselet(int precedence) {
+      this.precedence = precedence;
+    }
+
+    @Override
+    public Expression parse(Parser parser, Expression left, Token token) {
+      final Optional<Expression> right = parser.parseExpression(getPrecedence());
+      if (!right.isPresent()) {
+        throw new ParseException("Abrupt end of expression");
+      }
+      return new BinaryExpression(
+          left,
+          right.get(),
+          token.expectSimpleToken());
+    }
+
+    @Override
+    public int getPrecedence() {
+      return precedence;
     }
   }
 }
