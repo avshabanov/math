@@ -476,15 +476,13 @@ public class RubikCubeSample {
     }
 
     final class SolutionFinder {
-      static final int MAX_DEPTH = 20;
+      static final int MAX_DEPTH = 10;
 
       // this is to enable optimization: avoid reallocating array on each depth state and to
       // enable heuristics which is to match current state with the previous one to prune
       // solution candidate chains resulting in the same state as we had before
       final int[][] depthStates = new int[MAX_DEPTH][CELLS];
       final int[] depthStateHashCodes = new int[MAX_DEPTH];
-
-      final Set<Integer> visitedStates = new HashSet<>(80000);
 
       // iterations count, for statistics purposes
       long iterations = 0;
@@ -495,8 +493,7 @@ public class RubikCubeSample {
       void find(int depth) {
         ++iterations;
         if (iterations % 1000000000L == 0) {
-          System.out.println(new Date() + " - Iterations so far: " +
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 iterations + ", solution=" + solution + ", current rotations=" + rotations);
+          System.out.println(new Date() + " - Iterations so far: " + iterations);
         }
 
         if (isAssembled()) {
@@ -509,14 +506,6 @@ public class RubikCubeSample {
         if (depth >= MAX_DEPTH || (solution != null && depth > solution.size())) {
           return;
         }
-
-        // TODO: remove if you need optimal solution
-        final int cubeStateIndex = RubikCube2State.this.foldState();
-        if (visitedStates.contains(cubeStateIndex)) {
-          // this combination of vertices already met, discard this branch
-          return;
-        }
-        visitedStates.add(cubeStateIndex);
 
         final int[] newState = this.depthStates[depth];
         final int[] oldState = RubikCube2State.this.state;
