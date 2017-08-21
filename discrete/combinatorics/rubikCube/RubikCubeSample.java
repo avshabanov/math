@@ -27,7 +27,8 @@ public class RubikCubeSample {
   static void demo3() throws IOException {
     System.out.println("RubikState #3:");
     RubikCube2State s = new RubikCube2State();
-    s.setStates("YOORCYCRGYGWCGCGWRWYOROW").print(System.out);
+    //s.setStates("YOORCYCRGYGWCGCGWRWYOROW").print(System.out);
+    s.setStates("WOCGRYROOYGORWWCYGCWYRGC").print(System.out);
     s.findSolution(System.out);
   }
 
