@@ -21,3 +21,5 @@ out
 
 .DS_Store
 
+# Python
+.venv
