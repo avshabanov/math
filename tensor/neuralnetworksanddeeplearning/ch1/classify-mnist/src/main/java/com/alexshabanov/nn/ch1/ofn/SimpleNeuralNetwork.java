@@ -113,7 +113,9 @@ public class SimpleNeuralNetwork {
           " does not match previous layer size=" + previousLayerSize);
     }
 
-    final double[] layerValues = new double[layerSize];
+    // initialize accumulated layer values with biases
+    final double[] layerValues = Arrays.copyOf(seg.biases, seg.biases.length);
+    assert layerValues.length == seg.getLayerSize();
 
     // accumulate `w * a` values in layerValues
     for (int i = 0; i < previousLayerSize; ++i) {
@@ -121,11 +123,6 @@ public class SimpleNeuralNetwork {
       for (int j = 0; j < layerSize; ++j) {
         layerValues[j] += prevNodeValue * seg.weights[i][j];
       }
-    }
-
-    // accumulate biases
-    for (int j = 0; j < layerSize; ++j) {
-      layerValues[j] += seg.biases[j];
     }
 
     // let callback accept z-values before transforming them using sigmoid function
@@ -161,24 +158,29 @@ public class SimpleNeuralNetwork {
       @NonNull List<TrainingData> trainingSet,
       int epochs,
       int miniBatchSize,
-      double eta) {
+      double eta,
+      boolean reportEpoch) {
     // make training set mutable without affecting input argument
     final List<TrainingData> mutableTrainingSet = new ArrayList<>(trainingSet);
     final int trainingSetSize = mutableTrainingSet.size();
     final int batchCount = trainingSetSize / miniBatchSize;
 
     for (int j = 0; j < epochs; ++j) {
+      long delta = System.currentTimeMillis();
       Collections.shuffle(mutableTrainingSet, this.random);
 
       for (int k = 0; k < batchCount; ++k) {
-        final int startIndex = k * batchCount;
+        final int startIndex = k * miniBatchSize;
         final List<TrainingData> miniBatch = mutableTrainingSet.subList(startIndex,
-            Math.min(startIndex + batchCount, trainingSetSize));
+            Math.min(startIndex + miniBatchSize, trainingSetSize));
 
         updateMiniBatch(miniBatch, eta);
       }
 
-      //System.out.println("Epoch " + j + " complete");
+      if (reportEpoch) {
+        delta = System.currentTimeMillis() - delta;
+        System.out.println("Epoch " + j + " took " + delta + "ms to complete");
+      }
     }
   }
 

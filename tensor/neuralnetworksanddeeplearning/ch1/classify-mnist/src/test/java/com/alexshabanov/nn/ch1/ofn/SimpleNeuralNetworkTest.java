@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 
+import static com.alexshabanov.nn.ch1.ClassifyMain.doublesToString;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -37,7 +36,7 @@ public final class SimpleNeuralNetworkTest {
         TrainingData.withInput(1, 1).withOutput(0)
     );
     final SimpleNeuralNetwork n = new SimpleNeuralNetwork(random, new int[]{2, 1});
-    n.stochasticGradientDescent(trainingSet, 1000, 4, 3.0);
+    n.stochasticGradientDescent(trainingSet, 1000, 4, 3.0, false);
 
     for (final TrainingData trainingData : trainingSet) {
       final double[] output = n.evaluate(trainingData.getInput());
@@ -54,13 +53,13 @@ public final class SimpleNeuralNetworkTest {
   public void shouldBeAbleToLearnStairsPattern() {
     final List<TrainingData> trainingSet = new ArrayList<>();
     int stairCount = 0;
-    while (trainingSet.size() < 1000) {
-      final double d0 = random.nextInt(90) / 100.0;
-      final double d1 = random.nextInt(90) / 100.0;
-      final double d2 = random.nextInt(90) / 100.0;
-      final double d3 = random.nextInt(90) / 100.0;
-      if ((d0 < 0.25 && d1 >= 0.25 && d2 >= 0.25 && d3 >= 0.25) ||
-          (d0 >= 0.25 && d1 < 0.25 && d2 >= 0.25 && d3 >= 0.25)) {
+    while (trainingSet.size() < 5000) {
+      final double d0 = random.nextInt(100) / 100.0;
+      final double d1 = random.nextInt(100) / 100.0;
+      final double d2 = random.nextInt(100) / 100.0;
+      final double d3 = random.nextInt(100) / 100.0;
+      if ((d0 < 0.1 && d1 >= 0.1 && d2 >= 0.1 && d3 >= 0.1) ||
+          (d0 >= 0.1 && d1 < 0.1 && d2 >= 0.1 && d3 >= 0.1)) {
         ++stairCount;
         trainingSet.add(new TrainingData(new double[]{d0, d1, d2, d3}, new double[]{1.0}));
       }
@@ -76,23 +75,23 @@ public final class SimpleNeuralNetworkTest {
 
     System.out.println("stairs pattern recognition");
 
-    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(random, new int[]{4, 2, 2, 1});
-    n.stochasticGradientDescent(trainingSet, 3000, 500, 3.0);
+    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(random, new int[]{4, 4, 2, 1});
+    n.stochasticGradientDescent(trainingSet, 50, 30, 5.0, false);
 
-    final double[] rightStairOutput = n.evaluate(new double[]{0.0, 0.9, 0.9, 0.9});
-    System.out.println("rightStairOutput output=" + doublesToString(rightStairOutput));
+    final double[] rightStairOutput = n.evaluate(new double[]{0.01, 0.98, 0.85, 0.78});
+    System.out.println("rightStairOutput=" + doublesToString(rightStairOutput));
 
-    final double[] leftStairOutput = n.evaluate(new double[]{0.9, 0.12, 0.85, 0.78});
-    System.out.println("leftStairOutput output=" + doublesToString(leftStairOutput));
+    final double[] rightStairOutput2 = n.evaluate(new double[]{0.0, 1.0, 1.0, 1.0});
+    System.out.println("rightStairOutput2=" + doublesToString(rightStairOutput2));
 
-    final double[] nonStairOutput1 = n.evaluate(new double[]{0.65, 0.9, 0.29, 0.1});
+    final double[] leftStairOutput = n.evaluate(new double[]{0.9, 0.01, 0.85, 0.78});
+    System.out.println("leftStairOutput=" + doublesToString(leftStairOutput));
+
+    final double[] nonStairOutput1 = n.evaluate(new double[]{0.65, 0.9, 0.29, 0.01});
     System.out.println("nonStairOutput1=" + doublesToString(nonStairOutput1));
 
-    final double[] nonStairOutput2 = n.evaluate(new double[]{0.84, 0.68, 0.05, 0.1});
+    final double[] nonStairOutput2 = n.evaluate(new double[]{0.84, 0.68, 0.05, 0.01});
     System.out.println("nonStairOutput2=" + doublesToString(nonStairOutput2));
   }
 
-  private static String doublesToString(double[] arr) {
-    return DoubleStream.of(arr).mapToObj(d -> String.format("%.2f", d)).collect(Collectors.toList()).toString();
-  }
 }
