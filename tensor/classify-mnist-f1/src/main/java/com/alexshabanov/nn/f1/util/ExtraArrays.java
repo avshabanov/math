@@ -3,21 +3,10 @@ package com.alexshabanov.nn.f1.util;
 import java.util.Random;
 
 /**
- * Neural network utilities.
+ * Array utilities.
  */
-public final class ExtraMathf {
-  private ExtraMathf() {}
-
-  public static float sigmoid(float x) {
-    // TODO: Use alternative to sigmoid: f(x) = x / (1 + abs(x))
-    return 1.0f / (1.0f + (float) Math.exp(-x));
-  }
-
-  // first derivative from sigmoid function
-  public static float sigmoidPrime(float x) {
-    final float v = sigmoid(x);
-    return v * (1.0f - v);
-  }
+public final class ExtraArrays {
+  private ExtraArrays() {}
 
   public static float[][] randn2(Random random, int d0, int d1) {
     final float[][] result = new float[d0][];

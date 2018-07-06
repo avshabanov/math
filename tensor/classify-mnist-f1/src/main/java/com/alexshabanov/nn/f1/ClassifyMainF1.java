@@ -1,5 +1,6 @@
 package com.alexshabanov.nn.f1;
 
+import com.alexshabanov.nn.f1.ofn.NeuralNetworkMetadata;
 import com.alexshabanov.nn.f1.ofn.SimpleNeuralNetwork;
 import com.alexshabanov.nn.f1.ofn.TrainingData;
 import lombok.AllArgsConstructor;
@@ -11,7 +12,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -39,7 +39,7 @@ public final class ClassifyMainF1 {
     System.out.println("Read " + images.images.size() + " image(s)");
 
     final List<TrainingData> trainingDataSet = images.toTrainingData();
-    final SimpleNeuralNetwork neuralNetwork = new SimpleNeuralNetwork(ThreadLocalRandom.current(),
+    final SimpleNeuralNetwork neuralNetwork = new SimpleNeuralNetwork(NeuralNetworkMetadata.getClassicDefault(),
         new int[] {784, 100, 10});
     neuralNetwork.stochasticGradientDescent(trainingDataSet, 30, 10, 3.0f, true);
 

@@ -7,7 +7,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static com.alexshabanov.nn.f1.util.ExtraMathf.*;
+import static com.alexshabanov.nn.f1.util.ExtraArrays.randn2;
+import static com.alexshabanov.nn.f1.util.ExtraArrays.zeroes2;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -15,12 +16,14 @@ import static java.util.Objects.requireNonNull;
  */
 public class SimpleNeuralNetwork {
   final Segments segments;
-  final Random random;
+  final NeuralNetworkMetadata metadata;
 
-  public SimpleNeuralNetwork(@NonNull Random random, @NonNull int[] sizes) {
-    this.random = requireNonNull(random);
+  public SimpleNeuralNetwork(
+      @NonNull NeuralNetworkMetadata metadata,
+      @NonNull int[] sizes) {
+    this.metadata = requireNonNull(metadata);
     this.segments = new Segments(IntStream.range(0, sizes.length - 1)
-        .mapToObj(i -> new Segment(random, sizes[i], sizes[i + 1])).toArray(Segment[]::new));
+        .mapToObj(i -> new Segment(metadata.getRandom(), sizes[i], sizes[i + 1])).toArray(Segment[]::new));
   }
 
   public int getLayerCount() {
@@ -127,9 +130,7 @@ public class SimpleNeuralNetwork {
     zConsumer.accept(layerValues);
 
     // calculate Sigmoid(Sum(W * A) + b) and put into layer values
-    for (int j = 0; j < layerSize; ++j) {
-      layerValues[j] = sigmoid(layerValues[j]);
-    }
+    metadata.getSigmoid().accept(layerValues);
 
     return layerValues;
   }
@@ -165,7 +166,7 @@ public class SimpleNeuralNetwork {
 
     for (int j = 0; j < epochs; ++j) {
       long delta = System.currentTimeMillis();
-      Collections.shuffle(mutableTrainingSet, this.random);
+      Collections.shuffle(mutableTrainingSet, this.metadata.getRandom());
 
       for (int k = 0; k < batchCount; ++k) {
         final int startIndex = k * miniBatchSize;
@@ -242,9 +243,7 @@ public class SimpleNeuralNetwork {
     for (int i = 0; i < this.segments.size(); ++i) {
       activation = this.feedforward(activation, i, zValues -> {
         final float[] zPrimes = Arrays.copyOf(zValues, zValues.length);
-        for (int t = 0; t < zPrimes.length; ++t) {
-          zPrimes[t] = sigmoidPrime(zValues[t]);
-        }
+        this.metadata.getSigmoidPrime().accept(zPrimes);
         zPrimeValueSet.add(zPrimes);
       });
       activations.add(activation);
