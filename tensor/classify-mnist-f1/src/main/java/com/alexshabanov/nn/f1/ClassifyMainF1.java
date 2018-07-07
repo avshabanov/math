@@ -39,8 +39,13 @@ public final class ClassifyMainF1 {
     System.out.println("Read " + images.images.size() + " image(s)");
 
     final List<TrainingData> trainingDataSet = images.toTrainingData();
-    final SimpleNeuralNetwork neuralNetwork = new SimpleNeuralNetwork(NeuralNetworkMetadata.getClassicDefault(),
-        new int[] {784, 100, 10});
+    final NeuralNetworkMetadata metadata;
+    if (args.length > 1 && "-withAbsInvFunction".equals(args[1])) {
+      metadata = NeuralNetworkMetadata.withAbsInvFunction();
+    } else {
+      metadata = NeuralNetworkMetadata.withLogisticsFunction();
+    }
+    final SimpleNeuralNetwork neuralNetwork = new SimpleNeuralNetwork(metadata, new int[] {784, 100, 10});
     neuralNetwork.stochasticGradientDescent(trainingDataSet, 30, 10, 3.0f, true);
 
     // now test the network using first few images

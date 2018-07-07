@@ -183,7 +183,7 @@ public class SimpleNeuralNetwork {
     }
   }
 
-  private void updateMiniBatch(List<TrainingData> miniBatch, float eta) {
+  private Segments calculateNablas(List<TrainingData> miniBatch) {
     final Segments nablas = Segments.createPrototype(this.segments);
 
     // run minibatches
@@ -210,6 +210,12 @@ public class SimpleNeuralNetwork {
         }
       }
     }
+
+    return nablas;
+  }
+
+  private void updateMiniBatch(List<TrainingData> miniBatch, float eta) {
+    final Segments nablas = calculateNablas(miniBatch);
 
     // once nabla is known, adjust actual weights and biases
     final float learningRate = eta / miniBatch.size();

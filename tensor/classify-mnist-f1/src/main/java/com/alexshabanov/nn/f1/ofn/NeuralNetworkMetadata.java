@@ -1,6 +1,6 @@
 package com.alexshabanov.nn.f1.ofn;
 
-import com.alexshabanov.nn.f1.util.FloatToFloatFunction;
+import com.alexshabanov.nn.f1.util.AbsInvFunction;
 import com.alexshabanov.nn.f1.util.LogisticsFunction;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +29,7 @@ public final class NeuralNetworkMetadata {
 
   // TODO: cost derivative
 
-  public static NeuralNetworkMetadata getClassicDefault() {
+  public static NeuralNetworkMetadata withLogisticsFunction() {
     return new NeuralNetworkMetadata(
         ThreadLocalRandom.current(),
         values -> {
@@ -40,6 +40,22 @@ public final class NeuralNetworkMetadata {
         values -> {
           for (int i = 0; i < values.length; ++i) {
             values[i] = LogisticsFunction.callPrime(values[i]);
+          }
+        }
+    );
+  }
+
+  public static NeuralNetworkMetadata withAbsInvFunction() {
+    return new NeuralNetworkMetadata(
+        ThreadLocalRandom.current(),
+        values -> {
+          for (int i = 0; i < values.length; ++i) {
+            values[i] = AbsInvFunction.call(values[i]);
+          }
+        },
+        values -> {
+          for (int i = 0; i < values.length; ++i) {
+            values[i] = AbsInvFunction.callPrime(values[i]);
           }
         }
     );
