@@ -49,14 +49,19 @@ LFLAGS    =
 ''' >> target/config.mk
 else
     echo '''
-CFLAGS    = -O0 -g
+CFLAGS    = -O1 -g
 LFLAGS    = -g
 ''' >> target/config.mk
 fi
 
 # Write assertion options
 if [ $ASSERT_ENABLED -eq 0 ]; then
-    echo "CFLAGS    += -DNDEBUG" >> target/config.mk
+    echo '''
+# Disable debug and ublas debugging
+CFLAGS    += -DNDEBUG -DBOOST_UBLAS_NDEBUG
+# Also disable rtti to minimize footprint
+CFLAGS    += -fno-rtti
+''' > target/config.mk
 fi
 
 # Write newline at the end of file
