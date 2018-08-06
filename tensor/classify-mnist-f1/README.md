@@ -64,3 +64,5 @@ Image #9, expected label: 4
 	Got output=[0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00], expected=[0.00, 0.00, 0.00, 0.00, 1.00, 0.00, 0.00, 0.00, 0.00, 0.00]
 Match quality: 88.73 percent(s)
 ```
+
+Record precision: 98.31% (which is exceptionally great!).

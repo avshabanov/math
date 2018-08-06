@@ -1,4 +1,4 @@
-package com.alexshabanov.nn.f1.util;
+package com.alexshabanov.nn.f1.activation;
 
 /**
  * Utility class, encapsulating logistic function and it's first derivative (prime):

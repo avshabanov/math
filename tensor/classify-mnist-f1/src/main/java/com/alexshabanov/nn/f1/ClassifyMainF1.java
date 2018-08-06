@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -39,12 +40,11 @@ public final class ClassifyMainF1 {
     System.out.println("Read " + images.images.size() + " image(s)");
 
     final List<TrainingData> trainingDataSet = images.toTrainingData();
-    final NeuralNetworkMetadata metadata;
-    if (args.length > 1 && "-withAbsInvFunction".equals(args[1])) {
-      metadata = NeuralNetworkMetadata.withAbsInvFunction();
-    } else {
-      metadata = NeuralNetworkMetadata.withLogisticsFunction();
+    NeuralNetworkMetadata metadata = NeuralNetworkMetadata.builder().random(ThreadLocalRandom.current()).build();
+    if (args.length > 1 && "-withSoftsignFunction".equals(args[1])) {
+      metadata = metadata.withSoftsignFunction();
     }
+
     final SimpleNeuralNetwork neuralNetwork = new SimpleNeuralNetwork(metadata, new int[] {784, 100, 10});
     neuralNetwork.stochasticGradientDescent(trainingDataSet, 30, 10, 3.0f, true);
 

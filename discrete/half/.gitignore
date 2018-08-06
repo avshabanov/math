@@ -1,0 +1,9 @@
+
+# CMake intermediate files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# Output
+half

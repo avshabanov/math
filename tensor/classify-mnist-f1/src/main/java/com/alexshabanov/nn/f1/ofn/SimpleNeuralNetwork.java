@@ -1,14 +1,14 @@
 package com.alexshabanov.nn.f1.ofn;
 
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static com.alexshabanov.nn.f1.util.ExtraArrays.randn2;
-import static com.alexshabanov.nn.f1.util.ExtraArrays.zeroes2;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -30,109 +30,9 @@ public class SimpleNeuralNetwork {
     return this.segments.size() + 1;
   }
 
-  /**
-   * Helper class, that holds biases for a given layer in the neural network and preceding weights,
-   * connecting previous layer of the neural network with the current one, represented by biases in the
-   * given segment.
-   */
-  static final class Segment {
-    final float[] biases;
-    final float[][] weights;
-
-    Segment(@NonNull Random random, int previousLayerSize, int layerSize) {
-      if (previousLayerSize <= 0) {
-        throw new IllegalArgumentException("previousLayerSize");
-      }
-
-      if (layerSize <= 0) {
-        throw new IllegalArgumentException("layerSize");
-      }
-      this.biases = randn2(random, 1, layerSize)[0];
-      this.weights = randn2(random, previousLayerSize, layerSize);
-    }
-
-    Segment(@NonNull Segment prototype) {
-      this.biases = new float[prototype.getLayerSize()];
-      this.weights = zeroes2(prototype.getPreviousLayerSize(), prototype.getLayerSize());
-    }
-
-    Segment(@NonNull float[] biases, @NonNull float[][] weights, @NonNull Segment prototype) {
-      this.biases = biases;
-      this.weights = weights;
-
-      if (this.biases.length != prototype.getLayerSize()) {
-        throw new IllegalArgumentException("Unexpected biases size=" + this.biases.length +
-            ", expected=" + prototype.getLayerSize());
-      }
-
-      if (this.weights.length != prototype.getPreviousLayerSize()) {
-        throw new IllegalArgumentException("Unexpected weights 1d size=" + this.weights.length +
-            ", expected=" + prototype.getPreviousLayerSize());
-      }
-
-      if (this.weights[0].length != prototype.getLayerSize()) {
-        throw new IllegalArgumentException("Unexpected weights 2d size=" + this.weights[0].length +
-            ", expected=" + prototype.getLayerSize());
-      }
-    }
-
-    int getLayerSize() {
-      assert biases.length == weights[0].length;
-      return biases.length;
-    }
-
-    int getPreviousLayerSize() {
-      return weights.length;
-    }
-  }
-
-  @AllArgsConstructor
-  static final class Segments {
-    private final Segment[] segments;
-
-    public int size() {
-      return this.segments.length;
-    }
-
-    public Segment get(int index) {
-      return this.segments[index];
-    }
-
-    // Creates new segments, where all biases and weights are initialized to zeroes
-    public static Segments createPrototype(@NonNull Segments template) {
-      return new Segments(Arrays.stream(template.segments).map(Segment::new).toArray(Segment[]::new));
-    }
-  }
-
   float[] feedforward(float[] previousLayerValues, int layerIndex, Consumer<float[]> zConsumer) {
-    final int previousLayerSize = previousLayerValues.length;
     final Segment seg = this.segments.get(layerIndex);
-    final int layerSize = seg.weights[0].length;
-
-    if (seg.getPreviousLayerSize() != previousLayerSize) {
-      throw new IllegalStateException("Weight matrix size=" + seg.getPreviousLayerSize() +
-          " does not match previous layer size=" + previousLayerSize);
-    }
-
-    // initialize accumulated layer values with biases
-    final float[] layerValues = Arrays.copyOf(seg.biases, seg.biases.length);
-    assert layerValues.length == seg.getLayerSize();
-
-    // accumulate `w * a` values in layerValues
-    for (int i = 0; i < previousLayerSize; ++i) {
-      final float prevNodeValue = previousLayerValues[i];
-      for (int j = 0; j < layerSize; ++j) {
-        layerValues[j] += prevNodeValue * seg.weights[i][j];
-      }
-    }
-
-    // let callback accept z-values before transforming them using sigmoid function
-    zConsumer.accept(layerValues);
-
-    // calculate Sigmoid(Sum(W * A) + b) and put into layer values
-    metadata.getSigmoid().accept(layerValues);
-
-    return layerValues;
+    return seg.feedforward(metadata, previousLayerValues, zConsumer);
   }
 
   float[] feedforward(float[] previousLayerValues, int layerIndex) {
@@ -195,19 +95,7 @@ public class SimpleNeuralNetwork {
         final Segment nabla = nablas.get(segmentIndex);
         final Segment delta = deltaNablas.get(segmentIndex);
 
-        // accumulate biases
-        for (int i = 0; i < nabla.getLayerSize(); ++i) {
-          nabla.biases[i] += delta.biases[i];
-        }
-
-        // accumulate weights
-        for (int i = 0; i < nabla.getPreviousLayerSize(); ++i) {
-          final float[] nablaWeightSlice = nabla.weights[i];
-          final float[] deltaWeightSlice = delta.weights[i];
-          for (int j = 0; j < nabla.getLayerSize(); ++j) {
-            nablaWeightSlice[j] += deltaWeightSlice[j];
-          }
-        }
+        nabla.add(delta);
       }
     }
 
@@ -222,18 +110,7 @@ public class SimpleNeuralNetwork {
     for (int segmentIndex = 0; segmentIndex < nablas.size(); ++segmentIndex) {
       final Segment nabla = nablas.get(segmentIndex);
       final Segment seg = this.segments.get(segmentIndex);
-
-      for (int i = 0; i < nabla.getLayerSize(); ++i) {
-        seg.biases[i] -= learningRate * nabla.biases[i];
-      }
-
-      for (int i = 0; i < nabla.getPreviousLayerSize(); ++i) {
-        final float[] nablaWeightSlice = nabla.weights[i];
-        final float[] weightSlice = seg.weights[i];
-        for (int j = 0; j < nabla.getLayerSize(); ++j) {
-          weightSlice[j] -= learningRate * nablaWeightSlice[j];
-        }
-      }
+      seg.scaleSub(nabla, learningRate);
     }
   }
 
@@ -249,7 +126,7 @@ public class SimpleNeuralNetwork {
     for (int i = 0; i < this.segments.size(); ++i) {
       activation = this.feedforward(activation, i, zValues -> {
         final float[] zPrimes = Arrays.copyOf(zValues, zValues.length);
-        this.metadata.getSigmoidPrime().accept(zPrimes);
+        this.metadata.getActivationPrime().accept(zPrimes);
         zPrimeValueSet.add(zPrimes);
       });
       activations.add(activation);
@@ -271,24 +148,8 @@ public class SimpleNeuralNetwork {
         // TODO: fixme - this needs to be optimized further
         // we need to calculate delta using previous layer's weights:
         // Delta(L-1) = Transpose(W(L-1)) * Delta(L) * S'(Z(L-1))
-        final float[][] prevWeights = seg.weights; // previous weights
-        final float[] nextDelta = new float[prevWeights.length];
-        for (int u = 0; u < prevWeights.length; ++u) {
-          // u iterates from 0 up to current layer size
-          float[] prevWeightSlice = prevWeights[u];
-          float d = 0.0f;
-          for (int v = 0; v < prevWeightSlice.length; ++v) {
-            d += delta[v] * prevWeightSlice[v];
-          }
-          nextDelta[u] = d;
-        }
-
-        // update delta array
-        delta = nextDelta;
+        delta = seg.mulTransposedWeights(delta);
       }
-
-      // find corresponding segment
-      seg = this.segments.get(lastSegmentIndex - i);
 
       // here: finalize computing delta as C'(An, Y) * S'(Zn), where An is last activation layer values and
       // Zn - is last activation layer's z-values
@@ -296,26 +157,14 @@ public class SimpleNeuralNetwork {
         delta[j] = delta[j] * zPrimes[j];
       }
 
-      final float[][] weights = calcBackpropagatedWeights(seg, delta, activations.get(activations.size() - i - 2));
+      // find corresponding segment
+      seg = this.segments.get(lastSegmentIndex - i);
 
       // set nabla slice
-      nablas[lastSegmentIndex - i] = new Segment(delta, weights, seg);
+      nablas[lastSegmentIndex - i] = seg.backpropagate(delta, activations.get(activations.size() - i - 2));
     }
 
     return new Segments(nablas);
-  }
-
-  private float[][] calcBackpropagatedWeights(Segment prototype, float[] delta, float[] prevLayerActivations) {
-    // calculate matrix dot product: Delta*Transpose(A(prev))
-    assert delta.length == prototype.getLayerSize();
-    assert prevLayerActivations.length == prototype.getPreviousLayerSize();
-    final float[][] weights = zeroes2(prototype.getPreviousLayerSize(), prototype.getLayerSize());
-    for (int i = 0; i < prevLayerActivations.length; ++i) {
-      for (int j = 0; j < delta.length; ++j) {
-        weights[i][j] = prevLayerActivations[i] * delta[j];
-      }
-    }
-    return weights;
   }
 
   private float[] costDerivative(float[] outputActivations, float[] y) {

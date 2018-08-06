@@ -1,4 +1,4 @@
-package com.alexshabanov.nn.f1.util;
+package com.alexshabanov.nn.f1.activation;
 
 /**
  * Utility class, encapsulating reverse absolute value function and its first derivative:
@@ -8,9 +8,11 @@ package com.alexshabanov.nn.f1.util;
  *      = (1+x)'* (-1) * 1/(1+x)^2 = 1/(1+x)^2.
  *   for x < 0 -> f'(x) = (x / (1-x))' = (1/(1-x) - 1)' = (1-x)' * (-1) * 1/(1-x)^2 = 1/(1-x)^2
  * </pre>
+ *
+ * See also https://en.wikipedia.org/wiki/Activation_function
  */
-public final class AbsInvFunction {
-  private AbsInvFunction() {}
+public final class SoftsignFunction {
+  private SoftsignFunction() {}
 
   public static float call(float x) {
     return x / (1 + Math.abs(x));
