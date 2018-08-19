@@ -12,37 +12,33 @@ class Solution {
         final List<List<Integer>> result = new ArrayList<>();
         Arrays.sort(nums);
         
-        int prevA = 0;
         for (int i0 = 0; i0 < nums.length; ++i0) {
             final int a = nums[i0];
-            if ((i0 > 0) && (prevA == a)) {
+            if ((i0 > 0) && (nums[i0 - 1] == a)) {
                 continue;
             }
-            prevA = a;
             
             if (a > 0) {
                 break;
             }
             
-            int prevB = 0;
-            for (int i1 = i0 + 1; i1 < nums.length; ++i1) {
+            final int i1Start = i0 + 1;
+            for (int i1 = i1Start; i1 < nums.length; ++i1) {
                 final int b = nums[i1];
-                if ((i1 > (i0 + 1)) && (prevB == b)) {
+                if ((i1 > i1Start) && (nums[i1 - 1] == b)) {
                     continue;
                 }
-                prevB = b;
                 
                 if ((a + b) > 0) {
                     break;
                 }
                 
-                int prevC = 0;
-                for (int i2 = i1 + 1; i2 < nums.length; ++i2) {
+                final int i2Start = i1 + 1;
+                for (int i2 = i2Start; i2 < nums.length; ++i2) {
                     final int c = nums[i2];
-                    if ((i2 > (i1 + 1)) && (prevC == c)) {
+                    if ((i2 > i2Start) && (nums[i2 - 1] == c)) {
                         continue;
                     }
-                    prevC = c;
                     
                     final int sum = a + b + c;
                     if (sum > 0) {
