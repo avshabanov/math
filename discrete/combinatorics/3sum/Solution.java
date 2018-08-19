@@ -33,21 +33,10 @@ class Solution {
                     break;
                 }
                 
-                final int i2Start = i1 + 1;
-                for (int i2 = i2Start; i2 < nums.length; ++i2) {
-                    final int c = nums[i2];
-                    if ((i2 > i2Start) && (nums[i2 - 1] == c)) {
-                        continue;
-                    }
-                    
-                    final int sum = a + b + c;
-                    if (sum > 0) {
-                        break;
-                    }
-                    
-                    if (sum == 0) {
-                        result.add(Arrays.<Integer>asList(a, b, c));
-                    }
+                // check if there is a complement to zero in the remainder of this array
+                final int c = -(a + b);
+                if (Arrays.binarySearch(nums, i1 + 1, nums.length, c) > 0) {
+                    result.add(Arrays.<Integer>asList(a, b, c));
                 }
             }
         }
