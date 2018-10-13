@@ -2,7 +2,7 @@ package com.alexshabanov.nn.f1.ofn;
 
 import com.alexshabanov.nn.f1.activation.LogisticsFunction;
 import com.alexshabanov.nn.f1.cost.CostFunction;
-import com.alexshabanov.nn.f1.cost.QuadraticCostFunction;
+import com.alexshabanov.nn.f1.cost.SimpleCostFunctions;
 import com.alexshabanov.nn.f1.util.FloatToFloatFunction;
 import lombok.Builder;
 import lombok.NonNull;
@@ -86,13 +86,13 @@ public final class ToyNeuronTest {
     for (int i = 0; i < epochs; ++i) {
       System.out.print(String.format("%8d\t", i));
       n.sgd(input, desiredOutput, learningRate);
+      System.out.println();
     }
   }
 
   private static SingleNeuronNetwork.SingleNeuronNetworkBuilder networkBuilderWithDefaults() {
     return SingleNeuronNetwork.builder()
-        .cost(QuadraticCostFunction::call)
-        .costPrime(QuadraticCostFunction::callPrime)
+        .cost(SimpleCostFunctions.QUADRATIC)
         .activation(LogisticsFunction::call)
         .activationPrime(LogisticsFunction::callPrime);
   }
@@ -113,9 +113,6 @@ public final class ToyNeuronTest {
     @NonNull
     private CostFunction cost;
 
-    @NonNull
-    private CostFunction costPrime;
-
     float evaluate(float x) {
       return activation.applyUnboxed(z(x));
     }
@@ -129,10 +126,10 @@ public final class ToyNeuronTest {
       final float av = activation.applyUnboxed(zv);
 
       // find cost (only to output it later)
-      final float costVal = cost.call(av, y);
+      final float costVal = cost.call(new float[]{av}, new float[]{y})[0];
 
       // find C'(a)
-      final float costPrimeVal = costPrime.call(av, y);
+      final float costPrimeVal = cost.callDerivative(new float[]{av}, new float[]{y})[0];
 
       // apply delta to find cost function
       float d = costPrimeVal * activationPrime.applyUnboxed(zv);
@@ -147,7 +144,7 @@ public final class ToyNeuronTest {
       w += nw * learningRate;
 
       // output new values:
-      System.out.println(String.format("%.4f\t%.4f\t%.4f\t%.4f", costVal, av, b, w));
+      System.out.print(String.format("%.4f\t%.4f\t%.4f\t%.4f", costVal, av, b, w));
     }
 
     private float z(float a) {

@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import static com.alexshabanov.nn.f1.ClassifyMainF1.floatsToString;
+import static com.alexshabanov.nn.f1.util.ExtraArrays.floatsToString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -57,34 +57,39 @@ public final class SimpleNeuralNetworkTest {
 
   @Test
   public void shouldBeAbleToUseIdentityNetwork() {
-    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(defaultMetadata, new int[]{2, 3, 1});
+    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(defaultMetadata,
+        SegmentLayers.of(NeuronActivation.sigmoid(), 2).add(3).add(1));
     assertEquals(2, n.segments.size());
 
     final float[] result = n.evaluate(new float[] {0.01f, 0.9f});
     assertEquals(1, result.length);
   }
 
-  private static void testNandOperationLearn(NeuralNetworkMetadata m, LearnSettings s) {
+  private static void testNandOperationLearn(
+      NeuronActivation na,
+      ActivationLimits al,
+      NeuralNetworkMetadata m,
+      LearnSettings s) {
     final float e1 = 0.0001f;
     final float e2 = 0.001f;
     final List<TrainingData> trainingSet = Arrays.asList(
-        TrainingData.withInput(m.min(), m.min()).withOutput(m.max()),
-        TrainingData.withInput(m.max(), m.min()).withOutput(m.max()),
-        TrainingData.withInput(m.min(), m.max()).withOutput(m.max()),
-        TrainingData.withInput(m.max(), m.max()).withOutput(m.min()),
+        TrainingData.withInput(al.min(), al.min()).withOutput(al.max()),
+        TrainingData.withInput(al.max(), al.min()).withOutput(al.max()),
+        TrainingData.withInput(al.min(), al.max()).withOutput(al.max()),
+        TrainingData.withInput(al.max(), al.max()).withOutput(al.min()),
 
-        TrainingData.withInput(m.min(e1), m.min(e1)).withOutput(m.max(e1)),
-        TrainingData.withInput(m.max(e1), m.min(e1)).withOutput(m.max(e1)),
-        TrainingData.withInput(m.min(e1), m.max(e1)).withOutput(m.max(e1)),
-        TrainingData.withInput(m.max(e1), m.max(e1)).withOutput(m.min(e1)),
+        TrainingData.withInput(al.min(e1), al.min(e1)).withOutput(al.max(e1)),
+        TrainingData.withInput(al.max(e1), al.min(e1)).withOutput(al.max(e1)),
+        TrainingData.withInput(al.min(e1), al.max(e1)).withOutput(al.max(e1)),
+        TrainingData.withInput(al.max(e1), al.max(e1)).withOutput(al.min(e1)),
 
-        TrainingData.withInput(m.min(e2), m.min(e2)).withOutput(m.max(e2)),
-        TrainingData.withInput(m.max(e2), m.min(e2)).withOutput(m.max(e2)),
-        TrainingData.withInput(m.min(e2), m.max(e2)).withOutput(m.max(e2)),
-        TrainingData.withInput(m.max(e2), m.max(e2)).withOutput(m.min(e2))
+        TrainingData.withInput(al.min(e2), al.min(e2)).withOutput(al.max(e2)),
+        TrainingData.withInput(al.max(e2), al.min(e2)).withOutput(al.max(e2)),
+        TrainingData.withInput(al.min(e2), al.max(e2)).withOutput(al.max(e2)),
+        TrainingData.withInput(al.max(e2), al.max(e2)).withOutput(al.min(e2))
     );
 
-    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(m, new int[]{2, 1});
+    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(m, SegmentLayers.of(na, 2).add(1));
     //n.stochasticGradientDescent(trainingSet, 30, 4, 30.0f, false);
     n.stochasticGradientDescent(trainingSet, s.getEpochs(), s.getMiniBatchSize(), s.getEta(), false);
 
@@ -102,7 +107,9 @@ public final class SimpleNeuralNetworkTest {
 
   @Test
   public void shouldBeAbleToLearnNandOperation() {
-    testNandOperationLearn(defaultMetadata, LearnSettings.getDefault());
+    testNandOperationLearn(NeuronActivation.sigmoid(),
+        ActivationLimits.builder().activationMinValue(0).activationMaxValue(1).build(),
+        defaultMetadata, LearnSettings.getDefault());
   }
 
   @Ignore
@@ -114,7 +121,9 @@ public final class SimpleNeuralNetworkTest {
   @Test
   public void shouldBeAbleToLearnNandOperationUsingSoftsignFunction() {
     testNandOperationLearn(
-        defaultMetadata.withSoftsignFunction(),
+        NeuronActivation.softsign(),
+        ActivationLimits.builder().activationMinValue(-1).activationMaxValue(1).build(),
+        defaultMetadata,
         LearnSettings.getDefault().toBuilder()
             .epochs(40)
             .build()
@@ -127,7 +136,8 @@ public final class SimpleNeuralNetworkTest {
 
     System.out.println("stairs pattern recognition");
 
-    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(defaultMetadata, new int[]{4, 4, 2, 1});
+    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(defaultMetadata,
+        SegmentLayers.of(NeuronActivation.sigmoid(), 4).add(4).add(2).add(1));
     n.stochasticGradientDescent(trainingSet, 50, 30, 5.0f, false);
 
     final float[] rightStairOutput = n.evaluate(new float[]{0.01f, 0.98f, 0.85f, 0.78f});
@@ -148,34 +158,61 @@ public final class SimpleNeuralNetworkTest {
 
   @Test
   public void shouldClassifyCircleUsingLogisticsActivationFunction() {
-    testCircleClassification(defaultMetadata, LearnSettings.getDefault().toBuilder()
-        .epochs(4000)
-        .miniBatchSize(300)
-        .eta(30.0f)
-        .build(),
+    testCircleClassification(
+        new SimpleNeuralNetwork(defaultMetadata, SegmentLayers.of(NeuronActivation.sigmoid(), 2).add(4).add(2)),
+        ActivationLimits.builder().activationMinValue(0).activationMaxValue(1).build(),
+        LearnSettings.getDefault().toBuilder()
+          .epochs(4000)
+          .miniBatchSize(300)
+          .eta(30.0f)
+          .build(),
+          0 /*make sure that we fail on any inconsistency*/);
+  }
+
+  @Test
+  public void shouldClassifyCircleUsingReluAndSigmoid() {
+    testCircleClassification(
+        new SimpleNeuralNetwork(defaultMetadata,
+            SegmentLayers.of(NeuronActivation.relu(), 2)
+                .add(4)
+                .add(NeuronActivation.sigmoid(), 2)),
+        ActivationLimits.builder().activationMinValue(0).activationMaxValue(1).build(),
+        LearnSettings.getDefault().toBuilder()
+            .epochs(4000)
+            .miniBatchSize(300)
+            .eta(10.0f)
+            .build(),
         0 /*make sure that we fail on any inconsistency*/);
   }
 
   @Test
   public void shouldClassifyCircleUsingSoftsignActivationFunction() {
-    testCircleClassification(defaultMetadata.withSoftsignFunction(), LearnSettings.getDefault().toBuilder()
-        .epochs(4000)
-        .miniBatchSize(300)
-        .eta(30.0f)
-        .build(),
-        3/*allow that many inconsistencies*/);
+    testCircleClassification(
+        new SimpleNeuralNetwork(defaultMetadata, SegmentLayers.of(NeuronActivation.softsign(), 2).add(4).add(2)),
+        ActivationLimits.builder().activationMinValue(-1).activationMaxValue(1).build(),
+        LearnSettings.getDefault().toBuilder()
+          .epochs(4000)
+          .miniBatchSize(300)
+          .expectedResultSensitivity(0.9f)
+          .eta(30.0f)
+          .build(),
+          3/*allow that many inconsistencies*/);
   }
 
-  private static void testCircleClassification(NeuralNetworkMetadata m, LearnSettings s, int allowedNumberOfErrors) {
+  private static void testCircleClassification(
+      SimpleNeuralNetwork n,
+      ActivationLimits al,
+      LearnSettings s,
+      int allowedNumberOfErrors) {
     // problem: there is a set of dots inside the circle with radius 2. All the other dots are located outside that
     // radius. Output: two nodes, first node outputs one if dot is within the circle, the other - if it is outside.
     // see also: https://playground.tensorflow.org/#activation=sigmoid&batchSize=10&dataset=circle&regDataset=reg-plane&learningRate=0.03&regularizationRate=0&noise=0&networkShape=4,2&seed=0.59072&showTestData=false&discretize=false&percTrainData=50&x=true&y=true&xTimesY=false&xSquared=false&ySquared=false&cosX=false&sinX=false&cosY=false&sinY=false&collectStats=false&problem=classification&initZero=false&hideText=false
 
-    final Random random = m.getRandom();
+    final Random random = n.getRandom();
     final int trainingSize = 1000;
     final List<TrainingData> trainingSet = new ArrayList<>(trainingSize);
-    final float[] blueOutput = new float[] { m.max(), m.min() };
-    final float[] redOutput = new float[] { m.min(), m.max() };
+    final float[] blueOutput = new float[] { al.max(), al.min() };
+    final float[] redOutput = new float[] { al.min(), al.max() };
     for (int i = 0; i < trainingSize; ++i) {
       final float angle = random.nextFloat() * 2.0f * (float) Math.PI;
       final float radius;
@@ -196,8 +233,6 @@ public final class SimpleNeuralNetworkTest {
 
       trainingSet.add(TrainingData.withInput(input).withOutput(output));
     }
-
-    final SimpleNeuralNetwork n = new SimpleNeuralNetwork(m, new int[]{2, 4, 2});
 
     n.stochasticGradientDescent(trainingSet, s.getEpochs(), s.getMiniBatchSize(), s.getEta(), false);
 
@@ -232,6 +267,7 @@ public final class SimpleNeuralNetworkTest {
   //
 
   // Returns random two-digit float number between 0 and 1, e.g. 0.65, 0.89, etc.
+  @SuppressWarnings("SameParameterValue")
   private float[] randFloats(int size, int granularity) {
     final float[] r = new float[size];
     for (int i = 0; i < size; ++i) {
@@ -260,6 +296,37 @@ public final class SimpleNeuralNetworkTest {
           .eta(30.0f)
           .expectedResultSensitivity(0.15f)
           .build();
+    }
+  }
+
+  @Builder(toBuilder = true)
+  @Value
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  static final class ActivationLimits {
+    @Builder.Default
+    private final float activationMinValue = 0; // minimum value of the activation function
+
+    @Builder.Default
+    private final float activationMaxValue = 1; // maximum value of the activation function
+
+    // alias to minimum value of the activation function plus certain delta
+    public float min(float delta) {
+      return this.activationMinValue + delta;
+    }
+
+    // alias to max value of the activation function minus certain delta
+    public float max(float delta) {
+      return this.activationMaxValue - delta;
+    }
+
+    // alias to minimum value of the activation function
+    public float min() {
+      return min(0);
+    }
+
+    // alias to max value of the activation function
+    public float max() {
+      return max(0);
     }
   }
 }

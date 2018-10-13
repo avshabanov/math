@@ -1,29 +1,61 @@
 package com.alexshabanov.nn.f1.ofn;
 
+import com.alexshabanov.nn.f1.cost.CostFunction;
+import com.alexshabanov.nn.f1.cost.SimpleCostFunctions;
 import lombok.NonNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Neural network representation.
  */
-public class SimpleNeuralNetwork {
+public final class SimpleNeuralNetwork implements NeuralNetwork {
+  final Random random;
   final Segments segments;
-  final NeuralNetworkMetadata metadata;
+  final SegmentLayers layers;
+  final CostFunction costFunction;
+
+  @Override
+  public Random getRandom() {
+    return random;
+  }
+
+  @Override
+  public Segments getSegments() {
+    return this.segments;
+  }
+
+  @Override
+  public SegmentLayers getSegmentLayers() {
+    return this.layers;
+  }
+
+  @Override
+  public CostFunction getCostFunction() {
+    return this.costFunction;
+  }
 
   public SimpleNeuralNetwork(
       @NonNull NeuralNetworkMetadata metadata,
-      @NonNull int[] sizes) {
-    this.metadata = requireNonNull(metadata);
-    this.segments = new Segments(IntStream.range(0, sizes.length - 1)
-        .mapToObj(i -> new Segment(metadata.getRandom(), sizes[i], sizes[i + 1])).toArray(Segment[]::new));
+      @NonNull CostFunction costFunction,
+      @NonNull SegmentLayers layers) {
+    this.random = metadata.getRandom();
+    this.layers = layers;
+    this.costFunction = costFunction;
+
+    this.segments = new Segments(IntStream.range(0, layers.getCount() - 1)
+        .mapToObj(i -> new Segment(
+            this.random,
+            layers.getLayerSize(i), layers.getLayerSize(i + 1))).toArray(Segment[]::new));
+  }
+
+  public SimpleNeuralNetwork(
+      @NonNull NeuralNetworkMetadata metadata,
+      @NonNull SegmentLayers layers) {
+    this(metadata, SimpleCostFunctions.QUADRATIC, layers);
   }
 
   public int getLayerCount() {
@@ -32,7 +64,7 @@ public class SimpleNeuralNetwork {
 
   float[] feedforward(float[] previousLayerValues, int layerIndex, Consumer<float[]> zConsumer) {
     final Segment seg = this.segments.get(layerIndex);
-    return seg.feedforward(metadata, previousLayerValues, zConsumer);
+    return seg.feedforward(layers.getActivation(layerIndex), previousLayerValues, zConsumer);
   }
 
   float[] feedforward(float[] previousLayerValues, int layerIndex) {
@@ -45,6 +77,7 @@ public class SimpleNeuralNetwork {
    * @param input Source values
    * @return Destination neuron values
    */
+  @Override
   public float[] evaluate(@NonNull float[] input) {
     float[] it = input;
     for (int i = 1; i <= this.segments.size(); ++i) {
@@ -57,28 +90,49 @@ public class SimpleNeuralNetwork {
       @NonNull List<TrainingData> trainingSet,
       int epochs,
       int miniBatchSize,
-      float eta,
+      float learningRate,
       boolean reportEpoch) {
+    stochasticGradientDescent(trainingSet, GradientDescentSettings.builder()
+        .epochs(epochs)
+        .miniBatchSize(miniBatchSize)
+        .learningRate(learningRate)
+        .reportEpoch(reportEpoch)
+        .build());
+  }
+
+  public void stochasticGradientDescent(
+      @NonNull List<TrainingData> trainingSet,
+      @NonNull GradientDescentSettings settings) {
     // make training set mutable without affecting input argument
     final List<TrainingData> mutableTrainingSet = new ArrayList<>(trainingSet);
     final int trainingSetSize = mutableTrainingSet.size();
-    final int batchCount = trainingSetSize / miniBatchSize;
+    final int batchCount = trainingSetSize / settings.getMiniBatchSize();
+    final float weightScalingFactor = 1.0f - settings.getWeightDecay() / trainingSetSize;
 
-    for (int j = 0; j < epochs; ++j) {
+    for (int j = 0; j < settings.getEpochs(); ++j) {
       long delta = System.currentTimeMillis();
-      Collections.shuffle(mutableTrainingSet, this.metadata.getRandom());
+      Collections.shuffle(mutableTrainingSet, this.random);
 
       for (int k = 0; k < batchCount; ++k) {
-        final int startIndex = k * miniBatchSize;
+        final int startIndex = k * settings.getMiniBatchSize();
         final List<TrainingData> miniBatch = mutableTrainingSet.subList(startIndex,
-            Math.min(startIndex + miniBatchSize, trainingSetSize));
+            Math.min(startIndex + settings.getMiniBatchSize(), trainingSetSize));
 
-        updateMiniBatch(miniBatch, eta);
+        // update mini batch with parameters:
+        updateMiniBatch(miniBatch, settings.getLearningRate(), weightScalingFactor);
       }
 
-      if (reportEpoch) {
+      final boolean shouldStop = settings.getStopper().shouldStop(this);
+      if (settings.isReportEpoch()) {
         delta = System.currentTimeMillis() - delta;
         System.out.println("Epoch " + j + " took " + delta + "ms to complete");
+        if (shouldStop) {
+          System.out.println(" [stopping here]");
+        }
+      }
+
+      if (shouldStop) {
+        return;
       }
     }
   }
@@ -102,7 +156,7 @@ public class SimpleNeuralNetwork {
     return nablas;
   }
 
-  private void updateMiniBatch(List<TrainingData> miniBatch, float eta) {
+  private void updateMiniBatch(List<TrainingData> miniBatch, float eta, float weightScalingFactor) {
     final Segments nablas = calculateNablas(miniBatch);
 
     // once nabla is known, adjust actual weights and biases
@@ -110,7 +164,7 @@ public class SimpleNeuralNetwork {
     for (int segmentIndex = 0; segmentIndex < nablas.size(); ++segmentIndex) {
       final Segment nabla = nablas.get(segmentIndex);
       final Segment seg = this.segments.get(segmentIndex);
-      seg.scaleSub(nabla, learningRate);
+      seg.scaleSub(nabla, learningRate, weightScalingFactor);
     }
   }
 
@@ -119,16 +173,12 @@ public class SimpleNeuralNetwork {
     final List<float[]> activations = new ArrayList<>(getLayerCount());
     activations.add(activation);
 
-    // Collect computed Z' (z-prime values) across all layers
-    final List<float[]> zPrimeValueSet = new ArrayList<>(this.segments.size());
+    // Collect computed Z-values across all layers
+    final List<float[]> zValueSet = new ArrayList<>(this.segments.size());
 
     // compute all activations and store intermediate z-vectors
     for (int i = 0; i < this.segments.size(); ++i) {
-      activation = this.feedforward(activation, i, zValues -> {
-        final float[] zPrimes = Arrays.copyOf(zValues, zValues.length);
-        this.metadata.getActivationPrime().accept(zPrimes);
-        zPrimeValueSet.add(zPrimes);
-      });
+      activation = this.feedforward(activation, i, zv -> zValueSet.add(Arrays.copyOf(zv, zv.length)));
       activations.add(activation);
     }
 
@@ -139,22 +189,29 @@ public class SimpleNeuralNetwork {
     final int lastSegmentIndex = this.segments.size() - 1;
     Segment seg = null;
     for (int i = 0; i < this.segments.size(); ++i) {
-      final float[] zPrimes = zPrimeValueSet.get(zPrimeValueSet.size() - i - 1);
+      final int layerIndex = zValueSet.size() - i - 1;
+      final Supplier<float[]> zPrimeSupplier = () -> {
+        // Collect computed Z' (z-prime values) across all layers
+        final float[] zPrimes = zValueSet.get(layerIndex);
+        this.layers.getActivationPrime(layerIndex).accept(zPrimes);
+        return zPrimes;
+      };
 
       if (i == 0) {
         // last layer: infer delta using cost derivative function
-        delta = this.costDerivative(activations.get(activations.size() - 1), y);
+        delta = this.costFunction.delta(
+            zPrimeSupplier,
+            activations.get(activations.size() - 1),
+            y);
       } else {
-        // TODO: fixme - this needs to be optimized further
         // we need to calculate delta using previous layer's weights:
         // Delta(L-1) = Transpose(W(L-1)) * Delta(L) * S'(Z(L-1))
         delta = seg.mulTransposedWeights(delta);
-      }
 
-      // here: finalize computing delta as C'(An, Y) * S'(Zn), where An is last activation layer values and
-      // Zn - is last activation layer's z-values
-      for (int j = 0; j < delta.length; ++j) {
-        delta[j] = delta[j] * zPrimes[j];
+        final float[] zPrimes = zPrimeSupplier.get();
+        for (int j = 0; j < delta.length; ++j) {
+          delta[j] = delta[j] * zPrimes[j];
+        }
       }
 
       // find corresponding segment
@@ -165,14 +222,5 @@ public class SimpleNeuralNetwork {
     }
 
     return new Segments(nablas);
-  }
-
-  private float[] costDerivative(float[] outputActivations, float[] y) {
-    assert outputActivations.length == y.length;
-    final float[] result = new float[outputActivations.length];
-    for (int i = 0; i < outputActivations.length; ++i) {
-      result[i] = outputActivations[i] - y[i];
-    }
-    return result;
   }
 }

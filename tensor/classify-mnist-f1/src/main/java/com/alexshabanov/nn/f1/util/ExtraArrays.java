@@ -8,11 +8,14 @@ import java.util.Random;
 public final class ExtraArrays {
   private ExtraArrays() {}
 
-  public static float[] randn(Random random, int count) {
-    final float[] result = new float[count];
-    for (int i = 0; i < count; ++i) {
-      result[i] = (float) random.nextGaussian();
+  public static String floatsToString(float[] arr) {
+    final StringBuilder sb = new StringBuilder(arr.length * 7 + 10).append('[');
+    for (int i = 0; i < arr.length; ++i) {
+      if (i > 0) {
+        sb.append(", ");
+      }
+      sb.append(String.format("%.2f", arr[i]));
     }
-    return result;
+    return sb.append(']').toString();
   }
 }

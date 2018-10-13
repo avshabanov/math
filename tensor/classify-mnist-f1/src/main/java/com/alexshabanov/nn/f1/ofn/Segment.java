@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import static com.alexshabanov.nn.f1.util.ExtraArrays.randn;
-
 /**
  * Helper class, that holds biases for a given layer in the neural network and preceding weights,
  * connecting previous layer of the neural network with the current one, represented by biases in the
@@ -40,8 +38,27 @@ public final class Segment {
     }
     this.previousLayerSize = previousLayerSize;
     this.layerSize = layerSize;
-    this.biases = randn(random, layerSize);
-    this.weights = randn(random, previousLayerSize * layerSize);
+    this.biases = randBiases(random, layerSize);
+    this.weights = randWeights(random, previousLayerSize, layerSize);
+  }
+
+  private static float[] randBiases(Random random, int layerSize) {
+    final float[] biases = new float[layerSize];
+    for (int i = 0; i < layerSize; ++i) {
+      biases[i] = (float) random.nextGaussian();
+    }
+    return biases;
+  }
+
+  private static float[] randWeights(Random random, int previousLayerSize, int layerSize) {
+    final int weightLength = previousLayerSize * layerSize;
+    final float[] weights = new float[weightLength];
+    final double adjustmentCoefficient = Math.sqrt(previousLayerSize);
+    for (int i = 0; i < weightLength; ++i) {
+      // Use better weight initialization to reduce probability of neuron saturation
+      weights[i] = (float) (random.nextGaussian() / adjustmentCoefficient);
+    }
+    return weights;
   }
 
   public Segment(int previousLayerSize, int layerSize) {
@@ -69,7 +86,10 @@ public final class Segment {
     return this.previousLayerSize;
   }
 
-  public float[] feedforward(NeuralNetworkMetadata metadata, float[] previousLayerValues, Consumer<float[]> zConsumer) {
+  public float[] feedforward(
+      @NonNull Consumer<float[]> activation,
+      @NonNull float[] previousLayerValues,
+      @NonNull Consumer<float[]> zConsumer) {
     final int previousLayerSize = previousLayerValues.length;
     final int layerSize = this.getLayerSize();
 
@@ -97,12 +117,12 @@ public final class Segment {
     zConsumer.accept(layerValues);
 
     // calculate Sigmoid(Sum(W * A) + b) and put into layer values
-    metadata.getActivation().accept(layerValues);
+    activation.accept(layerValues);
 
     return layerValues;
   }
 
-  public void add(Segment other) {
+  public void add(@NonNull Segment other) {
     assert other.getLayerSize() == this.getLayerSize() && other.getPreviousLayerSize() == this.getPreviousLayerSize();
 
     // accumulate biases
@@ -117,20 +137,20 @@ public final class Segment {
     }
   }
 
-  public void scaleSub(Segment other, double rate) {
+  public void scaleSub(@NonNull Segment other, float learningRate, float weightScalingFactor) {
     assert other.getLayerSize() == this.getLayerSize() && other.getPreviousLayerSize() == this.getPreviousLayerSize();
 
     for (int i = 0; i < this.getLayerSize(); ++i) {
-      this.biases[i] -= rate * other.biases[i];
+      this.biases[i] -= learningRate * other.biases[i];
     }
 
     // since other segment should be identical to current one, we can just flat iterate over the weight matrices
     for (int i = 0; i < this.weights.length; ++i) {
-      this.weights[i] -= rate * other.weights[i];
+      this.weights[i] = this.weights[i] * weightScalingFactor - learningRate * other.weights[i];
     }
   }
 
-  public float[] mulTransposedWeights(float[] delta) {
+  public float[] mulTransposedWeights(@NonNull float[] delta) {
     assert delta.length == getLayerSize();
 
     // TODO: fixme - this needs to be optimized further
@@ -154,13 +174,13 @@ public final class Segment {
   }
 
   // infers backpropagated segment
-  public Segment backpropagate(float[] delta, float[] prevLayerActivations) {
+  public Segment backpropagate(@NonNull float[] delta, @NonNull float[] prevLayerActivations) {
     final float[] weights = calcBackpropagatedWeights(delta, prevLayerActivations);
     return new Segment(delta, weights, this.getPreviousLayerSize());
   }
 
 
-  private float[] calcBackpropagatedWeights(float[] delta, float[] prevLayerActivations) {
+  private float[] calcBackpropagatedWeights(@NonNull float[] delta, @NonNull float[] prevLayerActivations) {
     // calculate matrix dot product: Delta*Transpose(A(prev))
     assert delta.length == this.getLayerSize();
     assert prevLayerActivations.length == this.getPreviousLayerSize();

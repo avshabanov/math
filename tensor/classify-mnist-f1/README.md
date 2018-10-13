@@ -2,6 +2,10 @@
 
 This code is a java-to-python translation of code at http://neuralnetworksanddeeplearning.com/chap1.html using float numbers only.
 
+## Notes
+
+* [ReLU vs Sigmoid, Softmax and Tanh](https://algorithmsdatascience.quora.com/ReLu-compared-against-Sigmoid-Softmax-Tanh)
+
 ## Performance
 
 ### Mac Book Pro

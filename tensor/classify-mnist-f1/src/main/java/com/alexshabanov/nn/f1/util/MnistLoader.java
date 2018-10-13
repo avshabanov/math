@@ -1,7 +1,5 @@
-package com.alexshabanov.nn.f1;
+package com.alexshabanov.nn.f1.util;
 
-import com.alexshabanov.nn.f1.ofn.NeuralNetworkMetadata;
-import com.alexshabanov.nn.f1.ofn.SimpleNeuralNetwork;
 import com.alexshabanov.nn.f1.ofn.TrainingData;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,63 +10,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Main entry point.
+ * Encapsulates MNIST data loader.
  */
-public final class ClassifyMainF1 {
+public final class MnistLoader {
+  private MnistLoader() {}
 
-  public static void main(String[] args) throws Exception {
-    if (args.length < 1) {
-      throw new IllegalArgumentException("Unexpected arg count: first arg should be a path to gzipped MNIST data." +
-          " See also http://yann.lecun.com/exdb/mnist/");
-    }
-    final String folder = args[0];
-
-    if (args.length > 1 && "-debugLoader".equals(args[1])) {
-      final IdxImages images = readImageData(folder + File.separatorChar + "t10k-images-idx3-ubyte.gz", 10);
-      complementLabelData(folder + File.separatorChar + "t10k-labels-idx1-ubyte.gz", images);
-      images.dump();
-      return;
-    }
-
-    final IdxImages images = readImageData(folder + File.separatorChar + "train-images-idx3-ubyte.gz",
-        Integer.MAX_VALUE);
-    complementLabelData(folder + File.separatorChar + "train-labels-idx1-ubyte.gz", images);
-    System.out.println("Read " + images.images.size() + " image(s)");
-
-    final List<TrainingData> trainingDataSet = images.toTrainingData();
-    NeuralNetworkMetadata metadata = NeuralNetworkMetadata.builder().random(ThreadLocalRandom.current()).build();
-    if (args.length > 1 && "-withSoftsignFunction".equals(args[1])) {
-      metadata = metadata.withSoftsignFunction();
-    }
-
-    final SimpleNeuralNetwork neuralNetwork = new SimpleNeuralNetwork(metadata, new int[] {784, 100, 10});
-    neuralNetwork.stochasticGradientDescent(trainingDataSet, 30, 10, 3.0f, true);
-
-    // now test the network using first few images
-    System.out.println("Test network:");
-    for (int i = 0; i < Math.min(10, trainingDataSet.size()); ++i) {
-      final TrainingData td = trainingDataSet.get(i);
-      final float[] output = neuralNetwork.evaluate(td.getInput());
-      System.out.println("Image #" + i + ", expected label: " + images.labels[i]);
-      System.out.println("\tGot output=" + floatsToString(output) + ", expected=" + floatsToString(td.getOutput()));
-    }
-
-    int mismatches = 0;
-    for (final TrainingData td : trainingDataSet) {
-      final float[] output = neuralNetwork.evaluate(td.getInput());
-      for (int j = 0; j < output.length; ++j) {
-        if (Math.abs(output[j] - td.getOutput()[j]) > 0.4) {
-          ++mismatches;
-          break;
-        }
-      }
-    }
-    System.out.println(String.format("Match quality: %.2f percent(s)",
-        (100.0 * (trainingDataSet.size() - mismatches)) / trainingDataSet.size()));
+  public static IdxImages load(String imageDataFile, String labelDataFile) throws IOException {
+    final IdxImages images = readImageData(imageDataFile, Integer.MAX_VALUE);
+    complementLabelData(labelDataFile, images);
+    System.out.println("Read " + images.getImages().size() + " image(s) for dataFile=" + imageDataFile);
+    return images;
   }
 
   private static IdxImages readImageData(String filePath, int limit) throws IOException {
@@ -122,7 +76,7 @@ public final class ClassifyMainF1 {
    *
    * See also
    */
-  static final class IdxImagesHeader {
+  public static final class IdxImagesHeader {
     private static final int MAGIC = 0x00000803;
 
     int magic;
@@ -147,12 +101,12 @@ public final class ClassifyMainF1 {
 
   @Getter
   @AllArgsConstructor
-  static final class IdxImages {
+  public static final class IdxImages {
     final IdxImagesHeader header;
     final List<byte[]> images;
     final int[] labels;
 
-    List<TrainingData> toTrainingData() {
+    public List<TrainingData> toTrainingData() {
       final List<TrainingData> trainingData = new ArrayList<>(images.size());
       for (int i = 0; i < images.size(); ++i) {
         final float[] input = new float[784];
@@ -171,11 +125,11 @@ public final class ClassifyMainF1 {
       return trainingData;
     }
 
-    void dump() {
+    public void dump(int limit) {
       System.out.println(String.format("Header: numberOfImages=%d, numberOfColumns=%d, numberOfRows=%d",
           header.numberOfImages, header.numberOfColumns, header.numberOfRows));
 
-      for (int i = 0; i < images.size(); ++i) {
+      for (int i = 0; i < limit; ++i) {
         final byte[] image = images.get(i);
         System.out.println("Image of number " + labels[i]);
         for (int y = 0; y < header.numberOfRows; ++y) {
@@ -205,7 +159,7 @@ public final class ClassifyMainF1 {
    *
    * See also http://yann.lecun.com/exdb/mnist/
    */
-  static final class IdxLabelHeader {
+  public static final class IdxLabelHeader {
     private static final int MAGIC = 0x00000801;
 
     int magic;
@@ -222,16 +176,5 @@ public final class ClassifyMainF1 {
 
       return header;
     }
-  }
-
-  public static String floatsToString(float[] arr) {
-    final StringBuilder sb = new StringBuilder(arr.length * 7 + 10).append('[');
-    for (int i = 0; i < arr.length; ++i) {
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append(String.format("%.2f", arr[i]));
-    }
-    return sb.append(']').toString();
   }
 }
