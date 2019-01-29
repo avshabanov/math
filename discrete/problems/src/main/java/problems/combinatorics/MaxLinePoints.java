@@ -77,7 +77,7 @@ public class MaxLinePoints {
     final int denumerator;
 
     public Ratio(int numerator, int denumerator) {
-      final int gcd = BigInteger.valueOf(numerator).gcd(BigInteger.valueOf(denumerator)).intValueExact();
+      final int gcd = gcd(numerator, denumerator);
       this.numerator = numerator / gcd;
       this.denumerator = denumerator / gcd;
     }
@@ -123,6 +123,15 @@ public class MaxLinePoints {
     @Override
     public String toString() {
       return "(" + numerator + "/" + denumerator + ")";
+    }
+
+    static int gcd(int a, int b) {
+      while (b != 0) {
+        int t = a;
+        a = b;
+        b = t % b;
+      }
+      return a;
     }
   }
 
