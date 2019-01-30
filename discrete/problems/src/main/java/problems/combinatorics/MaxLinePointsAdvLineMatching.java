@@ -7,11 +7,6 @@ import java.util.*;
 /**
  * Improved version of the brute force solution of
  * https://leetcode.com/problems/max-points-on-a-line/
- *
- * Current result:
- * <code>
- *   Runtime: 83 ms, faster than 7.84% of Java online submissions for Max Points on a Line.
- * </code>
  */
 public final class MaxLinePointsAdvLineMatching {
 
@@ -25,17 +20,23 @@ public final class MaxLinePointsAdvLineMatching {
     Arrays.sort(points, POINT_COMPARATOR);
 
     // this is to optimize lookup for new lines
-    final Map<Ratio, Set<Point>> exclusions = new HashMap<>(sourcePoints.length * 2);
+    final Map<LineTrait, PointData> lineTraits = new HashMap<>();
 
     int result = 0;
     for (int i = 0; i < points.length; ++i) {
-      int lineCount = 0;
+      int lineCount = 1;
       Point a = points[i];
 
       // fold all the points that share the same position
-      int j = i;
-      for (; (j < points.length) && (POINT_COMPARATOR.compare(a, points[j]) == 0); ++j) {
-        ++lineCount;
+      int j = i + 1;
+      for (; j < points.length; ++j, ++lineCount) {
+        final Point d = points[j];
+        if (d.x != a.x || d.y != a.y) {
+          break;
+        }
+
+        // optimization: skip duplicate points in the outer loop
+        ++i;
       }
 
       // fold all the points that share the same x-coordinate
@@ -49,35 +50,73 @@ public final class MaxLinePointsAdvLineMatching {
         result = sameVerticalCount;
       }
 
-      // now j should point to the very first point, that doesn't share the same vertical
+      // now j should point to the very first point, that doesn't share the same vertical,
+      // that is (a, b) form either a slanted or horizontal line
       for (; j < points.length; ++j) {
         final Point b = points[j];
-        final Ratio ctg = Ratio.of(b.y - a.y, b.x - a.x);
-        Set<Point> excludedSet = exclusions.computeIfAbsent(ctg, k -> new TreeSet<>(POINT_COMPARATOR));
-        if (!excludedSet.add(b)) {
+        final Ratio slope = Ratio.of(b.y - a.y, b.x - a.x);
+        final Ratio intercept = Ratio.fromInteger(a.y).sub(slope.mul(Ratio.fromInteger(a.x)));
+
+        final LineTrait lineTrait = new LineTrait(slope, intercept);
+        final int curLineCount = lineCount;
+        final PointData pd = lineTraits.computeIfAbsent(lineTrait, k -> new PointData(a, curLineCount));
+        if (pd.origin != a) {
           continue;
         }
+        pd.count = pd.count + 1;
+      }
+    }
 
-        int currentBLineCount = lineCount + 1;
-
-        for (int z = j + 1; z < points.length; ++z) {
-          final Point c = points[z];
-          final int dy = c.y - a.y;
-          final int dx = c.x - a.x;
-          final Ratio otherCtg = Ratio.of(dy, dx);
-          if (otherCtg.equals(ctg)) {
-            excludedSet.add(c);
-            ++currentBLineCount;
-          }
-        }
-
-        if (currentBLineCount > result) {
-          result = currentBLineCount;
-        }
+    for (final PointData p : lineTraits.values()) {
+      if (p.count > result) {
+        result = p.count;
       }
     }
 
     return result;
+  }
+
+  private static final class PointData {
+    Point origin;
+    int count;
+
+    public PointData(Point origin, int count) {
+      this.count = count;
+      this.origin = origin;
+    }
+  }
+
+  private static final class LineTrait {
+    final Ratio slope;
+    final Ratio intercept;
+
+    public LineTrait(Ratio slope, Ratio intercept) {
+      this.slope = slope;
+      this.intercept = intercept;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof LineTrait)) return false;
+
+      LineTrait lineTrait = (LineTrait) o;
+
+      if (!slope.equals(lineTrait.slope)) return false;
+      return intercept.equals(lineTrait.intercept);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = slope.hashCode();
+      result = 31 * result + intercept.hashCode();
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "LineTrait{" + slope + ", " + intercept + '}';
+    }
   }
 
   private static final Comparator<Point> POINT_COMPARATOR = (l, r) -> {

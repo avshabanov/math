@@ -1,7 +1,5 @@
 package problems.util.math;
 
-import java.util.Objects;
-
 /**
  * Represents rational number without the loss of precision within integer value bounds.
  */
@@ -94,14 +92,18 @@ public final class Ratio extends Number implements Comparable<Ratio> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof Ratio)) return false;
+
     Ratio ratio = (Ratio) o;
-    return numerator == ratio.numerator &&
-        denominator == ratio.denominator;
+
+    if (numerator != ratio.numerator) return false;
+    return denominator == ratio.denominator;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(numerator, denominator);
+    int result = numerator;
+    result = 31 * result + denominator;
+    return result;
   }
 
   @Override
