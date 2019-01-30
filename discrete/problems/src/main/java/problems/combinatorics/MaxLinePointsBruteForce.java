@@ -1,13 +1,19 @@
 package problems.combinatorics;
 
-import java.math.BigInteger;
+import problems.util.math.Ratio;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Brute-force solution for https://leetcode.com/problems/max-points-on-a-line/
+ *
+ * Current result:
+ * <code>
+ *   Runtime: 80 ms, faster than 7.84% of Java online submissions for Max Points on a Line.
+ * </code>
  */
-public class MaxLinePoints {
+public final class MaxLinePointsBruteForce {
 
   public static int maxPoints(Point[] points) {
     if (points == null || points.length == 0) {
@@ -34,8 +40,6 @@ public class MaxLinePoints {
       final PointGroup a = orderedPoints.get(i);
       for (int j = i + 1; j < orderedPoints.size(); ++j) {
         final PointGroup b = orderedPoints.get(j);
-        // Use the following line equation: k * x + t * y = 1
-
         final Line key;
         if (a.x.equals(b.x)) {
           key = new VerticalLine(a.x);
@@ -70,69 +74,6 @@ public class MaxLinePoints {
     }
 
     return result;
-  }
-
-  private static final class Ratio {
-    final int numerator;
-    final int denumerator;
-
-    public Ratio(int numerator, int denumerator) {
-      final int gcd = gcd(numerator, denumerator);
-      this.numerator = numerator / gcd;
-      this.denumerator = denumerator / gcd;
-    }
-
-    public static Ratio fromInteger(int n) {
-      return new Ratio(n, 1);
-    }
-
-    public Ratio mul(Ratio other) {
-      return new Ratio(numerator * other.numerator,
-          denumerator * other.denumerator);
-    }
-
-    public Ratio div(Ratio other) {
-      return new Ratio(numerator * other.denumerator,
-          denumerator * other.numerator);
-    }
-
-    public Ratio add(Ratio other) {
-      return new Ratio(numerator * other.denumerator + other.numerator * denumerator,
-          denumerator * other.denumerator);
-    }
-
-    public Ratio sub(Ratio other) {
-      return new Ratio(numerator * other.denumerator - other.numerator * denumerator,
-          denumerator * other.denumerator);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof Ratio)) return false;
-      Ratio ratio = (Ratio) o;
-      return numerator == ratio.numerator &&
-          denumerator == ratio.denumerator;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(numerator, denumerator);
-    }
-
-    @Override
-    public String toString() {
-      return "(" + numerator + "/" + denumerator + ")";
-    }
-
-    static int gcd(int a, int b) {
-      while (b != 0) {
-        int t = a;
-        a = b;
-        b = t % b;
-      }
-      return a;
-    }
   }
 
   private interface Line {
@@ -224,56 +165,32 @@ public class MaxLinePoints {
   // Demo
   //
 
-  private static void printSolution(List<Point> points) {
-    final String pointsStr = points.stream()
-        .map(p -> "[" + p.x + ", " + p.y + "]")
-        .collect(Collectors.toList()).toString();
-
-    System.out.println("Input: " + pointsStr);
-    System.out.println("Output: " + maxPoints(points.toArray(new Point[points.size()])));
+  private static void solve(String input) {
+    Point.printSolution(Point.fromJsonArray(input),
+        MaxLinePointsBruteForce::maxPoints);
   }
 
-  public static final class MaxLinePointsCase1 {
+  public static final class Case1 {
     public static void main(String[] args) {
-      printSolution(Arrays.asList(
-          new Point(1, 1),
-          new Point(2, 2),
-          new Point(3, 3)
-      ));
+      solve("[[2,2],[1,1],[3,3]]");
     }
   }
 
-  public static final class MaxLinePointsCase2 {
+  public static final class Case2 {
     public static void main(String[] args) {
-      printSolution(Arrays.asList(
-          new Point(1, 1),
-          new Point(3, 2),
-          new Point(5, 3),
-          new Point(4, 1),
-          new Point(2, 3),
-          new Point(1, 4)
-      ));
+      solve("[[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]");
     }
   }
 
-  public static final class MaxLinePointsCase3 {
+  public static final class Case3 {
     public static void main(String[] args) {
-      printSolution(Arrays.asList(//[[0,0],[94911151,94911150],[94911152,94911151]]
-          new Point(0, 0),
-          new Point(94911151, 94911150),
-          new Point(94911152, 94911151)
-      ));
+      solve("[[0,0],[94911151,94911150],[94911152,94911151]]");
     }
   }
 
-  //
-  // Implicit definition
-  //
-
-  private static final class Point {
-    int x;
-    int y;
-    Point() { x = 0; y = 0; }
-    Point(int a, int b) { x = a; y = b; }
+  public static final class Case4 {
+    public static void main(String[] args) {
+      solve("[[0,0],[-1,-1],[2,2]]");
+    }
   }
 }
