@@ -3,6 +3,7 @@ package problems.learning.decisiontree.cart.classifier;
 import com.google.common.collect.ImmutableList;
 import lombok.*;
 
+import java.text.NumberFormat;
 import java.util.*;
 
 /**
@@ -143,8 +144,29 @@ public final class CartLearning {
       System.out.println(sb.toString());
     }
   }
+
+  public static final class Demo3 {
+    public static void main(String[] args) {
+      final Node tree = Cart.buildTree(DATASET1);
+
+      Features features = ArrayFeatures.of(DATASET1.get(0));
+      Node classification = tree.classify(features);
+      System.out.println("classify(" + features + ")=" + classification.toReadableClassification());
+
+      features = ArrayFeatures.of(DATASET1.get(1));
+      classification = tree.classify(features);
+      System.out.println("classify(" + features + ")=" + classification.toReadableClassification());
+    }
+  }
 }
 
+//
+// Helper classes
+//
+
+/**
+ * Utility class that encapsulates CART algorithm.
+ */
 final class Cart {
   /**
    * Calculates gini impurity for a given list of rows.
@@ -281,8 +303,8 @@ final class Question {
   private int number; // column number
   private Object value; // column value
 
-  public boolean match(TrainingData trainingData) {
-    final Object feature = trainingData.getFeature(number);
+  public boolean match(Features features) {
+    final Object feature = features.getFeature(number);
     if (feature instanceof Integer) {
       // special case for matching integers
       final Integer featureInt = (Integer) feature;
@@ -307,18 +329,24 @@ final class Question {
 
 interface Node {
 
+  Node classify(Features features);
+
+  default String toReadableClassification() {
+    return "<unknown>";
+  }
+
   static void print(StringBuilder sb, Node n, TrainingData prototype, String indent) {
     if (n instanceof LeafNode) {
-      sb.append(indent).append("Predict: {");
-      boolean next = false;
+      sb.append(indent).append("Predict: ").append(n);
+      /*boolean next = false;
       for (final Map.Entry<Object, Integer> entry : ((LeafNode) n).getPredictions().entrySet()) {
         if (next) {
           sb.append(", ");
         }
         next = true;
         sb.append(entry.getKey()).append(": ").append(entry.getValue());
-      }
-      sb.append("}\n");
+      }*/
+      sb.append("\n");
     } else if (n instanceof DecisionNode) {
       final DecisionNode dn = (DecisionNode) n;
       sb.append(indent).append(dn.getQuestion().toString(prototype)).append("\n");
@@ -340,6 +368,20 @@ final class DecisionNode implements Node {
   private Question question;
   private Node trueBranch;
   private Node falseBranch;
+
+  @Override
+  public Node classify(Features features) {
+    if (question.match(features)) {
+      return trueBranch.classify(features);
+    } else {
+      return falseBranch.classify(features);
+    }
+  }
+
+  @Override
+  public String toReadableClassification() {
+    return "<unknown>";
+  }
 }
 
 /**
@@ -347,9 +389,34 @@ final class DecisionNode implements Node {
  * It holds a map of a class (e.g. Apple) to a number of items it
  * appears in the rows from the training datasets that reach this leaf.
  */
-@Value
+@AllArgsConstructor
+@Getter
 final class LeafNode implements Node {
   private Map<Object, Integer> predictions;
+
+  @Override
+  public Node classify(Features features) {
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    return predictions.toString();
+  }
+
+  @Override
+  public String toReadableClassification() {
+    final Map<Object, Integer> predictions = getPredictions();
+    final double total = predictions.values().stream().reduce(0, (a, b) -> a+b);
+    final List<String> probabilities = new ArrayList<>(predictions.size());
+    final NumberFormat format = NumberFormat.getPercentInstance(Locale.ROOT);
+    for (final Map.Entry<Object, Integer> entry : predictions.entrySet()) {
+      probabilities.add(String.format("{%s: %s}",
+          entry.getKey(),
+          format.format(entry.getValue() / total)));
+    }
+    return probabilities.toString();
+  }
 }
 
 @Value(staticConstructor = "of")
@@ -373,10 +440,54 @@ final class Partition {
   }
 }
 
-interface TrainingData {
+interface Features {
   String getFeatureName(int column);
   Object getFeature(int column);
   int getFeatureCount();
+}
+
+final class ArrayFeatures implements Features {
+  private final Object[] values;
+
+  ArrayFeatures(Object[] values) {
+    values = Objects.requireNonNull(values);
+    this.values = Arrays.copyOf(values, values.length);
+  }
+
+  public static Features of(TrainingData trainingData) {
+    final Object[] values = new Object[trainingData.getFeatureCount()];
+    for (int i = 0; i < trainingData.getFeatureCount(); ++i) {
+      values[i] = trainingData.getFeature(i);
+    }
+    return of(values);
+  }
+
+  public static Features of(Object... values) {
+    return new ArrayFeatures(values);
+  }
+
+  @Override
+  public String getFeatureName(int column) {
+    return "#" + column;
+  }
+
+  @Override
+  public Object getFeature(int column) {
+    return values[column];
+  }
+
+  @Override
+  public int getFeatureCount() {
+    return values.length;
+  }
+
+  @Override
+  public String toString() {
+    return Arrays.toString(values);
+  }
+}
+
+interface TrainingData extends Features {
   Object getLabel();
 }
 
