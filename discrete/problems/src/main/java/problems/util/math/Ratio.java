@@ -14,6 +14,13 @@ public final class Ratio extends Number implements Comparable<Ratio> {
   private final int denominator;
 
   private Ratio(int numerator, int denominator) {
+    if (denominator < 0) {
+      // make sure that both numerator and denominator have deterministic signs,
+      // so that ratio like (-3)/2 would be equivalent to 3/(-2); 3/2 <=> (-3)/(-2), etc.
+      denominator = -denominator;
+      numerator = -numerator;
+    }
+
     this.numerator = numerator;
     this.denominator = denominator;
   }
