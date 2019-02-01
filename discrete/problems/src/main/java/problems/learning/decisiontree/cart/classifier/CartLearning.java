@@ -337,16 +337,7 @@ interface Node {
 
   static void print(StringBuilder sb, Node n, TrainingData prototype, String indent) {
     if (n instanceof LeafNode) {
-      sb.append(indent).append("Predict: ").append(n);
-      /*boolean next = false;
-      for (final Map.Entry<Object, Integer> entry : ((LeafNode) n).getPredictions().entrySet()) {
-        if (next) {
-          sb.append(", ");
-        }
-        next = true;
-        sb.append(entry.getKey()).append(": ").append(entry.getValue());
-      }*/
-      sb.append("\n");
+      sb.append(indent).append("Predict: ").append(n).append("\n");
     } else if (n instanceof DecisionNode) {
       final DecisionNode dn = (DecisionNode) n;
       sb.append(indent).append(dn.getQuestion().toString(prototype)).append("\n");
