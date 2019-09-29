@@ -3,12 +3,12 @@ package problems.indices.rankingtree.impl;
 /**
  * Represents an entry in the ranked map where key is associated with certain value.
  */
-final class KeyValue<K, V> {
+class KeyValue<K, V> {
   private final K key;
   private V value;
 
 
-  private KeyValue(K key, V value) {
+  protected KeyValue(K key, V value) {
     this.key = key;
     this.value = value;
   }

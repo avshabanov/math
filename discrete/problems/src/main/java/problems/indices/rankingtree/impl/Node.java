@@ -3,9 +3,10 @@ package problems.indices.rankingtree.impl;
 import problems.indices.rankingtree.RankedResult;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
- * Represents a pointer to certain section of a tree.
+ * Represents a pointer to certain section of a B+ tree.
  */
 interface Node<K extends Comparable<K>> {
 
@@ -149,18 +150,7 @@ interface Node<K extends Comparable<K>> {
 
     private int search(K key) {
       final KeyValue<K, V> adaptedKey = KeyValue.of(key, null);
-      return Arrays.binarySearch(this.values, 0, this.size, adaptedKey, (l, r) -> {
-        if (l != null && r != null) {
-          return l.getKey().compareTo(r.getKey());
-        }
-        if (l == null && r == null) {
-          return 0;
-        }
-        if (r == null) {
-          return 1;
-        }
-        return -1;
-      });
+      return Arrays.binarySearch(this.values, 0, this.size, adaptedKey, Comparator.comparing(KeyValue::getKey));
     }
   }
 }

@@ -10,5 +10,7 @@ public interface RankingTree<K extends Comparable<K>, V> {
 
   RankedResult<V> put(K key, V value);
 
+  RankedResult<V> delete(K key);
+
   int size();
 }

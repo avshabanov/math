@@ -6,9 +6,12 @@ import problems.indices.rankingtree.RankingTree;
 import java.util.Objects;
 
 /**
- * Ranking tree implementation.
+ * Ranking tree implementation based on B+ tree.
+ *
+ * TODO: add re-balancing code
+ * TODO: add grow capacity code
  */
-public final class RankingTreeImpl<K extends Comparable<K>, V> implements RankingTree<K, V> {
+public final class RankingBPlusTree<K extends Comparable<K>, V> implements RankingTree<K, V> {
 
   private final Node.Branch<K> root = new Node.Branch<>();
 
@@ -22,6 +25,36 @@ public final class RankingTreeImpl<K extends Comparable<K>, V> implements Rankin
     return this.root.getSize();
   }
 
+  /**
+   * Puts key-value pair into the tree.
+   *
+   * Algorithm: enqueue changes and modify the tree in one turn;
+   * start with leaf nodes, insert all the values and go upwards.
+   *
+   * (T+1) Ranking state:
+   * 0: 1000, 1: 950, 2: 840, 3: 835, 4: 801, 5: 560, 6: 405, 7: 397
+   * (T+2) Insert score=820
+   * (T+3) Ranking state:
+   * 0: 1000, 1: 950, 2: 840, 3: 835, 4: 820, 5: 801, 6: 560, 7: 405, 8: 397
+   * Effective update for all scores starting with index 4.
+   * Sample tree structure:
+   *              0-8
+   *            /  |  \
+   *         0-3  3-6  6-8
+   * Count of layers: log(N, K), where N is the number of elements and K - trunk node capacity
+   * Complexity of insert operations (number of nodes that we'd need to touch):
+   * Since we need to move element, keep leaf nodes unchanged (perhaps have a bg process that re-balances leaves),
+   * we'd need to only update trunk node ranks.
+   * Assuming M = K = 1000, and N = 1_000_000_000, we have three layers (last one is leaves);
+   * 1st layer: 0-10^9
+   * 2nd layer: 0-10^6, 10^6-2*10^6, ... 999*10^6-10^9
+   * 3rd layer: 0-1000, 2000-3000, 3000-4000...
+   * in total, we have 10^6 leaves and 1+10^3 trunk nodes.
+   *
+   * @param key Key, can't be null
+   * @param value Value, can't be null
+   * @return Ranking result
+   */
   @Override
   public RankedResult<V> put(K key, V value) {
     Objects.requireNonNull(key, "key");
@@ -99,5 +132,10 @@ public final class RankingTreeImpl<K extends Comparable<K>, V> implements Rankin
     }
 
     return null;
+  }
+
+  @Override
+  public RankedResult<V> delete(K key) {
+    throw new UnsupportedOperationException();
   }
 }
