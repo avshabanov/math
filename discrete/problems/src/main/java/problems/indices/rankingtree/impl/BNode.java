@@ -7,8 +7,9 @@ import java.util.Comparator;
 
 /**
  * Represents a pointer to certain section of a B+ tree.
+ * There are two kinds of B+ tree nodes: branches and leaves.
  */
-interface Node<K extends Comparable<K>> {
+interface BNode<K extends Comparable<K>> {
 
   /** Max capacity of a the pointer node. */
   int POINTER_CAPACITY = 4;
@@ -23,7 +24,7 @@ interface Node<K extends Comparable<K>> {
   K getFirstKey();
   int getSize();
 
-  final class Branch<K extends Comparable<K>> implements Node<K> {
+  final class Branch<K extends Comparable<K>> implements BNode<K> {
     @SuppressWarnings("unchecked")
     private Pointer<K>[] pointers = new Pointer[POINTER_CAPACITY];
     private int pointerCount;
@@ -64,7 +65,7 @@ interface Node<K extends Comparable<K>> {
       return this.pointerCount;
     }
 
-    void addPointer(Node<K> downstream) {
+    void addPointer(BNode<K> downstream) {
       if (this.pointerCount >= POINTER_CAPACITY) {
         throw new UnsupportedOperationException("Oversize capacity");
       }
@@ -79,12 +80,12 @@ interface Node<K extends Comparable<K>> {
       final Pointer<K> pointer = new Pointer<>();
       pointer.startKey = downstream.getFirstKey();
       pointer.size = downstream.getSize();
-      pointer.node = downstream;
+      pointer.BNode = downstream;
       this.pointers[pos] = pointer;
     }
   }
 
-  final class Leaf<K extends Comparable<K>, V> implements Node<K> {
+  final class Leaf<K extends Comparable<K>, V> implements BNode<K> {
     @SuppressWarnings("unchecked")
     private KeyValue<K, V>[] values = new KeyValue[LEAF_CAPACITY];
     private int size;
@@ -157,7 +158,7 @@ interface Node<K extends Comparable<K>> {
 
 final class Pointer<K extends Comparable<K>> {
   K startKey;
-  Node<K> node;
+  BNode<K> BNode;
   // total count of items corresponding to this node
   int size;
 }
