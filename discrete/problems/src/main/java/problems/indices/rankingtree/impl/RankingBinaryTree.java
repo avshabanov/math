@@ -28,6 +28,27 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
     HolderOfNodePointer<K, V> getRightHolder() {
       return (n) -> this.right = n;
     }
+
+    // pretty printing for debug purposes only
+    @Override
+    public String toString() {
+      final StringBuilder sb = new StringBuilder(100);
+      appendNode(sb, 0, this);
+      return sb.toString();
+    }
+
+    private static <K, V> void appendNode(StringBuilder sb, int printOffset, Node<K, V> n) {
+      if (n == null) {
+        return;
+      }
+
+      appendNode(sb, printOffset + 1, n.left);
+      for (int i = 0; i < printOffset; ++i) {
+        sb.append(' ');
+      }
+      sb.append(String.format("%s: %s (left subtree size: %d)\n", n.getKey(), n.getValue(), n.sizeOfLeftSubtree));
+      appendNode(sb, printOffset + 1, n.right);
+    }
   }
 
   private interface HolderOfNodePointer<K, V> {
@@ -94,7 +115,7 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
       }
     }
 
-    // put the new node
+    // associate referrer (root or left or right node pointer) with the new node
     h.set(new Node<>(key, value));
 
     // increment size of all parents right to this node
@@ -109,7 +130,68 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
   public RankedResult<V> delete(K key) {
     Objects.requireNonNull(key, "key");
 
-    throw new UnsupportedOperationException();
+    RankedResult<V> result = null;
+    int offset = 0;
+    HolderOfNodePointer<K, V> h = getRootHolder();
+    List<Node<K, V>> parentsToTheRight = new ArrayList<>();
+    Node<K, V> n = root;
+    while (n != null) {
+      final int cmp = key.compareTo(n.getKey());
+      if (cmp == 0) {
+        // found node to be deleted
+        result = RankedResult.of(n.sizeOfLeftSubtree + offset, n.getValue());
+        break;
+      }
+
+      if (cmp > 0) {
+        offset = offset + n.sizeOfLeftSubtree + 1;
+        h = n.getRightHolder();
+        n = n.right;
+      } else {
+        h = n.getLeftHolder();
+        parentsToTheRight.add(n);
+        n = n.left;
+      }
+    }
+
+    if (result == null) {
+      return null; // nothing found
+    }
+
+
+    if (n.left == null) {
+      // simple case: there is no left subtree => swapping with right node should cover all the cases
+      h.set(n.right);
+    } else {
+      // we need to swap the node that we need to remove with the rightmost node of its left subtree
+      // and account for the case which is the consequence of not balancing this tree: degenerate case when
+      // subtree is a linked-list alike structure
+      Node<K, V> candidate = n.left;
+      HolderOfNodePointer<K, V> innerHolder = h;
+      while (candidate.right != null) {
+        innerHolder = candidate.getRightHolder();
+        candidate = candidate.right;
+      }
+
+      innerHolder.set(candidate.left);
+
+      if (candidate != n.left) {
+        candidate.left = n.left;
+      } else {
+        // special case: degenerate left subtree
+        candidate.left = n.left.left;
+      }
+
+      candidate.right = n.right;
+      candidate.sizeOfLeftSubtree = n.sizeOfLeftSubtree - 1;
+      h.set(candidate);
+    }
+
+    for (Node<K, V> p : parentsToTheRight) {
+      p.sizeOfLeftSubtree--;
+    }
+
+    return result;
   }
 
   @Override
@@ -119,28 +201,5 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
       result = result + n.sizeOfLeftSubtree + 1;
     }
     return result;
-  }
-
-  //
-  // Debug printing
-  //
-
-  public String asReadableString() {
-    final StringBuilder sb = new StringBuilder(100);
-    appendNode(sb, 0, root);
-    return sb.toString();
-  }
-
-  private static <K, V> void appendNode(StringBuilder sb, int printOffset, Node<K, V> n) {
-    if (n == null) {
-      return;
-    }
-
-    appendNode(sb, printOffset + 1, n.left);
-    for (int i = 0; i < printOffset; ++i) {
-      sb.append(' ');
-    }
-    sb.append(String.format("%s: %s (left subtree size: %d)\n", n.getKey(), n.getValue(), n.sizeOfLeftSubtree));
-    appendNode(sb, printOffset + 1, n.right);
   }
 }
