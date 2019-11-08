@@ -58,7 +58,7 @@ A requirement of satisfying _closure_ group axiom [1] is satisfied by the above 
 ### Group-like Structures
 
 
-| | Totality	| Associativity	| Identity	| Invertibility	| Commutativity |
+| | Totality [2]	| Associativity	| Identity	| Invertibility	| Commutativity |
 |-|-|-|-|-|-|
 | Semigroupoid | Unneeded	| Required	| Unneeded	| Unneeded	| Unneeded |
 | Small Category	| Unneeded	| Required	| Required	| Unneeded	| Unneeded |
@@ -71,6 +71,8 @@ A requirement of satisfying _closure_ group axiom [1] is satisfied by the above 
 | Monoid	| Required	| Required	| Required	| Unneeded	| Unneeded |
 | Group	| Required	| Required	| Required	| Required	| Unneeded |
 | Abelian group	| Required	| Required	| Required	| Required	| Required |
+
+*[2]: Totality is an equivalent axiom to _closure_.
 
 ## TODOs
 
