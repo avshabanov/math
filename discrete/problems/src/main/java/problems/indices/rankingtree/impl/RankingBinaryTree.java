@@ -6,9 +6,28 @@ import problems.indices.rankingtree.RankingTree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
- * Ranking tree based upon binary search tree without balancing code.
+ * Ranked tree on top of unbalanced (for simplicity) binary search tree.
+ *
+ * The structure it builds may look as follows:
+ * <code>
+ *     66 (left subtree size: 0)
+ *     124 (left subtree size: 0)
+ *    151 (left subtree size: 1)
+ *  164 (left subtree size: 3)
+ *   207 (left subtree size: 0)
+ *      260 (left subtree size: 0)
+ *     273 (left subtree size: 1)
+ *    400 (left subtree size: 2)
+ * 570 (left subtree size: 8)
+ *   684 (left subtree size: 0)
+ *  687 (left subtree size: 1)
+ * </code>
+ * In the example above indentation shows root/left/right relations, e.g. node 570 is a root with
+ * node 164 to its left and node 687 to its right;
+ * consequentially node 164 has node 151 to its left and node 207 to its right, etc.
  */
 public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTree<K, V> {
 
@@ -21,11 +40,11 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
       super(key, value);
     }
 
-    HolderOfNodePointer<K, V> getLeftHolder() {
+    Consumer<Node<K, V>> getLeftHolder() {
       return (n) -> this.left = n;
     }
 
-    HolderOfNodePointer<K, V> getRightHolder() {
+    Consumer<Node<K, V>> getRightHolder() {
       return (n) -> this.right = n;
     }
 
@@ -51,11 +70,7 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
     }
   }
 
-  private interface HolderOfNodePointer<K, V> {
-    void set(Node<K, V> n);
-  }
-
-  private HolderOfNodePointer<K, V> getRootHolder() {
+  private Consumer<Node<K, V>> getRootHolder() {
     return (n) -> this.root = n;
   }
 
@@ -93,7 +108,7 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
     Objects.requireNonNull(key, "value");
 
     int offset = 0;
-    HolderOfNodePointer<K, V> h = getRootHolder();
+    Consumer<Node<K, V>> h = getRootHolder();
     List<Node<K, V>> parentsToTheRight = new ArrayList<>();
     for (Node<K, V> n = root; n != null;) {
       final int cmp = key.compareTo(n.getKey());
@@ -116,7 +131,7 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
     }
 
     // associate referrer (root or left or right node pointer) with the new node
-    h.set(new Node<>(key, value));
+    h.accept(new Node<>(key, value));
 
     // increment size of all parents right to this node
     for (final Node<K, V> parentToTheRight : parentsToTheRight) {
@@ -132,7 +147,7 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
 
     RankedResult<V> result = null;
     int offset = 0;
-    HolderOfNodePointer<K, V> h = getRootHolder();
+    Consumer<Node<K, V>> h = getRootHolder();
     List<Node<K, V>> parentsToTheRight = new ArrayList<>();
     Node<K, V> n = root;
     while (n != null) {
@@ -161,19 +176,19 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
 
     if (n.left == null) {
       // simple case: there is no left subtree => swapping with right node should cover all the cases
-      h.set(n.right);
+      h.accept(n.right);
     } else {
       // we need to swap the node that we need to remove with the rightmost node of its left subtree
       // and account for the case which is the consequence of not balancing this tree: degenerate case when
       // subtree is a linked-list alike structure
       Node<K, V> candidate = n.left;
-      HolderOfNodePointer<K, V> innerHolder = h;
+      Consumer<Node<K, V>> innerHolder = h;
       while (candidate.right != null) {
         innerHolder = candidate.getRightHolder();
         candidate = candidate.right;
       }
 
-      innerHolder.set(candidate.left);
+      innerHolder.accept(candidate.left);
 
       if (candidate != n.left) {
         candidate.left = n.left;
@@ -184,7 +199,7 @@ public class RankingBinaryTree<K extends Comparable<K>, V> implements RankingTre
 
       candidate.right = n.right;
       candidate.sizeOfLeftSubtree = n.sizeOfLeftSubtree - 1;
-      h.set(candidate);
+      h.accept(candidate);
     }
 
     for (Node<K, V> p : parentsToTheRight) {

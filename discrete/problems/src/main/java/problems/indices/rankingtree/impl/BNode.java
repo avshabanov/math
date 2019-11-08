@@ -22,7 +22,7 @@ interface BNode<K extends Comparable<K>> {
   }
 
   K getFirstKey();
-  int getSize();
+  int getSubtreeSize();
 
   final class Branch<K extends Comparable<K>> implements BNode<K> {
     @SuppressWarnings("unchecked")
@@ -36,16 +36,16 @@ interface BNode<K extends Comparable<K>> {
       }
       final Pointer<K> pointer = this.pointers[0];
       if (pointer == null) {
-        throw new IllegalStateException("Invariant failure: first point should be initialized but it is not");
+        throw new IllegalStateException("Invariant failure: first pointer should be initialized but it is not");
       }
       return pointer.startKey;
     }
 
     @Override
-    public int getSize() {
+    public int getSubtreeSize() { // shall not be needed for branch
       int result = 0;
       for (int i = 0; i < this.pointerCount; ++i) {
-        result += this.pointers[i].size;
+        result += this.pointers[i].subtreeSize;
       }
       return result;
     }
@@ -79,8 +79,8 @@ interface BNode<K extends Comparable<K>> {
 
       final Pointer<K> pointer = new Pointer<>();
       pointer.startKey = downstream.getFirstKey();
-      pointer.size = downstream.getSize();
-      pointer.BNode = downstream;
+      pointer.subtreeSize = downstream.getSubtreeSize();
+      pointer.node = downstream;
       this.pointers[pos] = pointer;
     }
   }
@@ -105,7 +105,7 @@ interface BNode<K extends Comparable<K>> {
     }
 
     @Override
-    public int getSize() {
+    public int getSubtreeSize() {
       return this.size;
     }
 
@@ -158,7 +158,7 @@ interface BNode<K extends Comparable<K>> {
 
 final class Pointer<K extends Comparable<K>> {
   K startKey;
-  BNode<K> BNode;
-  // total count of items corresponding to this node
-  int size;
+  BNode<K> node;
+  // total count of items corresponding to this node in its own subtree
+  int subtreeSize;
 }

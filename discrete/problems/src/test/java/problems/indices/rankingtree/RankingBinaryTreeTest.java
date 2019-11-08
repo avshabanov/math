@@ -14,25 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 /**
- * Ranked tree on top of unbalanced (for simplicity) binary search tree.
- *
- * The structure it builds may look as follows:
- * <code>
- *     66 (left subtree size: 0)
- *     124 (left subtree size: 0)
- *    151 (left subtree size: 1)
- *  164 (left subtree size: 3)
- *   207 (left subtree size: 0)
- *      260 (left subtree size: 0)
- *     273 (left subtree size: 1)
- *    400 (left subtree size: 2)
- * 570 (left subtree size: 8)
- *   684 (left subtree size: 0)
- *  687 (left subtree size: 1)
- * </code>
- * In the example above indentation shows root/left/right relations, e.g. node 570 is a root with
- * node 164 to its left and node 687 to its right;
- * consequentially node 164 has node 151 to its left and node 207 to its right, etc.
+ * Tests for {@link RankingBinaryTree}.
  */
 public final class RankingBinaryTreeTest extends RankingTreeTestBase {
 

@@ -8,8 +8,31 @@ import java.util.Objects;
 /**
  * Ranking tree implementation based on B+ tree.
  *
- * TODO: add re-balancing code
- * TODO: add grow capacity code
+ * Algorithm: enqueue changes and modify the tree in one turn;
+ * start with leaf nodes, insert all the values and go upwards.
+ *
+ * (T+1) Ranking state:
+ * 0: 1000, 1: 950, 2: 840, 3: 835, 4: 801, 5: 560, 6: 405, 7: 397
+ * (T+2) Insert score=820
+ * (T+3) Ranking state:
+ * 0: 1000, 1: 950, 2: 840, 3: 835, 4: 820, 5: 801, 6: 560, 7: 405, 8: 397
+ * Effective update for all scores starting with index 4.
+ * Sample tree structure:
+ *              0-8
+ *            /  |  \
+ *         0-3  3-6  6-8
+ * Count of layers: log(N, K), where N is the number of elements and K - trunk node capacity
+ * Complexity of insert operations (number of nodes that we'd need to touch):
+ * Since we need to move element, keep leaf nodes unchanged (perhaps have a bg process that re-balances leaves),
+ * we'd need to only update trunk node ranks.
+ * Assuming M = K = 1000, and N = 1_000_000_000, we have three layers (last one is leaves);
+ * 1st layer: 0-10^9
+ * 2nd layer: 0-10^6, 10^6-2*10^6, ... 999*10^6-10^9
+ * 3rd layer: 0-1000, 2000-3000, 3000-4000...
+ * in total, we have 10^6 leaves and 1+10^3 trunk nodes.
+ *
+ * TODO: add re-balancing code - could be a tree + lsm
+ * TODO: add grow capacity code - which is essentially adding extra layer on top of root:
  */
 public final class RankingBPlusTree<K extends Comparable<K>, V> implements RankingTree<K, V> {
 
@@ -22,34 +45,11 @@ public final class RankingBPlusTree<K extends Comparable<K>, V> implements Ranki
 
   @Override
   public int size() {
-    return this.root.getSize();
+    return this.root.getSubtreeSize();
   }
 
   /**
    * Puts key-value pair into the tree.
-   *
-   * Algorithm: enqueue changes and modify the tree in one turn;
-   * start with leaf nodes, insert all the values and go upwards.
-   *
-   * (T+1) Ranking state:
-   * 0: 1000, 1: 950, 2: 840, 3: 835, 4: 801, 5: 560, 6: 405, 7: 397
-   * (T+2) Insert score=820
-   * (T+3) Ranking state:
-   * 0: 1000, 1: 950, 2: 840, 3: 835, 4: 820, 5: 801, 6: 560, 7: 405, 8: 397
-   * Effective update for all scores starting with index 4.
-   * Sample tree structure:
-   *              0-8
-   *            /  |  \
-   *         0-3  3-6  6-8
-   * Count of layers: log(N, K), where N is the number of elements and K - trunk node capacity
-   * Complexity of insert operations (number of nodes that we'd need to touch):
-   * Since we need to move element, keep leaf nodes unchanged (perhaps have a bg process that re-balances leaves),
-   * we'd need to only update trunk node ranks.
-   * Assuming M = K = 1000, and N = 1_000_000_000, we have three layers (last one is leaves);
-   * 1st layer: 0-10^9
-   * 2nd layer: 0-10^6, 10^6-2*10^6, ... 999*10^6-10^9
-   * 3rd layer: 0-1000, 2000-3000, 3000-4000...
-   * in total, we have 10^6 leaves and 1+10^3 trunk nodes.
    *
    * @param key Key, can't be null
    * @param value Value, can't be null
@@ -79,7 +79,7 @@ public final class RankingBPlusTree<K extends Comparable<K>, V> implements Ranki
         final int rhsCompare = nextKey != null ? key.compareTo(nextKey) : -1;
         if (rhsCompare < 0) {
           // we found the pointer, proceed to the downstream node
-          final BNode<K> childBNode = ptr.BNode;
+          final BNode<K> childBNode = ptr.node;
           if (childBNode.isLeaf()) {
             // search within the leaf
             final BNode.Leaf<K, V> leaf = (BNode.Leaf<K, V>) childBNode;
@@ -87,7 +87,7 @@ public final class RankingBPlusTree<K extends Comparable<K>, V> implements Ranki
             if (result.getValue() == null) {
               // value has been inserted, so pointer size needs to be updated
               // TODO: update size of all the upstream nodes too
-              ptr.size = ptr.size + 1;
+              ptr.subtreeSize = ptr.subtreeSize + 1;
             }
 
             return result;
@@ -99,7 +99,7 @@ public final class RankingBPlusTree<K extends Comparable<K>, V> implements Ranki
         }
 
         // we'd need to continue the search
-        offset += ptr.size;
+        offset += ptr.subtreeSize;
       }
     }
   }
@@ -115,7 +115,7 @@ public final class RankingBPlusTree<K extends Comparable<K>, V> implements Ranki
         int rhsCompare = nextKey != null ? key.compareTo(nextKey) : -1;
         if (rhsCompare < 0) {
           // we found the pointer, proceed to downstream node
-          final BNode<K> childBNode = ptr.BNode;
+          final BNode<K> childBNode = ptr.node;
           if (childBNode.isLeaf()) {
             // search within the leaf
             final BNode.Leaf<K, V> leaf = (BNode.Leaf<K, V>) childBNode;
@@ -127,7 +127,7 @@ public final class RankingBPlusTree<K extends Comparable<K>, V> implements Ranki
         }
 
         // we'd need to continue the search
-        offset += ptr.size;
+        offset += ptr.subtreeSize;
       }
     }
 
