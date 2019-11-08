@@ -1,7 +1,10 @@
 package com.alexshabanov.groups.finite;
 
-import com.alexshabanov.groups.finite.cayley.CayleyGroup;
+import com.alexshabanov.groups.exceptions.NonGroupException;
+import com.alexshabanov.groups.finite.adhoc.CayleyGroup;
+import com.alexshabanov.groups.finite.adhoc.SquareSymmetryGroup;
 import com.alexshabanov.groups.finite.numbers.BaseNumericGroup;
+import com.alexshabanov.groups.finite.numbers.ComplementOnesGroup;
 import com.google.common.collect.ImmutableList;
 import lombok.NonNull;
 import org.junit.Test;
@@ -38,7 +41,12 @@ public final class FiniteGroupsTest {
 
   @Test
   public void shouldEnsureComplementOnesGroupIsValid() {
-    FiniteGroups.ensureValid(new ComplementOnesGroup());
+    FiniteGroups.ensureValid(ComplementOnesGroup.INSTANCE);
+  }
+
+  @Test
+  public void shouldEnsureSquareSymmetryGroupIsValid() {
+    FiniteGroups.ensureValid(SquareSymmetryGroup.INSTANCE);
   }
 
   @Test
@@ -73,6 +81,28 @@ public final class FiniteGroupsTest {
     }
   }
 
+  @Test
+  public void shouldFailAssociativityCheck() {
+    try {
+      FiniteGroups.ensureValid(new FiniteGroup<Integer>() {
+        @Override public Integer getIdentity() { return 1; }
+        @Override public @NonNull List<Integer> getElements() { return ImmutableList.of(1, 2, 4, 6, 8); }
+        @Override public Integer mul(@NonNull Integer left, @NonNull Integer right) {
+          if (left == 1) {
+            return right;
+          } else if (right == 1) {
+            return left;
+          }
+          final int result = left * 4 + right * 2;
+          return result > 8 ? 1 : result;
+        }
+      });
+      fail("Non-associative group should fail invariant check");
+    } catch (NonGroupException e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Associativity violation"));
+    }
+  }
+
   //
   // Private
   //
@@ -100,13 +130,5 @@ public final class FiniteGroupsTest {
     @Override public Integer mul(@NonNull Integer left, @NonNull Integer right) {
       return left;
     }
-  }
-
-  private static class ComplementOnesGroup implements FiniteGroup<Integer> {
-    @Override public Integer getIdentity() { return 1; }
-    @Override public @NonNull List<Integer> getElements() { return ImmutableList.of(-1, 1); }
-    @Override public Integer mul(@NonNull Integer left, @NonNull Integer right) { return left * right; }
-
-    @Override public String toString() { return "{-1, 1}"; }
   }
 }

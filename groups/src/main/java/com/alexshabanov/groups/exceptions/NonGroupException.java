@@ -1,4 +1,4 @@
-package com.alexshabanov.groups.finite;
+package com.alexshabanov.groups.exceptions;
 
 /**
  * Exception, thrown when certain group's property is violated.

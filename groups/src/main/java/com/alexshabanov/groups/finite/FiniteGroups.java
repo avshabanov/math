@@ -1,11 +1,11 @@
 package com.alexshabanov.groups.finite;
 
+import com.alexshabanov.groups.exceptions.NonGroupException;
 import com.alexshabanov.groups.utils.MoreStrings;
 import com.google.common.collect.ImmutableSet;
 import lombok.experimental.UtilityClass;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -101,7 +101,7 @@ import java.util.Set;
           final TElement product2 = group.mul(left, group.mul(right, other));
           if (!product1.equals(product2)) {
             throw new NonGroupException("Associativity violation: " + left + " * " + right + " * " + other +
-                " produces distinct products " + product1 + " and " + product2 + "depending on the order of operation");
+                " produces distinct products " + product1 + " and " + product2 + " depending on the order of operation");
           }
         }
       }

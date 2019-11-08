@@ -1,4 +1,4 @@
-package com.alexshabanov.groups.finite.cayley;
+package com.alexshabanov.groups.finite.adhoc;
 
 import com.alexshabanov.groups.finite.FiniteGroup;
 
@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Defines Cayley group for elements [1, -1, i, -i].
+ * Defines Cayley group for elements {1, -1, i, -i} with identity element 1 and standard multiplication.
  */
 public final class CayleyGroup implements FiniteGroup<CayleyGroup.Element> {
   public static final CayleyGroup INSTANCE = new CayleyGroup();
@@ -26,8 +26,8 @@ public final class CayleyGroup implements FiniteGroup<CayleyGroup.Element> {
     private final int imaginary;
 
     private static final int FOLD_MULTIPLIER = 2/* Element.values().length / 2 or count of distinct reals == imaginaries */;
-    private static final Map<Integer, Element> FOLD_MAP = Arrays.stream(Element.values()).collect(
-        Collectors.toMap(Element::fold, i -> i));
+    private static final Map<Integer, Element> FOLD_MAP = Arrays.stream(Element.values())
+        .collect(Collectors.toMap(Element::fold, i -> i));
 
     Element(int real, int imaginary) {
       assert real == 1 || real == -1 || real == 0;
