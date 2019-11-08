@@ -21,12 +21,13 @@ import java.util.Set;
     final List<TElement> elements = group.getElements();
     final int count = elements.size();
     final int maxWidth = elements.stream().map(e -> e.toString().length()).reduce(1, Math::max);
+    final int firstCellPadding = 4;
     final int cellSize = maxWidth + 2 /* 1 left padding + 1 right padding */;
 
     // header
     for (int i = 0; i <= count; ++i) {
       if (i == 0) {
-        MoreStrings.append(target, ' ', cellSize);
+        MoreStrings.append(target, ' ', cellSize + firstCellPadding);
       } else {
         MoreStrings.padded(target, elements.get(i - 1), cellSize);
       }
@@ -40,8 +41,8 @@ import java.util.Set;
     // rows
     for (TElement left : elements) {
       // separator
-      MoreStrings.append(target, '-', (cellSize + 1) * (count + 1)).append('\n');
-      MoreStrings.padded(target, left, cellSize);
+      MoreStrings.append(target, '-', firstCellPadding + (cellSize + 1) * (count + 1)).append('\n');
+      MoreStrings.padded(target, left, cellSize + firstCellPadding);
       // columns
       for (TElement right : elements) {
         target.append('|');
