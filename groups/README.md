@@ -55,7 +55,22 @@ A requirement of satisfying _closure_ group axiom [1] is satisfied by the above 
 
 *[1]: For each `a` and `b` in `S` their product `a * b` also belongs to `S`.
 
-### 
+### Group-like Structures
+
+
+| | Totality	| Associativity	| Identity	| Invertibility	| Commutativity |
+|-|-|-|-|-|-|
+| Semigroupoid | Unneeded	| Required	| Unneeded	| Unneeded	| Unneeded |
+| Small Category	| Unneeded	| Required	| Required	| Unneeded	| Unneeded |
+| Groupoid	| Unneeded	| Required	| Required	| Required	| Unneeded |
+| Magma	| Required	| Unneeded	| Unneeded	| Unneeded	| Unneeded |
+| Quasigroup	| Required	| Unneeded	| Unneeded	| Required	| Unneeded |
+| Loop	| Required	| Unneeded	| Required	| Required	| Unneeded |
+| Semigroup	| Required	| Required	| Unneeded	| Unneeded	| Unneeded |
+| Inverse | Semigroup	| Required	| Required	| Unneeded	| Required	| Unneeded |
+| Monoid	| Required	| Required	| Required	| Unneeded	| Unneeded |
+| Group	| Required	| Required	| Required	| Required	| Unneeded |
+| Abelian group	| Required	| Required	| Required	| Required	| Required |
 
 ## TODOs
 
