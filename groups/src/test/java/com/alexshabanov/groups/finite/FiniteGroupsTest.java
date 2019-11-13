@@ -3,7 +3,7 @@ package com.alexshabanov.groups.finite;
 import com.alexshabanov.groups.exceptions.NonGroupException;
 import com.alexshabanov.groups.finite.adhoc.CayleyGroup;
 import com.alexshabanov.groups.finite.adhoc.SquareSymmetryGroup;
-import com.alexshabanov.groups.finite.numbers.BaseNumericGroup;
+import com.alexshabanov.groups.finite.numbers.IntRangeGroup;
 import com.alexshabanov.groups.finite.numbers.ComplementOnesGroup;
 import com.google.common.collect.ImmutableList;
 import lombok.NonNull;
@@ -107,7 +107,7 @@ public final class FiniteGroupsTest {
   // Private
   //
 
-  private static class NaiveNumericGroup extends BaseNumericGroup {
+  private static class NaiveNumericGroup extends IntRangeGroup {
 
     NaiveNumericGroup(int to) {
       super(1, to);

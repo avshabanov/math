@@ -4,7 +4,7 @@ import com.alexshabanov.groups.finite.FiniteGroup;
 import com.alexshabanov.groups.finite.FiniteGroups;
 import com.alexshabanov.groups.finite.adhoc.CayleyGroup;
 import com.alexshabanov.groups.finite.adhoc.SquareSymmetryGroup;
-import com.alexshabanov.groups.finite.numbers.BaseNumericGroup;
+import com.alexshabanov.groups.finite.numbers.IntRangeGroup;
 import com.alexshabanov.groups.finite.numbers.ComplementOnesGroup;
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
@@ -16,7 +16,7 @@ import java.io.IOException;
   public static void main(String[] args) throws IOException {
     System.out.println("= Finite Groups Demo =\n");
 
-    demoFiniteGroup("({0, 1, 2, 3}, +) Group", new BaseNumericGroup(0, 4) {
+    demoFiniteGroup("({0, 1, 2, 3}, +) Group", new IntRangeGroup(0, 4) {
       @Override public Integer getIdentity() { return 0; }
       @Override public Integer mul(@NonNull Integer left, @NonNull Integer right) { return (left + right) % 4; }
     });
