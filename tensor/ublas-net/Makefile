@@ -1,17 +1,15 @@
-include target/config.mk
+include abandoned/config.mk
 
-CC			=		gcc
-LINKER	=		gcc
+CC				=	gcc
+LINKER			=	gcc
 
-CFLAGS	+=	-std=c++11 -Wall -pedantic
-LFLAGS	+=  -lstdc++
+CFLAGS			+=	-std=c++11 -Wall -pedantic
+LFLAGS			+=	-lstdc++
 
-LFLAGS_TEST = $(LFLAGS) -lboost_unit_test_framework
+LFLAGS_TEST		=	$(LFLAGS) -lboost_unit_test_framework
 
-CFLAGS	+=	-DUBLASNET_DEBUG
-
-OBJ			=		target/o
-OBJ_FILES =		$(OBJ)/net.o $(OBJ)/netmeta.o
+OBJ				=	target/o
+OBJ_FILES		=	$(OBJ)/net.o $(OBJ)/netmeta.o
 
 .PHONY: all
 all: target/ublas-net

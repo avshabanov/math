@@ -2,6 +2,9 @@
 
 set -e
 
+# Target folder, where config.mk shall be placed to
+TARGET=abandoned
+
 function help_and_quit {
     echo "Usage: ./configure --help"
     echo "       (to print this message)"
@@ -36,22 +39,22 @@ for ARG in "$@"; do
     fi
 done
 
-mkdir -p target
+mkdir -p ${TARGET}
 
 # Write common header
-echo "# Generated file, do not edit" > target/config.mk
+echo "# Generated file, do not edit" > ${TARGET}/config.mk
 
 # Write optimization options
 if [ $RELEASE_ENABLED -eq 1 ]; then
     echo '''
 CFLAGS    = -O3
 LFLAGS    =
-''' >> target/config.mk
+''' >> ${TARGET}/config.mk
 else
     echo '''
 CFLAGS    = -O1 -g
 LFLAGS    = -g
-''' >> target/config.mk
+''' >> ${TARGET}/config.mk
 fi
 
 # Write assertion options
@@ -61,11 +64,12 @@ if [ $ASSERT_ENABLED -eq 0 ]; then
 CFLAGS    += -DNDEBUG -DBOOST_UBLAS_NDEBUG
 # Also disable rtti to minimize footprint
 CFLAGS    += -fno-rtti
-''' > target/config.mk
+''' > ${TARGET}/config.mk
 fi
 
 # Write newline at the end of file
-echo >> target/config.mk
+echo >> ${TARGET}/config.mk
 
+echo "Generated: ${TARGET}/config.mk"
 echo "DONE"
 
