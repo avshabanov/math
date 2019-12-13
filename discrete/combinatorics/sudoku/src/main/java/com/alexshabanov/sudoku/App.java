@@ -8,7 +8,7 @@ import java.util.List;
  */
 public final class App {
 
-    private static int SIZE = 9;
+    private static final int SIZE = 9;
 
     private static int[][] createField() {
         final int[][] field = new int[SIZE][SIZE];
@@ -97,7 +97,7 @@ public final class App {
         }
     }
 
-    private static final List<Coordinate> findHollowCoordinates(int[][] field) {
+    private static List<Coordinate> findHollowCoordinates(int[][] field) {
         final List<Coordinate> coordinates = new ArrayList<Coordinate>();
 
         for (int i = 0; i < SIZE; ++i) {
@@ -312,7 +312,7 @@ public final class App {
              6 2 7 3 9 8 1 5 4
              4 8 1 7 5 6 2 9 3
 
-mvn exec:java -Dexec.mainClass=com.alexshabanov.restcomp.client.App
+mvn exec:java -Dexec.mainClass=com.alexshabanov.sudoku.App
 
 Byte flags-driven solution:
 
