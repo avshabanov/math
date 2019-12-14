@@ -1,5 +1,5 @@
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.function.IntToDoubleFunction;
 
 /**
  * Solution for sliding window median problem:
@@ -36,6 +36,18 @@ import java.util.Comparator;
  * Note:
  * You may assume k is always valid, ie: k is always smaller than input array's size for non-empty array.
  * </pre>
+ *
+ * Submission details (as of 2019-12-13):
+ * <pre>
+ * Runtime: 15 ms, faster than 98.33% of Java online submissions for Sliding Window Median.
+ * Memory Usage: 44.4 MB, less than 20.00% of Java online submissions for Sliding Window Median.
+ * </pre>
+ *
+ * Possible optimizations:
+ * <ul>
+ *   <li>Remove tail element allocation for sliding window (would safe a 10-100 nsec / call)</li>
+ *   <li>Use min and max heaps for tracking median element</li>
+ * </ul>
  */
 public class SlidingWindowMedianExample {
   public static void main(String[] args) {
@@ -73,52 +85,66 @@ public class SlidingWindowMedianExample {
       boolean hasNext();
     }
 
-    private static final class Index {
-      private int pos;
-      private Index next;
+    private static final class WindowItem implements Comparable<WindowItem> {
+      private int val;
+      private WindowItem next;
 
-      Index(int pos) {
-        this.pos = pos;
+      WindowItem(int v) {
+        this.val = v;
       }
 
       @Override
       public String toString() {
-        return "#(" + pos + ')';
+        return Integer.toString(val);
+      }
+
+      @Override
+      public int compareTo(WindowItem o) {
+        return Integer.compare(val, o.val);
       }
     }
 
-    private static final class WindowedMedianExtractor implements MedianExtractor, Comparator<Index> {
+    private static final class WindowedMedianExtractor implements MedianExtractor {
       private final int[] source;
       private int srcPos;
 
       // in-line data structure that unites linked list and array,
       // we need array traits for sorting, and linked list for queueing next index,
       // which is going to be a position of the sliding window
-      private final Index[] indices;
-      private Index head;
-      private Index tail;
+      private final WindowItem[] window;
+      private WindowItem head;
+      private WindowItem tail;
+      private final IntToDoubleFunction medianExtractor;
 
       WindowedMedianExtractor(int[] source, int k) {
         this.source = source;
 
-        this.indices = new Index[k];
-        Index cursor = null;
+        this.window = new WindowItem[k];
+        WindowItem cursor = null;
         for (int i = 0; i < k; ++i) {
-          final Index index = new Index(i);
+          final WindowItem windowItem = new WindowItem(source[i]);
           if (cursor == null) {
-            head = index;
+            head = windowItem;
           } else {
-            cursor.next = index;
+            cursor.next = windowItem;
           }
-          cursor = index;
-          this.indices[i] = index;
+          cursor = windowItem;
+          this.window[i] = windowItem;
         }
         this.tail = cursor;
 
         this.srcPos = k - 1;
 
-        // TODO: use binary search
-        sortIndices();
+        Arrays.sort(window);
+
+        if (this.window.length % 2 == 0) {
+          medianExtractor = rightIndexPos -> {
+            final int leftIndexPos = rightIndexPos - 1;
+            return ((double) window[leftIndexPos].val + window[rightIndexPos].val) / 2.0;
+          };
+        } else {
+          medianExtractor = rightIndexPos -> window[rightIndexPos].val;
+        }
       }
 
       @Override
@@ -128,45 +154,49 @@ public class SlidingWindowMedianExample {
 
       @Override
       public double next() {
-        //System.out.printf("[DBG] indices=%s\n", Arrays.toString(indices));
-        final int rightIndexPos = this.indices.length / 2;
-        final double median;
-        if (this.indices.length % 2 == 0) {
-          final int leftIndexPos = rightIndexPos - 1;
-          median = ((double) source[indices[leftIndexPos].pos] + source[indices[rightIndexPos].pos]) / 2.0;
-        } else {
-          median = source[indices[rightIndexPos].pos];
-        }
-
+        final double median = medianExtractor.applyAsDouble(this.window.length / 2);
         srcPos = srcPos + 1;
 
         if (srcPos >= source.length) {
           return median;
         }
 
-        final Index newTail = head;
-        // check, that list has at least two elements
-        if (head != tail) {
-          head = head.next;
-          tail.next = newTail;
-          tail = newTail;
+        if (window.length == 1) {
+          // shortcut for small windows
+          window[0].val = source[srcPos];
+          return median;
         }
 
-        newTail.pos = srcPos;
-        newTail.next = null;
+        final int headPos = Arrays.binarySearch(window, head);
+        if (headPos < 0) {
+          throw new IllegalStateException("Invariant check failed: (headPos=" + headPos + ")< 0");
+        }
 
-        sortIndices();
+        // make element that head points to a new tail
+        final WindowItem newTail = new WindowItem(source[srcPos]);
+        head = head.next;
+        tail.next = newTail;
+        tail = newTail;
+
+        // readjust elements to retain sorted trait of the window array
+        int newTailPos = Arrays.binarySearch(window, newTail);
+        if (newTailPos < 0) {
+          newTailPos = -newTailPos - 1;
+        }
+
+        // now shift elements in the proper order
+        if (headPos > newTailPos) {
+          // shift left-to-right
+          System.arraycopy(window, newTailPos, window, newTailPos + 1, headPos - newTailPos);
+        } else if (headPos < newTailPos) {
+          // shift right-to-left
+          newTailPos = newTailPos - 1;
+          System.arraycopy(window, headPos + 1, window, headPos, newTailPos - headPos);
+        } // else -> no need to move array slice
+
+        window[newTailPos] = newTail;
 
         return median;
-      }
-
-      @Override
-      public int compare(Index leftIndex, Index rightIndex) {
-        return Integer.compare(source[leftIndex.pos], source[rightIndex.pos]);
-      }
-
-      private void sortIndices() {
-        Arrays.sort(indices, this);
       }
     }
   }
