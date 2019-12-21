@@ -31,7 +31,7 @@ import java.util.List;
  *
  * Types:
  * <ul>
- *   <li>Classification trees - when dependenct variable is categorical
+ *   <li>Classification trees - when dependent variable is categorical
  *   </li>
  *   <li>Regression trees - when dependent variable is continuous
  *      <p>Regression - use mean/average</p>
