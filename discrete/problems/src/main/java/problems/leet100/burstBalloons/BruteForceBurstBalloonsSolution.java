@@ -25,7 +25,8 @@ public class BruteForceBurstBalloonsSolution {
     demo(new int[]{10, 2});
     demo(new int[]{2, 1, 2});
     demo(new int[]{1,2,3,1000});
-    demo(new int[]{1000,2,3,4});
+    demo(new int[]{1000,3,2,1});
+    demo(new int[]{1000,1,2,3});
     demo(new int[]{3,1,5,8});
     demo(new int[]{1,2});
     demo(new int[]{1,2,3,4});
