@@ -1,7 +1,5 @@
 package problems.leet100.nthMagicalNumber;
 
-import java.math.BigInteger;
-
 /**
  * 878. Nth Magical Number
  * https://leetcode.com/problems/nth-magical-number/
@@ -119,7 +117,7 @@ public class NthMagicalNumberSolution {
       return nthMagicalNumber(n, a);
     }
 
-    final int gcd = BigInteger.valueOf(a).gcd(BigInteger.valueOf(b)).intValueExact();
+    final int gcd = gcd(a, b);
     final long kPrime = (((long) n) * a * b) / (a + b - gcd);
     final long nPrime = kPrime / a + kPrime / b - (kPrime * gcd) / (a * b);
     final long result = findK(nPrime, kPrime, gcd, n, a, b);
@@ -130,7 +128,7 @@ public class NthMagicalNumberSolution {
     long amod = kPrime % a;
     long bmod = kPrime % b;
 
-    System.out.printf("\t[DBG] k1 = %d (n1' = %d; amod=%d, bmod=%d)\n", kPrime, nPrime, amod, bmod);
+    //System.out.printf("\t[DBG] k1 = %d (n1' = %d; amod=%d, bmod=%d)\n", kPrime, nPrime, amod, bmod);
 
     if (nPrime < n) {
       amod = kPrime - amod + a;
@@ -189,6 +187,12 @@ public class NthMagicalNumberSolution {
         throw new IllegalStateException("nPrime < n");
       }
     }
+  }
+
+  @SuppressWarnings("SuspiciousNameCombination")
+  private static int gcd(int x, int y) {
+    if (x == 0) return y;
+    return gcd(y % x, x);
   }
 
   private static int nthMagicalNumber(int n, int a) {
