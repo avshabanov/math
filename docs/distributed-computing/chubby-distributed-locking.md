@@ -507,6 +507,20 @@ Similar to unix open.
 * Sessions reduce the overhead of leases in the System V system.
 * Idea of exposing a general-purpose lock service is found in VMS.
 
+[Note](https://xudifsd.org/blog/2016/06/chubby-zookeeper-different-consistency-level/) on ZooKeeper vs Chubby:
+
+> Zookeeper provides almost the same functionality as chubby, but there’re a few subtly differences between them...
+> Zookeeper is a distributed process coordinator, as O’Reilly puts it.
+> Chubby is a distributed lock service provides strong consistency.
+> Although both of them have a file system like API from user’s perspective,
+> they provide different level of consistency, you can get a clue from their descriptions: coordinator is a much 
+> weaker word compare to lock service.
+> ... chubby is intended to provide strong consistency, it needs to ensure that the client should never see staled data.
+> ...To remedy this, Netflix created curator library which later moved to Apache foundation, this library
+> provides the commonly used functionality and cache management.
+> This additional layer to zookeeper allows it providing strong consistency needed by some users.
+> So whenever you want to use zookeeper, use curator library instead of native library unless you know what you are doing.
+
 ## Appendix: Open Source Alternatives to ZooKeeper
 
 Top Alternatives to ZooKeeper:
