@@ -521,6 +521,10 @@ Similar to unix open.
 > This additional layer to zookeeper allows it providing strong consistency needed by some users.
 > So whenever you want to use zookeeper, use curator library instead of native library unless you know what you are doing.
 
+See also [curator page](https://curator.apache.org/).
+
+> "Guava to Java is what Curator to ZooKeeper"
+
 ## Appendix: Open Source Alternatives to ZooKeeper
 
 Top Alternatives to ZooKeeper:

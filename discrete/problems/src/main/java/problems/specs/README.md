@@ -1,0 +1,1 @@
+See [Thinking above the code](../../../../../../../docs/tla/thinking-above-the-code.md)
