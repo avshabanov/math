@@ -147,16 +147,16 @@ Next:         U != {}                                                 // U is no
 Easy to write this as a formula:
 
 ```text
-Next:         U != {}
-          ^   Exists <b, t> in U:                                     // Pick an arbitrary value is
-                                                                      // existential quantification = \exists 
-                IF b != t
-                  THEN    Exists p in b..(t-1):
-                          A' Belongs to Partitions(A, p, b, t)        // NB: Belongs = \in
-                        ^ U' =  U with <b, t> removed and
-                                <b, t> and <p + 1, t> added
-                  ELSE    A' =  A
-                        ^ U' =  U with <b, t> removed
+Init:      A   =   any array of numbers of length N
+       ⋀   U   =   { [0, N-1] }
+Next:      U != {}
+       ⋀   ∃ (b, t) ∈ U:
+             IF b != t
+               THEN    ∃ p ∈ [b..(t-1)] :
+                       A' ∈ Partitions(A, p, b, t)
+                     ⋀ U' =  (U \ {[b, t]}) ∪ {[b, t], [p + 1, t]}
+               ELSE    A' =  A
+                     ⋀ U' =  U \ {[b, t]}
 ```
 
 Why write spec?
