@@ -32,6 +32,9 @@ public class QuickSortSpecSolution {
       return;
     }
 
+    demo(new int[] { });
+    demo(new int[] { 1 });
+    demo(new int[] { 2, 1 });
     demo(new int[] { 3, 2, 1 });
     demo(new int[] { 2, 3, 1 });
     demo(new int[] { 8, 6, 2, 3, 4, 1, 7, 9 });
@@ -48,12 +51,8 @@ public class QuickSortSpecSolution {
   }
 
   private static void qsort(int[] nums) {
-    if (nums.length < 2) {
-      return;
-    }
-
     final Deque<IntPair> u = new ArrayDeque<>();
-    u.add(new IntPair(0, nums.length - 1)); // u = { <0, n - 1> }
+    IntPair.addIfNotEmpty(u, 0, nums.length - 1); // n > 1 => u = { <0, n - 1> }
     while (!u.isEmpty()) {
       final IntPair pair = u.pollFirst(); // u' = u with <b, t> removed
       //System.out.printf("\t[DBG] <--- poll pair=%s\n", pair);

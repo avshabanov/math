@@ -177,4 +177,8 @@ Why it is hard?
 * writing (and real thinking) is hard 
  * and it is easier to think that you're thinking...
 * changes would have to be introduced twice
- 
+
+## Links
+
+* [Thinking Above the Code - Presentation](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/leslie_lamport.pdf)
+* [HTML Symbols](https://www.w3schools.com/html/html_symbols.asp)
