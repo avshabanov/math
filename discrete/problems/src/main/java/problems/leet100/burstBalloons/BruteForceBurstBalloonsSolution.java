@@ -1,6 +1,9 @@
 package problems.leet100.burstBalloons;
 
+import com.google.common.base.Stopwatch;
+
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 312. Burst Balloons
@@ -21,27 +24,69 @@ import java.util.Arrays;
  */
 public class BruteForceBurstBalloonsSolution {
 
-  public static void main(String[] args) {
-    demo(new int[]{10, 2});
-    demo(new int[]{2, 1, 2});
-    demo(new int[]{1,2,3,1000});
-    demo(new int[]{1000,3,2,1});
-    demo(new int[]{1000,1,2,3});
-    demo(new int[]{3,1,5,8});
-    demo(new int[]{1,2});
-    demo(new int[]{1,2,3,4});
-    demo(new int[]{4,3,2,1});
-    //demo(new int[]{2,4,8,4,0,7,8,9,1,2,4,7,1,7,3});
+  public static final class Demo1 {
+    public static void main(String[] args) {
+      demo(10, 2);
+      demo(2, 1, 2);
+      demo(1,2,3,1000);
+      demo(1000,3,2,1);
+      demo(1000,1,2,3);
+      demo(1,2,1000,3);
+      demo(1,1000,2,3);
+      demo(3,1,5,8);
+      demo(1,2);
+      demo(1,2,3,4);
+      demo(4,3,2,1);
+      demo(1,2,3,4,5);
+      demo(5,4,3,2,1);
+      demo(1,2,3,4,5,6);
+      demo(1,2,3,4,5,6,7);
+      demo(1,2,3,4,5,6,7,8);
+      demo(1,2,3,4,5,6,7,8,9);
+      demo(1,2,3,4,5,6,7,8,9,8);
+//      demo(1,2,3,4,5,6,7,8,9,8,7);                  // t=     5
+//      demo(1,2,3,4,5,6,7,8,9,8,7,6);                //        7
+//      demo(1,2,3,4,5,6,7,8,9,8,7,6,5);              //        27
+//      demo(1,2,3,4,5,6,7,8,9,8,7,6,5,4);            //        102
+//      demo(2,4,8,4,0,7,8,9,1,2,4,7,1,7,3);          //        388
+//      demo(2,4,8,4,0,7,8,9,1,2,4,7,1,7,3,2);        //        1454
+//      demo(2,4,8,4,0,7,8,9,1,2,4,7,1,7,3,2,1);      //        5552
+//      demo(2,4,8,4,0,7,8,9,1,2,4,7,1,7,3,2,1,2);    //        19781
+    }
   }
 
-  private static void demo(int[] nums) {
+  public static final class Demo2 {
+    public static void main(String[] args) {
+      demo(1,2,3,4,5);
+      demo(5,4,3,2,1);
+      demo(1,4,3,2,5);
+      demo(2,1,3,4,5);
+      demo(4,2,3,1,5);
+      demo(5,1,2,3,4);
+      demo(4,5,1,2,3);
+      demo(5,4,1,2,3);
+    }
+  }
+
+  public static final class Demo3 {
+    public static void main(String[] args) {
+      demo(10,20,30,40,50,60,70);
+    }
+  }
+
+  private static void demo(int... nums) {
+    final Stopwatch stopwatch = Stopwatch.createStarted();
+    final int solution = maxCoins(nums);
+    final long elapsedMillis = stopwatch.elapsed(TimeUnit.MILLISECONDS);
     System.out.printf(
-        "For nums=%s maxSum=%d\n",
-        Arrays.toString(nums),
-        maxCoins(nums)
+        "[%5d ms] maxSum=%7d for nums=%s\n",
+        elapsedMillis,
+        solution,
+        Arrays.toString(nums)
     );
   }
 
+  // Empirical complexity is ~O(4^n)
   private static int maxCoins(int[] nums) {
     if (nums.length == 0) {
       return 0;
@@ -95,10 +140,8 @@ public class BruteForceBurstBalloonsSolution {
       }
     }
 
-    void tryScan(CoinNode candidate) {
-      // try iterating forward
-      final CoinNode start = candidate.left.isSentinel() ? candidate : candidate.left;
-      for (CoinNode n = start; !n.isSentinel(); n = n.right) {
+    void tryScan(final CoinNode candidate) {
+      for (CoinNode n = candidate; !n.isSentinel(); n = n.right) {
         final CoinNode left = n.left;
         final CoinNode right = n.right;
 
@@ -107,17 +150,17 @@ public class BruteForceBurstBalloonsSolution {
         this.entries[this.entriesPos] = n.pos;
         this.entriesPos++;
 
-        final CoinNode next = right.isSentinel() ? left : right;
+        final CoinNode next = left.isSentinel() ? right : left;
         if (!next.isSentinel()) {
           // exclude this node
-          left.right = right;
-          right.left = left;
+          n.right.left = n.left;
+          n.left.right = n.right;
 
           tryScan(next);
 
           // recover left and right links; also restore found max sum
-          left.right = n;
-          right.left = n;
+          n.right.left = n;
+          n.left.right = n;
         } else if (this.entriesPos == this.entries.length) {
           // this is the final node
           this.foundMaxSum = Math.max(this.foundMaxSum, this.accumulatedMaxSum);
