@@ -1,8 +1,6 @@
 package problems.leet100.challenge528.w2;
 
 import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * https://leetcode.com/explore/featured/card/30-day-leetcoding-challenge/529/week-2/3297/
