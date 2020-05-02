@@ -1,4 +1,4 @@
-package problems.leet100.challenge528.w1;
+package problems.leet100.challenges.c2020_04.w1;
 
 import java.util.HashSet;
 import java.util.Set;

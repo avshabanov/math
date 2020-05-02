@@ -1,4 +1,4 @@
-package problems.leet100.challenge528.w2;
+package problems.leet100.challenges.c2020_04.w2;
 
 import java.util.stream.IntStream;
 

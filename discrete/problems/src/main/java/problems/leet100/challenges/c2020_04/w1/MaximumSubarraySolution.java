@@ -1,4 +1,4 @@
-package problems.leet100.challenge528.w1;
+package problems.leet100.challenges.c2020_04.w1;
 
 /**
  * https://leetcode.com/explore/featured/card/30-day-leetcoding-challenge/528/week-1/3285/
