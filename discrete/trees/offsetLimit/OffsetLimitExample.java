@@ -48,6 +48,9 @@ public final class OffsetLimitExample extends SimpleTreeSupport {
     demo(tree1, 15, 1, 10);
     demo(tree1, 45, 0, 1);
 
+    System.out.println("---\nTree=\n" + asString(n(10)));
+    demo(n(10), 9, 0, 10);
+
     final Node tree2 = n(40,
         n(30),
         n(80,
