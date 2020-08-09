@@ -12,6 +12,66 @@ func TestSample(t *testing.T) {
 	t.Logf("done; r=%d", rand.Intn(10))
 }
 
+/*
+Rotting Oranges
+In a given grid, each cell can have one of three values:
+
+the value 0 representing an empty cell;
+the value 1 representing a fresh orange;
+the value 2 representing a rotten orange.
+Every minute, any fresh orange that is adjacent (4-directionally) to a rotten orange becomes rotten.
+
+Return the minimum number of minutes that must elapse until no cell has a fresh orange.  If this is impossible, return -1 instead.
+*/
+
+func orangesRotting(grid [][]int) int {
+	if len(grid) == 0 || len(grid[0]) == 0 {
+		return 0
+	}
+
+	height := len(grid)
+	width := len(grid[0])
+
+	fresh := map[int]coord{}
+	for h := 0; h < height; h++ {
+		for w := 0; w < width; w++ {
+			if grid[h][w] == 1 {
+				fresh[len(fresh)] = coord{h, w}
+			}
+		}
+	}
+
+	days := 0
+
+	for ; len(fresh) > 0; days++ {
+		var rot []int
+		for pos, c := range fresh {
+			if c.w > 0 && grid[c.h][c.w-1] == 2 {
+				rot = append(rot, pos)
+			} else if c.w < (width-1) && grid[c.h][c.w+1] == 2 {
+				rot = append(rot, pos)
+			} else if c.h > 0 && grid[c.h-1][c.w] == 2 {
+				rot = append(rot, pos)
+			} else if c.h < (height-1) && grid[c.h+1][c.w] == 2 {
+				rot = append(rot, pos)
+			}
+		}
+
+		if len(rot) == 0 {
+			return -1
+		}
+		for _, pos := range rot {
+			c := fresh[pos]
+			grid[c.h][c.w] = 2
+			delete(fresh, pos)
+		}
+	}
+
+	return days
+}
+
+type coord struct{ h, w int }
+
 //
 // Samples
 //
