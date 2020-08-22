@@ -5,12 +5,318 @@ import (
 	"math/rand"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 )
 
 func TestSample(t *testing.T) {
 	t.Logf("done; r=%d", rand.Intn(10))
+}
+
+/*
+Random Point in Non-overlapping Rectangles
+Given a list of non-overlapping axis-aligned rectangles rects, write a function pick which randomly and uniformily picks an integer point in the space covered by the rectangles.
+
+Note:
+
+An integer point is a point that has integer coordinates.
+A point on the perimeter of a rectangle is included in the space covered by the rectangles.
+ith rectangle = rects[i] = [x1,y1,x2,y2], where [x1, y1] are the integer coordinates of the bottom-left corner, and [x2, y2] are the integer coordinates of the top-right corner.
+length and width of each rectangle does not exceed 2000.
+1 <= rects.length <= 100
+pick return a point as an array of integer coordinates [p_x, p_y]
+pick is called at most 10000 times.
+*/
+
+type rpnSolution struct {
+	rects       []*rpnRect
+	totalWeight int
+}
+
+func (t *rpnSolution) Len() int           { return len(t.rects) }
+func (t *rpnSolution) Less(i, j int) bool { return t.rects[i].weight < t.rects[j].weight }
+func (t *rpnSolution) Swap(i, j int)      { t.rects[i], t.rects[j] = t.rects[j], t.rects[i] }
+
+type rpnRect struct {
+	left   int
+	bottom int
+	width  int
+	height int
+	weight int
+}
+
+func rpnConstructor(rects [][]int) rpnSolution {
+	var s rpnSolution
+
+	weight := 0
+	for _, rect := range rects {
+		n := &rpnRect{
+			left:   rect[0],
+			bottom: rect[1],
+			width:  rect[2] - rect[0] + 1,
+			height: rect[3] - rect[1] + 1,
+			weight: weight,
+		}
+		s.rects = append(s.rects, n)
+		weight += n.width * n.height
+	}
+
+	sort.Sort(&s)
+	s.totalWeight = weight
+
+	return s
+}
+
+// Pick picks random dot within any of the given rects
+func (t *rpnSolution) Pick() []int {
+	dot := int(rand.Int31n(int32(t.totalWeight)))
+	rectIndex := sort.Search(len(t.rects), func(pos int) bool {
+		return dot < t.rects[pos].weight
+	})
+	r := t.rects[rectIndex-1]
+	rectDot := dot - r.weight
+	left := rectDot % r.width
+	bottom := rectDot / r.width
+	return []int{r.left + left, r.bottom + bottom}
+}
+
+func TestRandomPick1(t *testing.T) {
+	s := rpnConstructor([][]int{{1, 1, 2, 2}})
+	for i := 0; i < 20; i++ {
+		t.Logf("randomPick(%d) -> %v", i, s.Pick())
+	}
+}
+
+func TestRandomPick2(t *testing.T) {
+	s := rpnConstructor([][]int{{1, 1, 5, 51}})
+	for i := 0; i < 20; i++ {
+		t.Logf("randomPick(%d) -> %v", i, s.Pick())
+	}
+	//[[82918473, -57180867, 82918476, -57180863], [83793579, 18088559, 83793580, 18088560], [66574245, 26243152, 66574246, 26243153], [72983930, 11921716, 72983934, 11921720]]
+}
+
+/*
+Reorder List
+Given a singly linked list L: L0→L1→…→Ln-1→Ln,
+reorder it to: L0→Ln→L1→Ln-1→L2→Ln-2→…
+
+You may not modify the values in the list's nodes, only nodes itself may be changed.
+*/
+
+func reorderList(head *ListNode) {
+	if head == nil {
+		return
+	}
+
+	count := 0
+	for it := head; it != nil; it = it.Next {
+		count++
+	}
+
+	medianPos := count / 2
+	// find median element
+	median := head
+	for i := 0; i < medianPos; i++ {
+		median = median.Next
+	}
+
+	// reorder elements after median
+	it := median.Next
+	median.Next = nil // this is going to be the tail
+	var last *ListNode
+	for it != nil {
+		tmp := it.Next
+		it.Next = last
+		last, it = it, tmp
+	}
+
+	// now reorder elements starting at head
+	for it = head; last != nil; {
+		tmp := last.Next
+		last.Next = it.Next
+		it.Next = last
+		it, last = last.Next, tmp
+	}
+}
+
+type ListNode struct {
+	Val  int
+	Next *ListNode
+}
+
+func newList(nums ...int) *ListNode {
+	var source ListNode
+	it := &source.Next
+	for _, n := range nums {
+		node := &ListNode{Val: n}
+		*it = node
+		it = &node.Next
+	}
+	return source.Next
+}
+
+func (t *ListNode) String() string {
+	var sb strings.Builder
+	sb.WriteByte('[')
+	for it := t; it != nil; it = it.Next {
+		if it != t {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(strconv.Itoa(it.Val))
+	}
+	sb.WriteByte(']')
+	return sb.String()
+}
+
+func TestListNode(t *testing.T) {
+	l1 := newList(1, 2, 3, 4)
+	l1Str := l1.String()
+	reorderList(l1)
+	t.Logf("l1=%s, reorder=%s", l1Str, l1)
+
+	l2 := newList(1, 2, 3)
+	l2Str := l2.String()
+	reorderList(l2)
+	t.Logf("l2=%s, reorder=%s", l2Str, l2)
+}
+
+/*
+Goat Latin
+A sentence S is given, composed of words separated by spaces. Each word consists of lowercase and uppercase letters only.
+
+We would like to convert the sentence to "Goat Latin" (a made-up language similar to Pig Latin.)
+
+The rules of Goat Latin are as follows:
+
+If a word begins with a vowel (a, e, i, o, or u), append "ma" to the end of the word.
+For example, the word 'apple' becomes 'applema'.
+
+If a word begins with a consonant (i.e. not a vowel), remove the first letter and append it to the end, then add "ma".
+For example, the word "goat" becomes "oatgma".
+
+Add one letter 'a' to the end of each word per its word index in the sentence, starting with 1.
+For example, the first word gets "a" added to the end, the second word gets "aa" added to the end and so on.
+Return the final sentence representing the conversion from S to Goat Latin.
+*/
+
+func toGoatLatin(s string) string {
+	var p goatLatinStreamProcessor
+	for i := 0; i < len(s); i++ {
+		p.feed(s[i])
+	}
+	p.feed(0)
+	return p.w.String()
+}
+
+type goatLatinStreamProcessor struct {
+	w     strings.Builder
+	state goatLatinParserState
+
+	wordCount int
+	consonant byte
+}
+
+func (t *goatLatinStreamProcessor) appendSuffix() {
+	if t.consonant != 0 {
+		t.w.WriteByte(t.consonant)
+	}
+	t.w.WriteString("ma")
+	for i := 0; i <= t.wordCount; i++ {
+		t.w.WriteByte('a')
+	}
+}
+
+func (t *goatLatinStreamProcessor) feed(ch byte) {
+	// whitespace or end of word?
+	if ch == ' ' || ch == 0 {
+		if t.state == goatLatWord {
+			t.appendSuffix()
+			// update state
+			t.consonant = 0
+			t.wordCount++
+			t.state = goatLatWS
+		}
+		if ch > 0 {
+			t.w.WriteByte(ch)
+		}
+		return
+	}
+
+	// first character?
+	if t.state == goatLatWS {
+		lowercaseCh := ch | ('a' - 'A')
+		switch lowercaseCh {
+		case 'a', 'e', 'i', 'o', 'u':
+			t.w.WriteByte(ch)
+			break
+		default:
+			t.consonant = ch
+		}
+		t.state = goatLatWord
+		return
+	}
+
+	// this should be a mid-word
+	t.w.WriteByte(ch)
+}
+
+type goatLatinParserState int
+
+const (
+	goatLatWS = iota
+	goatLatWord
+)
+
+/*
+Numbers With Same Consecutive Differences
+Return all non-negative integers of length N such that the absolute difference between every two consecutive digits is K.
+
+Note that every number in the answer must not have leading zeros except for the number 0 itself. For example, 01 has one leading zero and is invalid, but 0 is valid.
+
+You may return the answer in any order.
+*/
+
+func numsSameConsecDiff(n int, k int) []int {
+	var d consecDiffFinder
+	d.k = k
+	d.max = 1
+	for i := 0; i < n; i++ {
+		d.max *= 10
+	}
+	if n == 1 {
+		d.result = []int{0}
+	}
+	for i := 1; i <= 9; i++ {
+		d.scan(i)
+	}
+	return d.result
+}
+
+type consecDiffFinder struct {
+	result []int
+	max    int
+	k      int
+}
+
+func (t *consecDiffFinder) scan(n int) {
+	newN := n * 10
+
+	if newN >= t.max {
+		t.result = append(t.result, n)
+		return
+	}
+
+	digit := n % 10
+
+	predDigit := digit - t.k
+	if predDigit >= 0 {
+		t.scan(newN + predDigit)
+	}
+	nextDigit := digit + t.k
+	if nextDigit <= 9 && nextDigit != predDigit {
+		t.scan(newN + nextDigit)
+	}
 }
 
 /*
