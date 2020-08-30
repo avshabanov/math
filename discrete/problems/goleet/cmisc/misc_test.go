@@ -15,6 +15,211 @@ func TestSample(t *testing.T) {
 }
 
 /*
+Pancake Sorting
+Given an array of integers A, We need to sort the array performing a series of pancake flips.
+
+In one pancake flip we do the following steps:
+
+Choose an integer k where 0 <= k < A.length.
+Reverse the sub-array A[0...k].
+For example, if A = [3,2,1,4] and we performed a pancake flip choosing k = 2, we reverse the sub-array [3,2,1],
+so A = [1,2,3,4] after the pancake flip at k = 2.
+
+Return an array of the k-values of the pancake flips that should be performed in order to sort A. Any valid answer
+that sorts the array within 10 * A.length flips will be judged as correct.
+
+1 <= A.length <= 100
+1 <= A[i] <= A.length
+All integers in A are unique (i.e. A is a permutation of the integers from 1 to A.length).
+*/
+
+func pancakeSort(a []int) []int {
+	var result []int
+
+	b := make([]int, len(a))
+	copy(b, a)
+
+	for last := len(b) - 1; last > 0; last-- {
+		maxPos := 0
+		max := b[0]
+		for i := 1; i <= last; i++ {
+			if max < b[i] {
+				max = b[i]
+				maxPos = i
+			}
+		}
+
+		if maxPos == last {
+			continue // biggest element is at its desired pos
+		}
+
+		if maxPos != 0 {
+			// move max element to the very beginning
+			result = append(result, maxPos+1)
+			pancakeMove(b, maxPos+1)
+		}
+
+		result = append(result, last+1)
+		pancakeMove(b, last+1)
+	}
+	return result
+}
+
+func pancakeMove(a []int, k int) {
+	for i := 0; i < k/2; i++ {
+		a[i], a[k-i-1] = a[k-i-1], a[i]
+	}
+}
+
+func applyPancakeSort(a []int, k []int) []int {
+	result := make([]int, len(a))
+	copy(result, a)
+	for _, r := range k {
+		pancakeMove(result, r)
+	}
+	return result
+}
+
+func TestPancakeSort(t *testing.T) {
+	a := []int{3, 2, 4, 1}
+	k := pancakeSort(a)
+	//k := []int{4, 2, 4, 3}
+	n := applyPancakeSort(a, k)
+	t.Logf("a=%v, k=%v; n=%v", a, k, n)
+}
+
+/*
+Implement Rand10() Using Rand7()
+Given a function rand7 which generates a uniform random integer in the range 1 to 7,
+write a function rand10 which generates a uniform random integer in the range 1 to 10.
+
+Do NOT use system's Math.random().
+*/
+
+func rand10() int {
+	rand40 := 41
+	for rand40 > 40 {
+		rand40 = rand7() + 7*(rand7()-1)
+	}
+	return rand40 - 10*((rand40-1)/10)
+}
+
+func rand7() int {
+	return rand.Intn(7) + 1
+}
+
+/*
+Sum of Left Leaves
+Find the sum of all left leaves in a given binary tree.
+*/
+
+func sumOfLeftLeaves(root *TreeNode) int {
+	var findSum func(n *TreeNode, multiplier int) int
+	findSum = func(n *TreeNode, multiplier int) int {
+		if n == nil {
+			return 0
+		}
+		if n.Left == nil && n.Right == nil {
+			return multiplier * n.Val
+		}
+		return findSum(n.Left, 1) + findSum(n.Right, 0)
+	}
+	return findSum(root, 0)
+}
+
+/*
+Stream of Characters
+Implement the StreamChecker class as follows:
+
+StreamChecker(words): Constructor, init the data structure with the given words.
+query(letter): returns true if and only if for some k >= 1, the last k characters queried (in order from
+	oldest to newest, including this letter just queried) spell one of the words in the given list.
+
+	Note:
+1 <= words.length <= 2000
+1 <= words[i].length <= 2000
+Words will only consist of lowercase English letters.
+Queries will only consist of lowercase English letters.
+The number of queries is at most 40000.
+*/
+
+type socNode struct {
+	children [26]*socNode
+	leaf     bool
+	//debugStr string
+}
+
+type socStreamChecker struct {
+	root       socNode
+	queryNodes []*socNode
+}
+
+func socConstructor(words []string) socStreamChecker {
+	var s socStreamChecker
+	for _, w := range words {
+		it := &s.root
+		for n := 0; n < len(w); n++ {
+			index := w[n] - 'a'
+			next := it.children[index]
+			if next == nil {
+				next = &socNode{}
+				it.children[index] = next
+				//next.debugStr = w[0 : n+1]
+			}
+			it = next
+		}
+		it.leaf = true
+	}
+	return s
+}
+
+func (t *socStreamChecker) Query(letter byte) bool {
+	result := false
+	index := letter - 'a'
+
+	t.queryNodes = append(t.queryNodes, &t.root)
+	last := len(t.queryNodes) - 1
+	for i := 0; i <= last; i++ {
+		it := t.queryNodes[i]
+
+		next := it.children[index]
+		if next != nil {
+			t.queryNodes[i] = next
+			result = result || next.leaf
+			continue
+		}
+		// this is not a part of any word
+		t.queryNodes[i], t.queryNodes[last] = t.queryNodes[last], t.queryNodes[i]
+		if i != last {
+			i--
+		}
+		// resize array to exclude last element
+		t.queryNodes = t.queryNodes[0:last]
+		last--
+	}
+
+	return result
+}
+
+func TestStreamOfCharacters1(t *testing.T) {
+	c := socConstructor([]string{"cd", "f", "kl"})
+	chars := "abcdefghijklm"
+	for _, ch := range []byte(chars) {
+		result := c.Query(ch)
+		t.Logf("Query(%c)=%t", ch, result)
+	}
+}
+
+func TestStreamOfCharacters2(t *testing.T) {
+	c := socConstructor([]string{"aa", "baa", "baaa", "aaa", "bbbb"})
+	chars := "bababab"
+	for _, ch := range []byte(chars) {
+		result := c.Query(ch)
+		t.Logf("Query(%c)=%t", ch, result)
+	}
+}
+
+/*
 Random Point in Non-overlapping Rectangles
 Given a list of non-overlapping axis-aligned rectangles rects, write a function pick which randomly and uniformily picks an integer point in the space covered by the rectangles.
 
@@ -895,6 +1100,55 @@ func TestPathSum1(t *testing.T) {
 	if k != 3 {
 		t.Errorf("k=%d", k)
 	}
+}
+
+/*
+Minimum Cost For Tickets
+In a country popular for train travel, you have planned some train travelling one year in advance.
+The days of the year that you will travel is given as an array days.  Each day is an integer from 1 to 365.
+
+Train tickets are sold in 3 different ways:
+
+a 1-day pass is sold for costs[0] dollars;
+a 7-day pass is sold for costs[1] dollars;
+a 30-day pass is sold for costs[2] dollars.
+The passes allow that many days of consecutive travel.  For example, if we get a 7-day pass on day 2,
+then we can travel for 7 days: day 2, 3, 4, 5, 6, 7, and 8.
+
+Return the minimum number of dollars you need to travel every day in the given list of days.
+*/
+
+func mincostTickets(days []int, costs []int) int {
+	totalDays := len(days)
+	dp := make([]int, totalDays+1) // bottom-up approach: fill from last element to the first one
+	cc := make([]int, len(costs))  // cost choices: indices of dp between now (index i) and i+corresponding number of days
+	passLengths := []int{1, 7, 30} // number of days per each pass, indices in this array must match costs length
+	if len(passLengths) != len(costs) {
+		panic("invalid choice of costs") // it could also be passed as a parameter
+	}
+	for i := totalDays - 1; i >= 0; i-- {
+		// fill out cost choices
+		for j := 0; j < len(cc); j++ {
+			cc[j] = i
+			for cc[j] < totalDays && days[cc[j]] < days[i]+passLengths[j] {
+				cc[j]++
+			}
+		}
+
+		// find min cost
+		dp[i] = math.MaxInt32
+		for j := 0; j < len(cc); j++ {
+			dp[i] = intMin(dp[i], costs[j]+dp[cc[j]])
+		}
+	}
+	return dp[0]
+}
+
+func intMin(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
 }
 
 /*
