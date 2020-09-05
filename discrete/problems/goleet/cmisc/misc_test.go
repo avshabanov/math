@@ -1,6 +1,7 @@
 package miscleetproblems
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"regexp"
@@ -12,6 +13,380 @@ import (
 
 func TestSample(t *testing.T) {
 	t.Logf("done; r=%d", rand.Intn(10))
+}
+
+/*
+All Elements in Two Binary Search Trees
+Given two binary search trees root1 and root2.
+
+Return a list containing all the integers from both trees sorted in ascending order.
+*/
+
+func getAllElements(root1 *TreeNode, root2 *TreeNode) []int {
+	var result []int
+
+	t1 := iterTreeNodeFrom(root1)
+	t2 := iterTreeNodeFrom(root2)
+
+	e1, ok1 := t1.next()
+	e2, ok2 := t2.next()
+
+	for ok1 && ok2 {
+		for ok1 && ok2 && e1 <= e2 {
+			result = append(result, e1)
+			e1, ok1 = t1.next()
+		}
+		for ok1 && ok2 && e2 <= e1 {
+			result = append(result, e2)
+			e2, ok2 = t2.next()
+		}
+	}
+
+	// feed in the remainder
+	for ok1 {
+		result = append(result, e1)
+		e1, ok1 = t1.next()
+	}
+	for ok2 {
+		result = append(result, e2)
+		e2, ok2 = t2.next()
+	}
+
+	return result
+}
+
+type iterTreeNode struct {
+	elems []*TreeNode
+}
+
+func iterTreeNodeFrom(r *TreeNode) *iterTreeNode {
+	var t iterTreeNode
+	t.feed(r)
+	return &t
+}
+
+func (t *iterTreeNode) feed(r *TreeNode) {
+	for r != nil {
+		t.elems = append(t.elems, r)
+		r = r.Left
+	}
+}
+
+func (t *iterTreeNode) next() (int, bool) {
+	size := len(t.elems)
+	if size == 0 {
+		return 0, false
+	}
+	last := t.elems[size-1]
+	t.elems = t.elems[0 : size-1]
+	t.feed(last.Right)
+	return last.Val, true
+}
+
+/*
+Partition Labels
+A string S of lowercase English letters is given. We want to partition this string into as many parts as possible
+so that each letter appears in at most one part, and return a list of integers representing the size of these parts.
+
+Note:
+
+S will have length in range [1, 500].
+S will consist of lowercase English letters ('a' to 'z') only.
+*/
+
+func partitionLabels(s string) []int {
+	var partitions []int
+
+	charStats := map[byte]int{}
+	for i := 0; i < len(s); i++ {
+		ch := s[i]
+		charStats[ch] = charStats[ch] + 1
+	}
+
+	partitionSize := 1
+	accumulatedChars := map[byte]int{}
+	for i := 0; i < len(s); i++ {
+		ch := s[i]
+		charCount := accumulatedChars[ch] + 1
+		if charCount == charStats[ch] {
+			delete(accumulatedChars, ch)
+		} else {
+			accumulatedChars[ch] = accumulatedChars[ch] + 1
+		}
+
+		if len(accumulatedChars) == 0 {
+			partitions = append(partitions, partitionSize)
+			partitionSize = 0
+		}
+
+		partitionSize++
+	}
+
+	return partitions
+}
+
+/* Fuzzy duplicate finder */
+
+func containsNearbyAlmostDuplicate(nums []int, k int, t int) bool {
+	if len(nums) == 0 {
+		return false
+	}
+
+	for i := 1; i < len(nums); i++ {
+		for j := 0; j < k; j++ {
+			u := i - j - 1
+			if u < 0 {
+				break
+			}
+			if intAbs(nums[i]-nums[u]) <= t {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// intAbs returns the absolute value of x.
+func intAbs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+/*
+Delete Node in a BST
+Given a root node reference of a BST and a key, delete the node with the given key in the BST. Return the root node reference (possibly updated) of the BST.
+
+Basically, the deletion can be divided into two stages:
+
+Search for a node to remove.
+If the node is found, delete the node.
+Note: Time complexity should be O(height of tree).
+*/
+
+func deleteNode(root *TreeNode, key int) *TreeNode {
+	if root == nil {
+		return nil
+	}
+
+	var sentinel TreeNode
+	sentinel.Left = root
+
+	prev := &sentinel.Left
+	n := root
+
+	for n != nil {
+		if key == n.Val {
+			break
+		}
+
+		if key > n.Val {
+			// right tree
+			prev = &n.Right
+			n = n.Right
+			continue
+		}
+
+		prev = &n.Left
+		n = n.Left
+	}
+
+	if n == nil {
+		return root // no key found, return tree as it is
+	}
+
+	// simplest cases - left or right subtree is null
+	if n.Left == nil {
+		*prev = n.Right
+	} else if n.Right == nil {
+		*prev = n.Left
+	} else {
+		// complex case: both subtrees are in place
+		leftmost := treeMinusLeftmost(n.Right, &n.Right)
+		n.Val = leftmost.Val
+	}
+
+	return sentinel.Left
+}
+
+func treeMinusLeftmost(r *TreeNode, prev **TreeNode) *TreeNode {
+	for {
+		if r.Left == nil {
+			*prev = r.Right
+			return r
+		}
+		prev = &r.Left
+		r = r.Left
+	}
+}
+
+func TestRemoval(t *testing.T) {
+	k := deleteNode(
+		&TreeNode{
+			Val:   1,
+			Right: &TreeNode{Val: 2},
+		},
+		2,
+	)
+	t.Logf("k.Val=%d", k.Val)
+}
+
+/*
+Largest Component Size by Common Factor
+Given a non-empty array of unique positive integers A, consider the following graph:
+
+There are A.length nodes, labelled A[0] to A[A.length - 1];
+There is an edge between A[i] and A[j] if and only if A[i] and A[j] share a common factor greater than 1.
+Return the size of the largest connected component in the graph.
+*/
+
+func largestComponentSize(a []int) int {
+	m := map[int]*lcsGroup{}
+	groupIDCounter := 0
+	for _, elem := range a {
+		factors := lcsFactorize(elem)
+		// reuse any existing group
+		var group *lcsGroup
+		for _, factor := range factors {
+			foundGroup, exists := m[factor]
+			if exists {
+				group = foundGroup
+				break
+			}
+		}
+		// create new group if none was found
+		if group == nil {
+			groupIDCounter++
+			group = &lcsGroup{groupID: groupIDCounter, primes: map[int]int{}, numbers: map[int]int{}}
+		}
+		group.numbers[elem] = 0
+		// merge groups
+		for _, factor := range factors {
+			foundGroup, exists := m[factor]
+			if exists {
+				if foundGroup == group {
+					continue // same group
+				}
+
+				// different groups, in this case we need to merge all primes from the found group into the current one
+				for k := range foundGroup.primes {
+					group.primes[k] = 0
+				}
+				for k := range foundGroup.numbers {
+					group.numbers[k] = 0
+				}
+			}
+
+			group.primes[factor] = 0
+		}
+		// finally update all collected primes to point to the found group
+		for k := range group.primes {
+			m[k] = group
+		}
+
+		lcsDBGDump(elem, factors, m)
+	}
+
+	// finally find connection factor
+	max := 0
+	for _, group := range m {
+		connFactor := len(group.numbers)
+		if max < connFactor {
+			max = connFactor
+		}
+	}
+
+	lcsDBGFinalValidation(m, a)
+	return max
+}
+
+const lcsMaxNumber = 100000
+
+var lcsPrimes = []int{
+	2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109,
+	113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239,
+	241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317,
+}
+
+func lcsFactorize(num int) []int {
+	var factors []int
+
+	for _, prime := range lcsPrimes {
+		if num%prime == 0 {
+			factors = append(factors, prime)
+			continue
+		}
+
+		if prime > num {
+			break
+		}
+	}
+
+	if len(factors) == 0 {
+		// this number is a prime itself
+		factors = append(factors, num)
+	}
+
+	return factors
+}
+
+type lcsGroup struct {
+	groupID int
+	primes  map[int]int
+	numbers map[int]int
+}
+
+func lcsDBGDump(elem int, factors []int, m map[int]*lcsGroup) {
+	// debug dump state
+	fmt.Printf("[LCS] factorizing %d -> %v\n", elem, factors)
+	printedGroups := map[int]bool{}
+	for k, v := range m {
+		fmt.Printf("\t%7d -> {groupId: %d, numbers: [", k, v.groupID)
+		if printedGroups[v.groupID] {
+			fmt.Printf("... same as above ...]}\n")
+			continue
+		}
+		printedGroups[v.groupID] = true
+		for k := range v.numbers {
+			fmt.Printf(" %d", k)
+		}
+		fmt.Printf(" ], primes: [")
+		for k := range v.primes {
+			fmt.Printf(" %d", k)
+		}
+		fmt.Printf(" ]}\n")
+	}
+}
+
+func lcsDBGFinalValidation(m map[int]*lcsGroup, a []int) {
+	numToGroupID := map[int]int{}
+	for _, group := range m {
+		for k := range group.numbers {
+			prevGroupID, exists := numToGroupID[k]
+			if exists {
+				if prevGroupID != group.groupID {
+					panic(fmt.Sprintf("Group mismatch: got %d and %d", prevGroupID, group.groupID))
+				}
+				continue
+			}
+			numToGroupID[k] = group.groupID
+		}
+	}
+	for _, num := range a {
+		_, exists := numToGroupID[num]
+		if !exists {
+			panic(fmt.Sprintf("Num %d is missing in the map", num))
+		}
+	}
+	fmt.Printf("Num-to-groupID looks good\n")
+}
+
+func TestLargestComponentSize1(t *testing.T) {
+	//n := largestComponentSize([]int{2, 2 * 3, 7, 7 * 5, 2 * 5, 11, 17})
+	//n := largestComponentSize([]int{2, 3, 6, 7, 4, 12, 21, 39})
+	n := largestComponentSize([]int{2, 7, 522, 526, 535, 26, 944, 35, 519, 45, 48, 567, 266, 68, 74, 591, 81, 86, 602, 93, 610, 621, 111, 114, 629, 641, 131, 651, 142, 659, 669, 161, 674, 163, 180, 187, 190, 194, 195, 206, 207, 218, 737, 229, 240, 757, 770, 260, 778, 270, 272, 785, 274, 290, 291, 292, 296, 810, 816, 314, 829, 833, 841, 349, 880, 369, 147, 897, 387, 390, 905, 405, 406, 407, 414, 416, 417, 425, 938, 429, 432, 926, 959, 960, 449, 963, 966, 929, 457, 463, 981, 985, 79, 487, 1000, 494, 508})
+	t.Logf("[1] n=%d", n)
 }
 
 /*
@@ -1149,6 +1524,57 @@ func intMin(x, y int) int {
 		return x
 	}
 	return y
+}
+
+/*
+Largest Time for Given Digits
+Given an array of 4 digits, return the largest 24 hour time that can be made.
+
+The smallest 24 hour time is 00:00, and the largest is 23:59.  Starting from 00:00,
+a time is larger if more time has elapsed since midnight.
+
+Return the answer as a string of length 5.  If no valid time can be made, return an empty string.
+*/
+
+func largestTimeFromDigits(a []int) string {
+	r := make([]int, 4)
+	max := -1
+
+	for d0 := 0; d0 < 4; d0++ {
+		a0 := a[d0]
+		if a0 > 2 {
+			continue
+		}
+		for d1 := 0; d1 < 4; d1++ {
+			a1 := a[d1]
+			if d1 == d0 || (a0 == 2 && a1 > 3) {
+				continue
+			}
+			for d2 := 0; d2 < 4; d2++ {
+				a2 := a[d2]
+				if d2 == d1 || d2 == d0 || a2 > 5 {
+					continue
+				}
+				for d3 := 0; d3 < 4; d3++ {
+					a3 := a[d3]
+					if d3 == d2 || d3 == d1 || d3 == d0 {
+						continue
+					}
+
+					// finally we have four distinct digit and we can find the hour value
+					totalTimeMinutes := (a0*10+a1)*60 + a2*10 + a3
+					if totalTimeMinutes > max {
+						max = totalTimeMinutes
+						r[0], r[1], r[2], r[3] = a0, a1, a2, a3
+					}
+				}
+			}
+		}
+	}
+	if max < 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d%d:%d%d", r[0], r[1], r[2], r[3])
 }
 
 /*
