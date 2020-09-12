@@ -3,6 +3,7 @@ package miscleetproblems
 import (
 	"fmt"
 	"math"
+	"math/bits"
 	"math/rand"
 	"regexp"
 	"sort"
@@ -13,6 +14,583 @@ import (
 
 func TestSample(t *testing.T) {
 	t.Logf("done; r=%d", rand.Intn(10))
+}
+
+/*
+Combination Sum III
+Find all possible combinations of k numbers that add up to a number n, given that only numbers from 1 to 9 can be used
+and each combination should be a unique set of numbers.
+
+Note:
+
+All numbers will be positive integers.
+The solution set must not contain duplicate combinations.
+*/
+
+func combinationSum3(k int, n int) [][]int {
+	var t combinationSum3Finder
+	t.n = n
+	t.accum = make([]int, k)
+	t.find(0, 1)
+	return t.solutions
+}
+
+type combinationSum3Finder struct {
+	n         int
+	sum       int
+	accum     []int
+	solutions [][]int
+}
+
+func (t *combinationSum3Finder) find(pos int, num int) {
+	if pos == len(t.accum) {
+		if t.sum == t.n {
+			var solution []int
+			solution = append(solution, t.accum...)
+			t.solutions = append(t.solutions, append(solution))
+		}
+		return
+	}
+
+	// [1..10) is the boundary we can try
+	for i := num; i < 10; i++ {
+		nextSum := t.sum + i
+		if nextSum > t.n {
+			return
+		}
+		t.sum = nextSum
+		t.accum[pos] = i
+		t.find(pos+1, i+1)
+		t.sum -= i
+	}
+}
+
+/*
+Maximum Product Subarray
+Given an integer array nums, find the contiguous subarray within an array (containing at least one number)
+which has the largest product.
+*/
+
+func maxProduct(nums []int) int {
+	if len(nums) == 0 {
+		return 1
+	}
+
+	max := nums[0]
+	prevMax := max
+	prevMin := max
+	for i := 1; i < len(nums); i++ {
+		n := nums[i]
+		curMax := intMax(n, intMax(n*prevMin, n*prevMax))
+		curMin := intMin(n, intMin(n*prevMin, n*prevMax))
+		max = intMax(max, curMax)
+		prevMax = curMax
+		prevMin = curMin
+	}
+
+	return max
+}
+
+func TestMaxProduct(t *testing.T) {
+	testCases := map[int][]int{
+		24:  []int{-2, 3, -4},
+		108: []int{-1, -2, -9, -6},
+	}
+
+	for k, v := range testCases {
+		t.Run(fmt.Sprintf("max product for %v", v), func(t *testing.T) {
+			p := maxProduct(v)
+			if p != k {
+				t.Errorf("f(%v) produced %d which doesn't match expected %d product", v, p, k)
+			}
+		})
+	}
+}
+
+/*
+Bulls and Cows
+You are playing the following Bulls and Cows game with your friend: You write down a number and ask your
+friend to guess what the number is. Each time your friend makes a guess, you provide a hint that indicates how many
+digits in said guess match your secret number exactly in both digit and position (called "bulls") and how many digits
+match the secret number but locate in the wrong position (called "cows"). Your friend will use successive guesses
+and hints to eventually derive the secret number.
+
+Write a function to return a hint according to the secret number and friend's guess, use A to indicate the bulls
+and B to indicate the cows.
+
+Please note that both secret number and friend's guess may contain duplicate digits.
+*/
+
+func getHint(secret string, guess string) string {
+	if len(secret) != len(guess) {
+		return ""
+	}
+
+	// 1st pass: detect bulls and compute overall statistics for a secret
+	bulls := 0
+	cowStats := [10]int{}
+	var guessDigits []byte
+	for i := 0; i < len(secret); i++ {
+		ch := secret[i]
+		if ch == guess[i] {
+			bulls++
+			continue
+		}
+
+		secretDigit := secret[i] - '0'
+		cowStats[secretDigit]++
+		guessDigits = append(guessDigits, guess[i]-'0')
+	}
+
+	// 2nd pass: find out cows
+	cows := 0
+	for _, guessDigit := range guessDigits {
+		cowStat := cowStats[guessDigit]
+		if cowStat == 0 {
+			continue
+		}
+		cows++
+		cowStats[guessDigit] = cowStat - 1
+	}
+
+	return fmt.Sprintf("%dA%dB", bulls, cows)
+}
+
+/*
+Compare Version Numbers
+
+Compare two version numbers version1 and version2.
+If version1 > version2 return 1; if version1 < version2 return -1;otherwise return 0.
+
+You may assume that the version strings are non-empty and contain only digits and the . character.
+
+The . character does not represent a decimal point and is used to separate number sequences.
+
+For instance, 2.5 is not "two and a half" or "half way to version three", it is the fifth second-level revision of
+the second first-level revision.
+
+You may assume the default revision number for each level of a version number to be 0. For example, version number 3.4
+has a revision number of 3 and 4 for its first and second level revision number.
+Its third and fourth level revision number are both 0.
+
+Note:
+
+Version strings are composed of numeric strings separated by dots . and this numeric strings may have leading zeroes.
+Version strings do not start or end with dots, and they will not be two consecutive dots.
+*/
+
+func compareVersion(version1 string, version2 string) int {
+	var t1, t2 versionComponents
+	t1.version = version1
+	t2.version = version2
+	for t1.hasNext() || t2.hasNext() {
+		p1 := t1.next()
+		p2 := t2.next()
+		if p1 > p2 {
+			return 1
+		} else if p1 < p2 {
+			return -1
+		}
+	}
+	return 0
+}
+
+type versionComponents struct {
+	version string
+}
+
+func (t *versionComponents) hasNext() bool {
+	return len(t.version) > 0
+}
+
+func (t *versionComponents) next() int {
+	if len(t.version) == 0 {
+		return 0
+	}
+
+	pos := strings.IndexByte(t.version, '.')
+
+	var nextVersion string
+	if pos < 0 {
+		pos = len(t.version)
+		nextVersion = ""
+	} else {
+		nextVersion = t.version[pos+1:]
+	}
+
+	num, err := strconv.Atoi(t.version[0:pos])
+	if err != nil {
+		panic(err)
+	}
+
+	t.version = nextVersion
+
+	return num
+}
+
+/*
+Sum of Root To Leaf Binary Numbers
+Given a binary tree, each node has value 0 or 1.
+Each root-to-leaf path represents a binary number starting with the most significant bit.
+For example, if the path is 0 -> 1 -> 1 -> 0 -> 1, then this could represent 01101 in binary, which is 13.
+
+For all leaves in the tree, consider the numbers represented by the path from the root to that leaf.
+
+Return the sum of these numbers.
+*/
+
+func sumRootToLeaf(root *TreeNode) int {
+	var t sumRootState
+	if root != nil {
+		t.find(root, 0)
+	}
+	return t.sum
+}
+
+type sumRootState struct {
+	sum int
+}
+
+func (t *sumRootState) find(n *TreeNode, num int) {
+	nextNum := num<<1 + n.Val
+	if n.Left == nil && n.Right == nil {
+		t.sum += nextNum
+		return
+	}
+	if n.Left != nil {
+		t.find(n.Left, nextNum)
+	}
+	if n.Right != nil {
+		t.find(n.Right, nextNum)
+	}
+}
+
+/*
+Word Pattern
+Given a pattern and a string str, find if str follows the same pattern.
+
+Here follow means a full match, such that there is a bijection between a letter in pattern and a non-empty word in str.
+*/
+
+func wordPattern(pattern string, str string) bool {
+	wr := map[string]rune{} // word-to-rune
+	rw := map[rune]string{} // rune-to-word
+
+	j := 0
+	for _, curRune := range pattern {
+		// find next word in the given string
+		wordStart := j
+		for ; j < len(str); j++ {
+			if str[j] != ' ' {
+				continue // skip letters within the word
+			}
+			if wordStart != j {
+				break // stop at trailing whitespace
+			}
+			wordStart++ // skip leading whitespace
+		}
+		if wordStart == j {
+			return false // empty word means end of `str`
+		}
+		curWord := str[wordStart:j]
+
+		// find if there is a corresponding word
+		prevRune, runeExists := wr[curWord]
+		prevWord, wordExists := rw[curRune]
+		if runeExists != wordExists {
+			return false
+		}
+
+		if runeExists { //==wordExists both word and rune mapping are in place and they both must match
+			if prevRune != curRune || prevWord != curWord {
+				return false
+			}
+			continue
+		}
+
+		// neither rune nor word exists
+		wr[curWord] = curRune
+		rw[curRune] = curWord
+	}
+	return j == len(str)
+}
+
+func TestWordPattern(t *testing.T) {
+	testCases := map[string]bool{
+		"abba;dog dog dog dog": false,
+		"abba;dog cat cat dog": true,
+	}
+
+	for data, match := range testCases {
+		matchStr := "mismatch"
+		if match {
+			matchStr = "match"
+		}
+		values := strings.Split(data, ";")
+
+		t.Run(data, func(t *testing.T) {
+			if match != wordPattern(values[0], values[1]) {
+				t.Errorf("expect %s for pattern=%s and str=%s", matchStr, values[0], values[1])
+			} else {
+				t.Logf("properly produced %s for pattern=%s and str=%s", matchStr, values[0], values[1])
+			}
+		})
+	}
+
+	if wordPattern("abba", "dog dog dog dog") {
+		t.Errorf("unexpected match")
+	}
+	t.Logf("done; r=%d", rand.Intn(10))
+}
+
+/*
+Image Overlap
+Two images A and B are given, represented as binary, square matrices of the same size.
+(A binary matrix has only 0s and 1s as values.)
+
+We translate one image however we choose (sliding it left, right, up, or down any number of units), and place
+it on top of the other image.
+After, the overlap of this translation is the number of positions that have a 1 in both images.
+(Note also that a translation does not include any kind of rotation.)
+What is the largest possible overlap?
+
+Notes:
+
+1 <= A.length = A[0].length = B.length = B[0].length <= 30
+0 <= A[i][j], B[i][j] <= 1
+*/
+
+func largestOverlap(a [][]int, b [][]int) int {
+	ma := normalizeMatrix(a)
+	mb := normalizeMatrix(b)
+
+	minHeight := intMin(len(a), len(b))
+	minWidth := intMin(len(a[0]), len(b[0]))
+
+	maxBits := 0
+
+	for w := 1 - minWidth; w < minWidth; w++ {
+		for h := 0; h < minHeight; h++ {
+			maxBits = intMax(maxBits, findBitsCount(ma, mb, w, h))
+			maxBits = intMax(maxBits, findBitsCount(mb, ma, w, h))
+		}
+	}
+
+	return maxBits
+}
+
+func findBitsCount(ma, mb []uint32, w, h int) int {
+	bitsCount := 0
+	for rowA := 0; rowA < len(ma); rowA++ {
+		rowB := h + rowA
+		if rowB >= len(mb) {
+			break
+		}
+
+		numA := ma[rowA]
+		if w >= 0 {
+			numA <<= w
+		} else {
+			numA >>= -w
+		}
+		numB := mb[rowB]
+
+		bitsCount += bits.OnesCount32(numA & numB)
+	}
+	return bitsCount
+}
+
+func normalizeMatrix(m [][]int) []uint32 {
+	result := make([]uint32, len(m))
+	for h := 0; h < len(m); h++ {
+		var row uint32
+		r := m[h]
+		for w := 0; w < len(r); w++ {
+			row <<= 1
+			if r[len(r)-w-1] != 0 {
+				row |= 1
+			}
+		}
+		result[h] = row
+	}
+	return result
+}
+
+func TestImageOverlap0(t *testing.T) {
+	n := largestOverlap(
+		[][]int{
+			{0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0},
+			{0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 1},
+			{0, 1, 0, 0, 1},
+		},
+		[][]int{
+			{1, 0, 1, 1, 1},
+			{1, 1, 1, 1, 1},
+			{1, 1, 1, 1, 1},
+			{0, 1, 1, 1, 1},
+			{1, 0, 1, 1, 1},
+		},
+	)
+
+	t.Logf("bits=%d", n)
+	if n != 5 {
+		t.Errorf("unexpected overlap: %d", n)
+	}
+}
+
+func TestImageOverlap(t *testing.T) {
+
+	t.Run("5d 5 bits overlap", func(t *testing.T) {
+		n := largestOverlap(
+			[][]int{
+				{0, 0, 0, 0, 0},
+				{0, 1, 0, 0, 0},
+				{0, 0, 1, 0, 0},
+				{0, 0, 0, 0, 1},
+				{0, 1, 0, 0, 1},
+			},
+			[][]int{
+				{1, 0, 1, 1, 1},
+				{1, 1, 1, 1, 1},
+				{1, 1, 1, 1, 1},
+				{0, 1, 1, 1, 1},
+				{1, 0, 1, 1, 1},
+			},
+		)
+
+		t.Logf("bits=%d", n)
+		if n != 5 {
+			t.Errorf("unexpected overlap: %d", n)
+		}
+	})
+
+	t.Run("3d 3 bits overlap", func(t *testing.T) {
+		n := largestOverlap(
+			[][]int{
+				{1, 1, 0},
+				{0, 1, 0},
+				{0, 1, 0},
+			},
+			[][]int{
+				{0, 0, 0},
+				{0, 1, 1},
+				{0, 0, 1},
+			},
+		)
+
+		t.Logf("bits=%d", n)
+		if n != 3 {
+			t.Errorf("unexpected overlap: %d", n)
+		}
+	})
+
+	t.Run("2d one bit overlap", func(t *testing.T) {
+		n := largestOverlap(
+			[][]int{
+				{1, 0},
+				{0, 1},
+			},
+			[][]int{
+				{0, 1},
+				{1, 0},
+			},
+		)
+
+		t.Logf("bits=%d", n)
+		if n != 1 {
+			t.Errorf("unexpected overlap: %d", n)
+		}
+	})
+
+	t.Run("3d - 3 bit overlap", func(t *testing.T) {
+		n := largestOverlap(
+			[][]int{
+				{1, 1, 0},
+				{0, 1, 0},
+				{0, 1, 0},
+			},
+			[][]int{
+				{0, 0, 0},
+				{0, 1, 1},
+				{0, 0, 1},
+			},
+		)
+
+		t.Logf("bits=%d", n)
+		if n != 3 {
+			t.Errorf("unexpected overlap: %d", n)
+		}
+	})
+
+	t.Run("3d - 3 bit overlap II", func(t *testing.T) {
+		n := largestOverlap(
+			[][]int{
+				{1, 0, 1},
+				{0, 1, 0},
+				{1, 0, 1},
+			},
+			[][]int{
+				{0, 1, 0},
+				{1, 1, 1},
+				{0, 1, 0},
+			},
+		)
+
+		t.Logf("bits=%d", n)
+		if n != 3 {
+			t.Errorf("unexpected overlap: %d", n)
+		}
+	})
+
+	t.Run("5d - 4 bits overlap", func(t *testing.T) {
+		n := largestOverlap(
+			[][]int{
+				{0, 0, 0, 0, 0},
+				{0, 1, 0, 0, 0},
+				{0, 0, 1, 0, 0},
+				{0, 0, 0, 0, 1},
+				{0, 1, 0, 0, 1},
+			},
+			[][]int{
+				{1, 0, 1, 1, 1},
+				{1, 1, 1, 1, 1},
+				{1, 1, 1, 1, 1},
+				{0, 1, 1, 1, 1},
+				{1, 0, 1, 1, 1},
+			},
+		)
+
+		t.Logf("bits=%d", n)
+		if n != 5 {
+			t.Errorf("unexpected overlap: %d", n)
+		}
+	})
+
+	t.Run("5d - 5 bit overlap", func(t *testing.T) {
+		n := largestOverlap(
+			[][]int{
+				{0, 0, 0, 0, 0},
+				{0, 0, 0, 1, 0},
+				{0, 0, 1, 0, 0},
+				{1, 0, 0, 0, 0},
+				{1, 0, 0, 1, 0},
+			},
+			[][]int{
+				{1, 1, 1, 0, 1},
+				{1, 1, 1, 1, 1},
+				{1, 1, 1, 1, 1},
+				{1, 1, 1, 1, 0},
+				{1, 1, 1, 0, 1},
+			},
+		)
+
+		t.Logf("bits=%d", n)
+		if n != 5 {
+			t.Errorf("unexpected overlap: %d", n)
+		}
+	})
 }
 
 /*
@@ -942,13 +1520,6 @@ func maxProfit(prices []int) int {
 	return maxProfit
 }
 
-func intMax(x, y int) int {
-	if x > y {
-		return x
-	}
-	return y
-}
-
 func TestProfit1(t *testing.T) {
 	t.Logf("t(0)=%d", maxProfit([]int{3, 3, 5, 0, 0, 3, 1, 4}))
 }
@@ -1517,13 +2088,6 @@ func mincostTickets(days []int, costs []int) int {
 		}
 	}
 	return dp[0]
-}
-
-func intMin(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
 }
 
 /*
