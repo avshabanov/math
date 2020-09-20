@@ -13,3 +13,11 @@ func intMax(x, y int) int {
 	}
 	return y
 }
+
+// intAbs returns the absolute value of x.
+func intAbs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}

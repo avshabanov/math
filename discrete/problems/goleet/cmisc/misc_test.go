@@ -13,7 +13,426 @@ import (
 )
 
 func TestSample(t *testing.T) {
-	t.Logf("done; r=%d", rand.Intn(10))
+	t.Logf("result=%d", rand.Intn(10))
+}
+
+/*
+Unique Paths III
+On a 2-dimensional grid, there are 4 types of squares:
+
+1 represents the starting square.  There is exactly one starting square.
+2 represents the ending square.  There is exactly one ending square.
+0 represents empty squares we can walk over.
+-1 represents obstacles that we cannot walk over.
+Return the number of 4-directional walks from the starting square to the ending square, that walk over every
+non-obstacle square exactly once.
+
+1 <= grid.length * grid[0].length <= 20
+*/
+
+func uniquePathsIII(grid [][]int) int {
+	if len(grid) == 0 || len(grid[0]) == 0 {
+		return 0 // empty grid
+	}
+	t := uniquePaths3Iterator{grid: grid, width: len(grid[0]), height: len(grid)}
+
+	startx, starty := -1, -1
+
+	// find start square and count of passable squares
+	for y := 0; y < t.height; y++ {
+		for x := 0; x < t.width; x++ {
+			switch grid[y][x] {
+			case 1:
+				startx, starty = x, y   // found start square
+				t.passableSquareCount++ // initial square IS passable
+			case 0:
+				t.passableSquareCount++ // 0-square is passable too
+			}
+		}
+	}
+
+	t.iter(startx, starty)
+
+	return t.result
+}
+
+type uniquePaths3Iterator struct {
+	grid                [][]int
+	width               int
+	height              int
+	passableSquareCount int
+	result              int
+}
+
+func (t *uniquePaths3Iterator) iter(x, y int) {
+	if x < 0 || x >= t.width || y < 0 || y >= t.height {
+		return
+	}
+
+	square := t.grid[y][x]
+	switch square {
+	case 2:
+		if t.passableSquareCount == 0 {
+			t.result++ // found a destination
+		}
+		return
+	case -1:
+		return // impassable
+	default: // fall through
+	}
+
+	t.grid[y][x] = -1       // mark this square as impassable
+	t.passableSquareCount-- // decrement number of passable squares as we mark this one as occupied
+	t.iter(x-1, y)
+	t.iter(x, y-1)
+	t.iter(x+1, y)
+	t.iter(x, y+1)
+	t.passableSquareCount++ // restore number of passable squares
+	t.grid[y][x] = square   // restore square
+}
+
+/*
+Sequential Digits
+An integer has sequential digits if and only if each digit in the number is one more than the previous digit.
+
+Return a sorted list of all the integers in the range [low, high] inclusive that have sequential digits.
+*/
+
+func sequentialDigits(low int, high int) []int {
+	dit := digitsIterator{low: low, high: high, digits: make([]int, 10)}
+	dit.inc(0)
+	sort.Ints(dit.sink)
+	return dit.sink
+}
+
+type digitsIterator struct {
+	sink        []int
+	digits      []int
+	composedNum int
+	low         int
+	high        int
+}
+
+func (t *digitsIterator) inc(pos int) {
+	if pos == 0 {
+		for i := 1; i <= 8; i++ {
+			t.composedNum = i
+			t.digits[0] = i
+			t.inc(1)
+		}
+		return
+	}
+
+	prev := t.digits[pos-1]
+	if prev == 9 {
+		return
+	}
+
+	prevComposedNum := t.composedNum
+	newDigit := prev + 1
+	t.digits[pos] = newDigit
+	t.composedNum = prevComposedNum*10 + newDigit
+	if t.composedNum < t.low {
+		t.inc(pos + 1)
+	} else if t.composedNum <= t.high {
+		// this number is actually within the permitted bounds, include it
+		t.sink = append(t.sink, t.composedNum)
+		t.inc(pos + 1) // we may have another number
+	}
+	t.composedNum = prevComposedNum // reset to a previous value
+}
+
+func TestSequentialDigits0(t *testing.T) {
+	t.Logf("result=%v", sequentialDigits(100, 300))
+}
+
+/*
+Best Time to Buy and Sell Stock
+Say you have an array for which the ith element is the price of a given stock on day i.
+
+If you were only permitted to complete at most one transaction (i.e., buy one and sell one share of the stock),
+design an algorithm to find the maximum profit.
+
+Note that you cannot sell a stock before you buy one.
+*/
+
+func maxProfitOneTransaction(prices []int) int {
+	n := len(prices)
+	if n == 0 {
+		return 0
+	}
+
+	// find maximums after each element in the array
+	maxAfter := make([]int, n)
+	prevMax := 0
+	for i := 0; i < n; i++ {
+		maxAfter[n-i-1] = prevMax
+		prevMax = intMax(prevMax, prices[n-i-1])
+	}
+
+	maxProfit := 0
+	for i, price := range prices {
+		maxProfit = intMax(maxProfit, maxAfter[i]-price)
+	}
+	return maxProfit
+}
+
+func maxProfitOneTransactionAlt(prices []int) int {
+	// find maximums after each element in the array
+	var minPrice, maxProfit int
+	for i := 0; i < len(prices); i++ {
+		if i == 0 || prices[i] < minPrice {
+			minPrice = prices[i]
+		} else if prices[i]-minPrice > maxProfit {
+			maxProfit = prices[i] - minPrice
+		}
+	}
+	return maxProfit
+}
+
+func TestMaxProfitOneTransactionBehaviorMatch(t *testing.T) {
+	funcs := map[string]func([]int) int{
+		"maxProfitOneTransaction":    maxProfitOneTransaction,
+		"maxProfitOneTransactionAlt": maxProfitOneTransactionAlt,
+	}
+
+	testCases := map[int][]int{
+		5: []int{7, 1, 5, 3, 6, 4},
+		0: []int{7, 6, 4, 3, 1},
+	}
+
+	for funcName, f := range funcs {
+		for expected, prices := range testCases {
+			t.Run(fmt.Sprintf("%s: %v->%d", funcName, prices, expected), func(t *testing.T) {
+				actual := f(prices)
+				if actual != expected {
+					t.Errorf("Got unexpected max profit: %d", actual)
+				}
+			})
+		}
+	}
+}
+
+/*
+Robot Bounded In Circle
+On an infinite plane, a robot initially stands at (0, 0) and faces north.  The robot can receive one of three instructions:
+
+"G": go straight 1 unit;
+"L": turn 90 degrees to the left;
+"R": turn 90 degress to the right.
+The robot performs the instructions given in order, and repeats them forever.
+
+Return true if and only if there exists a circle in the plane such that the robot never leaves the circle.
+*/
+
+func isRobotBounded(instructions string) bool {
+	var x, y, directionIndex int
+	directions := [][]int{
+		[]int{1, 0},
+		[]int{0, 1},
+		[]int{-1, 0},
+		[]int{0, -1},
+	}
+
+	// compute coordinates for each step
+	for i := 0; i < len(instructions); i++ {
+		insn := instructions[i]
+		switch insn {
+		case 'R':
+			directionIndex = (directionIndex + len(directions) - 1) % len(directions)
+		case 'L':
+			directionIndex = (directionIndex + 1) % len(directions)
+		case 'G':
+			d := directions[directionIndex]
+			kx, ky := d[0], d[1]
+			x, y = x+kx, y+ky
+		default:
+			panic("unknown command")
+		}
+	}
+	if x == 0 && y == 0 {
+		return true
+	}
+
+	// circle bounded can happen IFF robot returned to the same point or changes movement vector
+	return directionIndex != 0 || (x == 0 && y == 0)
+}
+
+func TestRobotBounded(t *testing.T) {
+	testCases := map[string]bool{
+		"GLLG":   true,
+		"GGLLGG": true,
+		"GGLRG":  false,
+		"GRLGG":  false,
+		"GLGG":   true,
+		"GL":     true,
+		"GR":     true,
+	}
+
+	for dir, pass := range testCases {
+		t.Run(fmt.Sprintf("%s -> %t", dir, pass), func(t *testing.T) {
+			actual := isRobotBounded(dir)
+			if pass != actual {
+				t.Errorf("unexpected result: %t", actual)
+			}
+		})
+	}
+}
+
+/*
+Maximum XOR of Two Numbers in an Array
+Given a non-empty array of numbers, a0, a1, a2, … , an-1, where 0 ≤ ai < 231.
+
+Find the maximum result of ai XOR aj, where 0 ≤ i, j < n.
+
+Could you do this in O(n) runtime?
+*/
+
+// TODO: O(n) runtime, O(n) memory solution - use prefix tree and two passes
+
+// findMaximumXORBruteforce has O(n^2) runtime, O(1) memory
+func findMaximumXORBruteforce(nums []int) int {
+	max := 0
+	for i, lhs := range nums {
+		for j := i + 1; j < len(nums); j++ {
+			rhs := nums[j]
+			max = intMax(max, lhs^rhs)
+		}
+	}
+	return max
+}
+
+func TestMaxXOR1(t *testing.T) {
+	testCases := map[int][]int{
+		28: []int{3, 10, 5, 25, 2, 8},
+	}
+
+	maxXORFuncs := map[string]func([]int) int{
+		"findMaximumXORBruteforce": findMaximumXORBruteforce,
+	}
+
+	for funcName, maxXORFunc := range maxXORFuncs {
+		for k, v := range testCases {
+			t.Run(fmt.Sprintf("Test case for %s(%v)=%d", funcName, v, k), func(t *testing.T) {
+				actual := maxXORFunc(v)
+				if k != actual {
+					t.Errorf("unexpected result: %d", actual)
+				}
+			})
+		}
+	}
+}
+
+/*
+Length of Last Word
+Given a string s consists of upper/lower-case alphabets and empty space characters ' ', return the length of last word
+(last word means the last appearing word if we loop from left to right) in the string.
+
+If the last word does not exist, return 0.
+
+Note: A word is defined as a maximal substring consisting of non-space characters only.
+*/
+
+func lengthOfLastWord(s string) int {
+	var lastLen int
+	for i := 0; i < len(s); i++ {
+		j := i
+		for ; j < len(s); j++ {
+			if s[j] == ' ' {
+				break
+			}
+		}
+		if j > i {
+			lastLen = j - i
+			i = j
+		}
+	}
+	return lastLen
+}
+
+func TestLastLen(t *testing.T) {
+	lengthOfLastWord("abc df")
+}
+
+/*
+https://leetcode.com/explore/challenge/card/september-leetcoding-challenge/555/week-2-september-8th-september-14th/3459/
+*/
+
+func rob(nums []int) int {
+	var m0, m1 int
+	for i := 0; i < len(nums); i++ {
+		m0, m1 = intMax(m0, m1), intMax(m1, m0+nums[i])
+	}
+	return m1
+}
+
+/*
+Insert Interval
+Given a set of non-overlapping intervals, insert a new interval into the intervals (merge if necessary).
+
+You may assume that the intervals were initially sorted according to their start times.
+*/
+
+func insert(intervals [][]int, newInterval []int) [][]int {
+	var result [][]int
+
+	intersectIndex := 0
+	for ; intersectIndex < len(intervals); intersectIndex++ {
+		interval := intervals[intersectIndex]
+		if interval[1] >= newInterval[0] {
+			break
+		}
+		result = append(result, interval)
+	}
+
+	// no overlap, this should be the last interval
+	if intersectIndex == len(intervals) {
+		result = append(result, newInterval)
+		return result
+	}
+
+	// compute overlap
+	leftIntersectIndex, rightIntersectIndex := newInterval[0], newInterval[1]
+	for ; intersectIndex < len(intervals); intersectIndex++ {
+		intersectInterval := intervals[intersectIndex]
+		if newInterval[1] < intersectInterval[0] {
+			break
+		}
+		leftIntersectIndex = intMin(leftIntersectIndex, intersectInterval[0])
+		rightIntersectIndex = intMax(rightIntersectIndex, intersectInterval[1])
+	}
+	result = append(result, []int{leftIntersectIndex, rightIntersectIndex})
+
+	// add remaining
+	for i := intersectIndex; i < len(intervals); i++ {
+		result = append(result, intervals[i])
+	}
+
+	return result
+}
+
+func TestIntervals1(t *testing.T) {
+	t.Run("singular interval", func(t *testing.T) {
+		result := insert(
+			[][]int{
+				[]int{1, 5},
+			},
+			[]int{2, 3},
+		)
+		t.Logf("r = %v", result)
+	})
+}
+
+func TestIntervals2(t *testing.T) {
+	t.Run("ext first", func(t *testing.T) {
+		result := insert(
+			[][]int{
+				[]int{1, 3}, []int{6, 9},
+			},
+			[]int{2, 5},
+		)
+		t.Logf("r = %v", result)
+	})
 }
 
 /*
@@ -722,14 +1141,6 @@ func containsNearbyAlmostDuplicate(nums []int, k int, t int) bool {
 		}
 	}
 	return false
-}
-
-// intAbs returns the absolute value of x.
-func intAbs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }
 
 /*
@@ -1973,12 +2384,6 @@ The path does not need to start or end at the root or a leaf, but it must go dow
 
 The tree has no more than 1,000 nodes and the values are in the range -1,000,000 to 1,000,000.
 */
-
-type TreeNode struct {
-	Val   int
-	Left  *TreeNode
-	Right *TreeNode
-}
 
 func pathSum(root *TreeNode, sum int) int {
 	pf := pathSumFinder{targetSum: sum, intermediateSums: map[int]int{}}
