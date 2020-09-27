@@ -17,6 +17,424 @@ func TestSample(t *testing.T) {
 }
 
 /*
+Evaluate Division
+You are given equations in the format A / B = k, where A and B are variables represented as strings, and k is a
+real number (floating-point number). Given some queries, return the answers. If the answer does not exist, return -1.0.
+
+The input is always valid. You may assume that evaluating the queries will result in no division by zero and there
+is no contradiction.
+
+Example 1:
+
+Input: equations = [["a","b"],["b","c"]], values = [2.0,3.0], queries = [["a","c"],["b","a"],["a","e"],["a","a"],["x","x"]]
+Output: [6.00000,0.50000,-1.00000,1.00000,-1.00000]
+Explanation:
+Given: a / b = 2.0, b / c = 3.0
+queries are: a / c = ?, b / a = ?, a / e = ?, a / a = ?, x / x = ?
+return: [6.0, 0.5, -1.0, 1.0, -1.0 ]
+Example 2:
+
+Input: equations = [["a","b"],["b","c"],["bc","cd"]], values = [1.5,2.5,5.0], queries = [["a","c"],["c","b"],["bc","cd"],["cd","bc"]]
+Output: [3.75000,0.40000,5.00000,0.20000]
+Example 3:
+
+Input: equations = [["a","b"]], values = [0.5], queries = [["a","b"],["b","a"],["a","c"],["x","y"]]
+Output: [0.50000,2.00000,-1.00000,-1.00000]
+
+
+Constraints:
+
+1 <= equations.length <= 20
+equations[i].length == 2
+1 <= equations[i][0], equations[i][1] <= 5
+values.length == equations.length
+0.0 < values[i] <= 20.0
+1 <= queries.length <= 20
+queries[i].length == 2
+1 <= queries[i][0], queries[i][1] <= 5
+equations[i][0], equations[i][1], queries[i][0], queries[i][1] consist of lower case English letters and digits
+*/
+
+func calcEquation(equations [][]string, values []float64, queries [][]string) []float64 {
+	// transform equations + values into a map mapping dividend to a map of all corresponding divisors and values
+	m := map[string]map[string]float64{}
+	for i, eq := range equations {
+		putEquationValue(m, eq[0], eq[1], values[i])
+		putEquationValue(m, eq[1], eq[0], 1.0/values[i])
+	}
+
+	result := make([]float64, len(queries))
+	c := calcEquationLookup{eqm: m, markers: map[string]bool{}}
+	for i, query := range queries {
+		if query[0] == query[1] {
+			_, exists := c.eqm[query[0]]
+			if exists {
+				result[i] = 1
+			} else {
+				result[i] = -1
+			}
+			continue
+		}
+
+		c.dividendVar = query[1]
+		if c.scan(query[0], 1.0) {
+			result[i] = 1.0 / c.result
+			continue
+		}
+
+		// neither direct nor inverted value has been found
+		result[i] = -1
+	}
+	return result
+}
+
+func putEquationValue(m map[string]map[string]float64, dividend, divisor string, value float64) {
+	div, exists := m[dividend]
+	if !exists {
+		div = map[string]float64{}
+		m[dividend] = div
+	}
+	div[divisor] = value
+}
+
+type calcEquationLookup struct {
+	eqm         map[string]map[string]float64
+	markers     map[string]bool
+	dividendVar string
+	result      float64
+}
+
+func (t *calcEquationLookup) scan(div string, cur float64) bool {
+	if t.markers[div] {
+		return false
+	}
+
+	d, exists := t.eqm[div]
+	if !exists {
+		t.result = -1
+		return true // such variable doesn't exist
+	}
+
+	// quick scan for desired opposing variable
+	v, exists := d[t.dividendVar]
+	if exists {
+		// we found opposing value
+		t.result = cur / v
+		return true
+	}
+
+	// continue search
+	found := false
+	t.markers[div] = true
+	for div2, val2 := range d {
+		found = t.scan(div2, cur/val2)
+		if found {
+			break // stop search if we found desired variable
+		}
+	}
+	t.markers[div] = false
+
+	return found
+}
+
+func TestCalcEquation1(t *testing.T) {
+	t.Logf("result=%v", calcEquation(
+		[][]string{
+			{"a", "b"},
+		},
+		[]float64{
+			0.5,
+		},
+		[][]string{
+			{"a", "b"},
+			{"b", "a"},
+			{"a", "c"},
+			{"b", "c"},
+			{"x", "y"},
+		}))
+}
+
+func TestCalcEquation2(t *testing.T) {
+	t.Logf("result=%v", calcEquation(
+		[][]string{
+			{"a", "e"},
+			{"b", "e"},
+		},
+		[]float64{
+			4.0,
+			3.0,
+		},
+		[][]string{
+			{"a", "b"},
+			{"e", "e"},
+		}))
+}
+
+/*
+Teemo Attacking
+In LOL world, there is a hero called Teemo and his attacking can make his enemy Ashe be in poisoned condition.
+Now, given the Teemo's attacking ascending time series towards Ashe and the poisoning time duration per
+Teemo's attacking, you need to output the total time that Ashe is in poisoned condition.
+
+You may assume that Teemo attacks at the very beginning of a specific time point, and makes
+Ashe be in poisoned condition immediately.
+*/
+
+func findPoisonedDuration(timeSeries []int, duration int) int {
+	result, begin, end := 0, -1, -1
+	for _, time := range timeSeries {
+		nextEnd := time + duration
+		if time > end {
+			// new duration segment
+			result += (end - begin)
+			begin, end = time, nextEnd
+			continue
+		}
+
+		// duration segment continues
+		end = nextEnd
+	}
+	result += (end - begin)
+	return result
+}
+
+/*
+Largest Number
+
+Given a list of non negative integers, arrange them such that they form the largest number.
+*/
+
+func largestNumber(nums []int) string {
+	strs := make([]string, len(nums))
+	strlen := 0
+	for i, num := range nums {
+		strs[i] = strconv.Itoa(num)
+		strlen += len(strs[i])
+	}
+	sort.Sort(numStrSlice(strs))
+	var buf strings.Builder
+	buf.Grow(strlen)
+	for _, str := range strs {
+		buf.WriteString(str)
+	}
+
+	result := buf.String()
+	if len(result) > 0 && result[0] == '0' {
+		return "0" // prune 0-only numbers
+	}
+	return result
+}
+
+type numStrSlice []string
+
+func (p numStrSlice) Len() int { return len(p) }
+func (p numStrSlice) Less(i, j int) bool {
+	lhs, rhs := p[i]+p[j], p[j]+p[i] // a key part of this algorithm: comparing concatenations of these numbers
+	return lhs > rhs
+}
+func (p numStrSlice) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+
+func TestLargestNumber1(t *testing.T) {
+	t.Logf("result=%s", largestNumber([]int{3, 30, 34, 5, 9}))
+}
+
+func TestLargestNumber2(t *testing.T) {
+	t.Logf("result=%s", largestNumber([]int{824, 938, 1399, 5607, 6973, 5703, 9609, 4398, 8247}))
+}
+
+/*
+Find the Difference
+Given two strings s and t which consist of only lowercase letters.
+
+String t is generated by random shuffling string s and then add one more letter at a random position.
+
+Find the letter that was added in t.
+*/
+
+func findTheDifference(s string, t string) byte {
+	sarr := freqLowercaseChars(s)
+	tarr := freqLowercaseChars(t)
+
+	var diffChar byte
+
+	for i, sfreq := range sarr {
+		tfreq := tarr[i]
+		if sfreq != tfreq {
+			diffChar = byte(i) + 'a'
+			break
+		}
+	}
+
+	return diffChar
+}
+
+func freqLowercaseChars(str string) []int {
+	arr := make([]int, 26)
+	for i := 0; i < len(str); i++ {
+		idx := str[i] - 'a'
+		arr[idx]++
+	}
+	return arr
+}
+
+func TestFindTheDifference(t *testing.T) {
+	bch := findTheDifference("abcd", "abcde")
+	t.Logf("Diff ch: %c", bch)
+}
+
+/*
+Gas Station
+There are N gas stations along a circular route, where the amount of gas at station i is gas[i].
+
+You have a car with an unlimited gas tank and it costs cost[i] of gas to travel from station i to its next station (i+1).
+You begin the journey with an empty tank at one of the gas stations.
+
+Return the starting gas station's index if you can travel around the circuit once in the clockwise direction,
+otherwise return -1.
+
+Note:
+
+If there exists a solution, it is guaranteed to be unique.
+Both input arrays are non-empty and have the same length.
+Each element in the input arrays is a non-negative integer.
+
+Sample:
+gas  	= [	1,	2,	3,	4,	5	]
+cost 	= [	3,	4,	5,	1,	2	]
+
+deltas=	[	-2,	-2, -2, 3,  3	]
+					-2	-4	-6	-3	0
+
+start
+gas		=	[	0,	-2,	]
+
+
+Sample 1':
+
+gas  	= [	5,	1,	2,	3,	4	]
+cost 	= [	2,	3,	4,	5,	1	]
+
+deltas=	[	3,	-2, -2, -2,  3	]
+
+Sample 2:
+gas  	= [	2,	3,	4	]
+cost 	= [	3,	4,	3	]
+
+deltas=	[	-1,	-1,	1	]
+*/
+
+// O(n) runtime, O(1) memory
+func canCompleteCircuit(gas []int, cost []int) int {
+	deltaSum, minDeltaSumIndex, minDeltaSum := 0, -1, math.MaxInt32
+	for i := 0; i < len(gas); i++ {
+		deltaSum += gas[i] - cost[i]
+		if minDeltaSum > deltaSum {
+			minDeltaSum = deltaSum
+			minDeltaSumIndex = i
+		}
+	}
+	if deltaSum < 0 || minDeltaSumIndex < 0 {
+		return -1
+	}
+
+	return (minDeltaSumIndex + 1) % len(gas)
+}
+
+/*
+Majority Element II
+Given an integer array of size n, find all elements that appear more than ⌊ n/3 ⌋ times.
+
+Note: The algorithm should run in linear time and in O(1) space.
+*/
+
+func majorityElement(nums []int) []int {
+	if len(nums) == 0 {
+		return nil
+	}
+
+	// solution is a variation of `Boyer-Moore Vote` algorithm
+	candidates := make([]int, 2)
+	candidateCounts := []int{-1, -1}
+
+	for _, num := range nums {
+		// try assign this number to either candidate
+		for i, candidate := range candidates {
+			if candidateCounts[i] < 0 {
+				candidates[i] = num
+				candidateCounts[i] = 1
+				goto EndInner // we didn't have candidate for this number
+			} else if num == candidate {
+				candidateCounts[i]++
+				goto EndInner // we've found a match
+			}
+		}
+
+		// at this point we tried both candidates and couldn't find a match,
+		// try putting this number in place of either candidate
+		for i := range candidateCounts {
+			if candidateCounts[i] == 0 {
+				candidates[i] = num
+				candidateCounts[i] = 1
+				goto EndInner // we've found a place for a new candidate, so no need to decrement the other one
+			}
+		}
+
+		// neither candidate had zero-count, so decrement both
+		for i := range candidates {
+			candidateCounts[i]--
+		}
+
+	EndInner:
+	}
+
+	// now compute the actual counts for both candidates
+	for i, count := range candidateCounts {
+		if count >= 0 {
+			candidateCounts[i] = 0
+		}
+	}
+
+	for _, num := range nums {
+		for i, candidate := range candidates {
+			if candidateCounts[i] < 0 {
+				continue
+			}
+			if num == candidate {
+				candidateCounts[i]++
+			}
+		}
+	}
+
+	// now decide what we're going to have in the candidates list
+	pruneCount := len(nums) / 3
+	start, end := 0, 2
+	if candidateCounts[0] <= pruneCount {
+		start = 1
+	}
+	if candidateCounts[1] <= pruneCount {
+		end = 1
+	}
+
+	return candidates[start:end]
+}
+
+func TestMajorityElements(t *testing.T) {
+	testCases := [][]int{
+		{1, 2, 3, 2},
+		{1, 1, 1, 2, 3, 4, 5, 6},
+		{3, 2, 3},
+		{1, 1, 1, 3, 3, 2, 2, 2},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("majority elements for %v", tc), func(t *testing.T) {
+			m := majorityElement(tc)
+			t.Logf("majority for %v is %v", tc, m)
+		})
+	}
+}
+
+/*
 Unique Paths III
 On a 2-dimensional grid, there are 4 types of squares:
 
