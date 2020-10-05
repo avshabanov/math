@@ -17,6 +17,652 @@ func TestSample(t *testing.T) {
 }
 
 /*
+Remove Covered Intervals
+Given a list of intervals, remove all intervals that are covered by another interval in the list.
+
+Interval [a,b) is covered by interval [c,d) if and only if c <= a and b <= d.
+
+After doing so, return the number of remaining intervals.
+
+
+
+Example 1:
+
+Input: intervals = [[1,4],[3,6],[2,8]]
+Output: 2
+Explanation: Interval [3,6] is covered by [2,8], therefore it is removed.
+Example 2:
+
+Input: intervals = [[1,4],[2,3]]
+Output: 1
+Example 3:
+
+Input: intervals = [[0,10],[5,12]]
+Output: 2
+Example 4:
+
+Input: intervals = [[3,10],[4,10],[5,11]]
+Output: 2
+Example 5:
+
+Input: intervals = [[1,2],[1,4],[3,4]]
+Output: 1
+
+
+Constraints:
+
+1 <= intervals.length <= 1000
+intervals[i].length == 2
+0 <= intervals[i][0] < intervals[i][1] <= 10^5
+All the intervals are unique.
+*/
+
+type coveredIntervals [][]int
+
+func (p coveredIntervals) Len() int { return len(p) }
+func (p coveredIntervals) Less(i, j int) bool {
+	lhs, rhs := p[i], p[j]
+	if lhs[0] < rhs[0] {
+		return true
+	} else if lhs[0] == rhs[0] {
+		if lhs[1] > rhs[1] {
+			return true
+		}
+	}
+	return false
+}
+func (p coveredIntervals) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+
+func removeCoveredIntervals(intervals [][]int) int {
+	sort.Sort(coveredIntervals(intervals))
+	farthestY := -1
+	removed := 0
+	for _, i := range intervals {
+		//fmt.Printf("[%d, %d], ", i[0], i[1])
+		if farthestY >= i[1] {
+			removed++
+			continue
+		}
+		farthestY = i[1]
+	}
+	//fmt.Println()
+	return len(intervals) - removed
+}
+
+func TestCoveredIntervals(t *testing.T) {
+	t.Logf("result=%d", removeCoveredIntervals([][]int{
+		{3, 6}, {1, 4}, {2, 5}, {2, 8},
+	}))
+}
+
+func TestCoveredIntervals1(t *testing.T) {
+	testCases := []struct {
+		intervals [][]int
+		expected  int
+	}{
+		{intervals: [][]int{{3, 6}, {1, 4}, {2, 5}, {2, 8}}, expected: 2},
+		{intervals: [][]int{{1, 4}, {3, 6}, {2, 8}}, expected: 2},
+		{intervals: [][]int{{1, 4}, {2, 3}}, expected: 1},
+		{intervals: [][]int{{0, 10}, {5, 12}}, expected: 2},
+		{intervals: [][]int{{5, 8}, {0, 10}}, expected: 1},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("removeCoveredIntervals(%v) -> %d", tc.intervals, tc.expected), func(t *testing.T) {
+			actual := removeCoveredIntervals(tc.intervals)
+			if actual != tc.expected {
+				t.Errorf("actual=%d, expected=%d", actual, tc.expected)
+			}
+		})
+	}
+}
+
+/*
+K-diff Pairs in an Array
+Given an array of integers nums and an integer k, return the number of unique k-diff pairs in the array.
+
+A k-diff pair is an integer pair (nums[i], nums[j]), where the following are true:
+
+0 <= i, j < nums.length
+i != j
+a <= b
+b - a == k
+
+
+Example 1:
+
+Input: nums = [3,1,4,1,5], k = 2
+Output: 2
+Explanation: There are two 2-diff pairs in the array, (1, 3) and (3, 5).
+Although we have two 1s in the input, we should only return the number of unique pairs.
+Example 2:
+
+Input: nums = [1,2,3,4,5], k = 1
+Output: 4
+Explanation: There are four 1-diff pairs in the array, (1, 2), (2, 3), (3, 4) and (4, 5).
+Example 3:
+
+Input: nums = [1,3,1,5,4], k = 0
+Output: 1
+Explanation: There is one 0-diff pair in the array, (1, 1).
+Example 4:
+
+Input: nums = [1,2,4,4,3,3,0,9,2,3], k = 3
+Output: 2
+Example 5:
+
+Input: nums = [-1,-2,-3], k = 1
+Output: 2
+
+
+Constraints:
+
+1 <= nums.length <= 104
+-107 <= nums[i] <= 107
+0 <= k <= 107
+*/
+
+func findPairs(nums []int, k int) int {
+	m := map[int]int{}
+	for _, num := range nums {
+		m[num]++
+	}
+
+	result := 0
+	for n := range m {
+		prev := n - k
+		count := m[prev]
+		if k == 0 {
+			if count > 1 {
+				result++
+			}
+			continue
+		}
+
+		if count > 0 {
+			result++
+		}
+	}
+
+	return result
+}
+
+func TestFindPairs(t *testing.T) {
+	t.Logf("result=%d", findPairs([]int{3, 1, 4, 1, 5}, 2))
+}
+
+/*
+Combination Sum
+Given an array of distinct integers candidates and a target integer target, return a list of all unique combinations
+of candidates where the chosen numbers sum to target. You may return the combinations in any order.
+
+The same number may be chosen from candidates an unlimited number of times. Two combinations are unique
+if the frequency of at least one of the chosen numbers is different.
+
+Constraints:
+
+1 <= candidates.length <= 30
+1 <= candidates[i] <= 200
+All elements of candidates are distinct.
+1 <= target <= 500
+*/
+
+func combinationSum(candidates []int, target int) [][]int {
+	var currentTarget int
+	var currentCombination []int
+	var combinations [][]int
+	var finder func(int)
+
+	finder = func(pos int) {
+		currentCombinationLen := len(currentCombination)
+		prevTarget := currentTarget
+
+		defer func() {
+			currentTarget = prevTarget
+			currentCombination = currentCombination[0:currentCombinationLen]
+		}()
+
+		for num := candidates[pos]; ; {
+			currentTarget += num
+			if currentTarget > target {
+				return // we're exceeding domain, no need to seek further
+			}
+
+			if currentTarget == target {
+				destCombination := append([]int{num}, currentCombination...)
+				combinations = append(combinations, destCombination)
+				return // found resultant combination, no need to seek further
+			}
+
+			currentCombination = append(currentCombination, num)
+			for newPos := pos + 1; newPos < len(candidates); newPos++ {
+				finder(newPos)
+			}
+		}
+	}
+
+	for i := 0; i < len(candidates); i++ {
+		finder(i)
+	}
+
+	return combinations
+}
+
+func TestCombinationSum1(t *testing.T) {
+	testCases := []struct {
+		arr    []int
+		target int
+	}{
+		{arr: []int{2, 3, 5}, target: 8},
+		{arr: []int{2, 3, 5}, target: 7},
+		{arr: []int{1}, target: 1},
+		{arr: []int{1}, target: 2},
+		{arr: []int{2}, target: 1},
+	}
+
+	for i, tc := range testCases {
+		if i > 100 {
+			return
+		}
+		t.Run(fmt.Sprintf("combination sum for arr=%v and target=%d", tc.arr, tc.target), func(t *testing.T) {
+			result := combinationSum(tc.arr, tc.target)
+			t.Logf("result=%v", result)
+		})
+	}
+}
+
+/*
+Number of Recent Calls
+You have a RecentCounter class which counts the number of recent requests within a certain time frame.
+
+Implement the RecentCounter class:
+
+RecentCounter() Initializes the counter with zero recent requests.
+int ping(int t) Adds a new request at time t, where t represents some time in milliseconds, and returns the
+number of requests that has happened in the past 3000 milliseconds (including the new request).
+Specifically, return the number of requests that have happened in the inclusive range [t - 3000, t].
+It is guaranteed that every call to ping uses a strictly larger value of t than the previous call.
+
+Example 1:
+
+Input
+["RecentCounter", "ping", "ping", "ping", "ping"]
+[[], [1], [100], [3001], [3002]]
+Output
+[null, 1, 2, 3, 3]
+
+Explanation
+RecentCounter recentCounter = new RecentCounter();
+recentCounter.ping(1);     // requests = [1], range is [-2999,1], return 1
+recentCounter.ping(100);   // requests = [1, 100], range is [-2900,100], return 2
+recentCounter.ping(3001);  // requests = [1, 100, 3001], range is [1,3001], return 3
+recentCounter.ping(3002);  // requests = [1, 100, 3001, 3002], range is [2,3002], return 3
+
+Constraints:
+
+1 <= t <= 104
+Each test case will call ping with strictly increasing values of t.
+At most 104 calls will be made to ping.
+*/
+
+type lrcRecentCounter struct {
+	list  *lrcRequest
+	count int
+}
+
+type lrcRequest struct {
+	time int
+	next *lrcRequest
+	prev *lrcRequest
+}
+
+func (t *lrcRequest) String() string {
+	return fmt.Sprintf("(%d)", t.time)
+}
+
+func lrcConstructor() lrcRecentCounter {
+	var t lrcRecentCounter
+	var head lrcRequest
+	h := &head
+	h.next, h.prev, t.list = h, h, h
+	h.time = math.MinInt32
+	return t
+}
+
+const lrcTimeBound = 3000
+
+func (t *lrcRecentCounter) Ping(time int) int {
+	// prune old values
+	h := t.list
+	for threshold := time - lrcTimeBound; h.next != h && h.next.time < threshold; {
+		nn := h.next.next
+		nn.prev, h.next = h, nn
+		t.count--
+	}
+	// insert new value
+	newRequest := &lrcRequest{time: time, next: h, prev: h.prev}
+	h.prev.next = newRequest
+	h.prev = newRequest
+	t.count++
+	return t.count
+}
+
+func TestRecentCounter1(t *testing.T) {
+	lrc := lrcConstructor()
+	timings := []int{1, 100, 3001, 3002}
+	for i, time := range timings {
+		t.Logf("%2d: Ping(%d) = %d", i, time, lrc.Ping(time))
+	}
+}
+
+/*
+First Missing Positive
+Given an unsorted integer array, find the smallest missing positive integer.
+
+Example 1:
+
+Input: [1,2,0]
+Output: 3
+Example 2:
+
+Input: [3,4,-1,1]
+Output: 2
+Example 3:
+
+Input: [7,8,9,11,12]
+Output: 1
+Follow up:
+
+Your algorithm should run in O(n) time and uses constant extra space.
+*/
+
+func firstMissingPositive(nums []int) int {
+	// rearrange numbers
+	for _, num := range nums {
+		for targetPos := num - 1; targetPos >= 0 && targetPos < len(nums); {
+			otherNum := nums[targetPos]
+			if otherNum == num {
+				break // ignore duplicates
+			}
+			nums[targetPos] = num // put number on the appropriate position
+			targetPos = otherNum - 1
+			num = otherNum
+		}
+	}
+
+	// now find what's missing
+	last := 0
+	for ; last < len(nums); last++ {
+		expectedNum := last + 1
+		if nums[last] != expectedNum {
+			return expectedNum
+		}
+	}
+
+	return last + 1
+}
+
+/*
+Word Break
+Given a non-empty string s and a dictionary wordDict containing a list of non-empty words, determine if s can be
+segmented into a space-separated sequence of one or more dictionary words.
+
+Note:
+
+The same word in the dictionary may be reused multiple times in the segmentation.
+You may assume the dictionary does not contain duplicate words.
+Example 1:
+
+Input: s = "leetcode", wordDict = ["leet", "code"]
+Output: true
+Explanation: Return true because "leetcode" can be segmented as "leet code".
+Example 2:
+
+Input: s = "applepenapple", wordDict = ["apple", "pen"]
+Output: true
+Explanation: Return true because "applepenapple" can be segmented as "apple pen apple".
+             Note that you are allowed to reuse a dictionary word.
+Example 3:
+
+Input: s = "catsandog", wordDict = ["cats", "dog", "sand", "and", "cat"]
+Output: false
+*/
+
+func wordBreak(s string, wordDict []string) bool {
+	var prefixTree wordPrefixTree
+	prefixTree.init(wordDict)
+	return prefixTree.wordBreak(s)
+}
+
+type wordPrefixTreeNode struct {
+	children map[byte]*wordPrefixTreeNode
+	fullWord bool
+}
+
+func newWordPrefixTreeNode() *wordPrefixTreeNode {
+	return &wordPrefixTreeNode{children: map[byte]*wordPrefixTreeNode{}}
+}
+
+type wordPrefixTree struct {
+	rootNode *wordPrefixTreeNode
+}
+
+func (t *wordPrefixTree) wordBreak(s string) bool {
+	posStack := make([]int, len(s)+1)
+	posStackLen := 1 // => posStack = {0}
+
+	visitedPositions := map[int]bool{}
+
+	for count := 1; posStackLen > 0; count-- {
+		n := t.rootNode
+
+		// pop next element
+		posStackLen--
+		pos := posStack[posStackLen]
+		visitedPositions[pos] = true
+
+		//fmt.Printf("pos = %d\n", pos)
+
+		for i := pos; i < len(s); i++ {
+			nextNode, exists := n.children[s[i]]
+			if !exists {
+				goto NextBranch
+			}
+
+			if nextNode.fullWord {
+				nextPos := i + 1
+				if !visitedPositions[nextPos] {
+					// only add predecessor position if we didn't visit it already
+					posStack[posStackLen] = nextPos // record next position that we can start from
+					posStackLen++
+				}
+			}
+
+			n = nextNode
+		}
+
+		if n.fullWord {
+			return true
+		}
+	NextBranch:
+	}
+
+	return false
+}
+
+func (t *wordPrefixTree) bootstrap(wordDict []string) map[string]*wordPrefixTreeNode {
+	result := map[string]*wordPrefixTreeNode{}
+
+	t.rootNode = newWordPrefixTreeNode()
+	for _, word := range wordDict {
+		if len(word) == 0 {
+			continue
+		}
+
+		n := t.rootNode
+		for i := 0; i < len(word); i++ {
+			ch := word[i]
+
+			nextNode, exists := n.children[ch]
+			if !exists {
+				nextNode = newWordPrefixTreeNode()
+				n.children[ch] = nextNode
+			}
+			n = nextNode
+		}
+		n.fullWord = true
+		result[word] = n
+	}
+
+	return result
+}
+
+func (t *wordPrefixTree) init(wordDict []string) {
+	wordMap := t.bootstrap(wordDict)
+
+	// re-bootstrap trie until we have composite words
+	for hasCompositeWords := true; hasCompositeWords; {
+
+		hasCompositeWords = false
+
+		for i, word := range wordDict {
+			lexeme, exists := wordMap[word]
+			if !exists {
+				continue
+			}
+
+			lexeme.fullWord = false
+			if t.wordBreak(word) {
+				//fmt.Printf("prune word '%s'\n", word)
+				wordDict[i] = ""
+				hasCompositeWords = true
+				continue
+			}
+			lexeme.fullWord = true
+		}
+
+		if hasCompositeWords {
+			// re-bootstrap the dictionary
+			wordMap = t.bootstrap(wordDict)
+		}
+	}
+}
+
+func TestWordBreak1(t *testing.T) {
+	t.Logf("result=%t", wordBreak("aaaaaaaa", []string{"a", "aa", "aaa", "aaaa"}))
+	t.Logf("result=%t", wordBreak("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab", []string{"a"}))
+	t.Logf("result=%t", wordBreak("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab", []string{"a", "ab"}))
+	t.Logf("result=%t", wordBreak("aaaaaaaa", []string{"aaaa", "aaa"}))
+	t.Logf("result=%t", wordBreak("aaaaaaa", []string{"aaaa", "aa"}))
+	t.Logf("result=%t", wordBreak("aaaaaa", []string{"aaaa", "aa"}))
+}
+
+func TestWordBreak2(t *testing.T) {
+	t.Logf("result=%t", wordBreak(
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		//"aaaaaaaaaaaaaaaaaaaaaaaaaaaaabaabaaa",
+		[]string{
+			"aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "aaaaaaa", "aaaaaaaa", "aaaaaaaaa", "aaaaaaaaaa", "ba",
+		},
+	))
+}
+
+/*
+Subarray Product Less Than K
+Your are given an array of positive integers nums.
+
+Count and print the number of (contiguous) subarrays where the product of all the elements in the subarray is less than k.
+
+Example 1:
+Input: nums = [10, 5, 2, 6], k = 100
+Output: 8
+Explanation: The 8 subarrays that have product less than 100 are: [10], [5], [2], [6], [10, 5], [5, 2], [2, 6], [5, 2, 6].
+Note that [10, 5, 2] is not included as the product of 100 is not strictly less than k.
+Note:
+
+0 < nums.length <= 50000.
+0 < nums[i] < 1000.
+0 <= k < 10^6.
+*/
+
+func numSubarrayProductLessThanKBruteforce(nums []int, k int) int {
+	count, product := 0, 1
+	for i, num := range nums {
+		product *= num
+		for j := i + 1; product < k; j++ {
+			count++
+			if j >= len(nums) {
+				break
+			}
+			product *= nums[j]
+		}
+		product = 1
+	}
+
+	return count
+}
+
+func numSubarrayProductLessThanK(nums []int, k int) int {
+	products := map[int]int{}
+	var count int
+
+	for _, num := range nums {
+		var newProducts map[int]int
+		if num == 1 {
+			newProducts = products
+		} else {
+			newProducts = map[int]int{}
+			for product, c := range products {
+				p := product * num
+				if p < k {
+					newProducts[p] = c
+				}
+			}
+		}
+
+		if num < k {
+			newProducts[num]++
+		}
+
+		for _, c := range newProducts {
+			count += c
+		}
+		products = newProducts
+	}
+
+	return count
+}
+
+/*
+Optimized solution, T=O(N), M=O(1):
+
+int numSubarrayProductLessThanK(int[] nums, int k) {
+	if (k <= 1) return 0;
+	int prod = 1, ans = 0, left = 0;
+	for (int right = 0; right < nums.length; right++) {
+		prod *= nums[right];
+		while (prod >= k) prod /= nums[left++];
+		ans += right - left + 1;
+	}
+	return ans;
+}
+*/
+
+func TestNumSubarrayProductLessThanK1(t *testing.T) {
+	t.Logf("result=%d", numSubarrayProductLessThanK([]int{10, 5, 2, 6}, 100))
+}
+
+func TestNumSubarrayProductLessThanK2(t *testing.T) {
+	t.Logf("result=%d", numSubarrayProductLessThanK([]int{1, 1, 1}, 2))
+}
+
+func TestNumSubarrayProductLessThanK3(t *testing.T) {
+	arr := []int{1, 2, 5}
+	t.Logf("[opt] result=%d", numSubarrayProductLessThanK(arr, 1000))
+	t.Logf("[b/f] result=%d", numSubarrayProductLessThanKBruteforce(arr, 1000))
+}
+
+/*
 Evaluate Division
 You are given equations in the format A / B = k, where A and B are variables represented as strings, and k is a
 real number (floating-point number). Given some queries, return the answers. If the answer does not exist, return -1.0.
