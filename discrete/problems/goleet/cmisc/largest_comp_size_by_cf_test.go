@@ -1,4 +1,4 @@
-package miscleetproblems
+package cmisc
 
 import (
 	"testing"

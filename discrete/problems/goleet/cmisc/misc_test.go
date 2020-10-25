@@ -1,10 +1,12 @@
-package miscleetproblems
+package cmisc
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"math/bits"
 	"math/rand"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -14,6 +16,1361 @@ import (
 
 func TestSample(t *testing.T) {
 	t.Logf("result=%d", rand.Intn(10))
+}
+
+/*
+Stone Game IV
+Alice and Bob take turns playing a game, with Alice starting first.
+
+Initially, there are n stones in a pile.  On each player's turn, that player makes a move consisting of removing
+any non-zero square number of stones in the pile.
+
+Also, if a player cannot make a move, he/she loses the game.
+
+Given a positive integer n. Return True if and only if Alice wins the game otherwise return False,
+assuming both players play optimally.
+
+Constraints:
+
+1 <= n <= 10^5
+*/
+
+func winnerSquareGameWithBitSet(n int) bool {
+	dp := newSimpleBitset(n + 1) // false: bob wins, true: alice wins
+	for i := 1; i <= n; i++ {
+		var aliceWins bool
+		for j := 1; ; j++ {
+			square := j * j
+			if i-square < 0 {
+				break
+			}
+
+			if !dp.Bit(i - square) {
+				aliceWins = true
+				break
+			}
+		}
+		if aliceWins {
+			dp.SetBit(i, true)
+		}
+	}
+	return dp.Bit(n)
+}
+
+func winnerSquareGame(n int) bool {
+	// TODO: bitset is better
+	dp := make([]int, n+1) // 0: bob wins, 1: alice wins
+	for i := 1; i <= n; i++ {
+
+		var aliceWins bool
+		for j := 1; ; j++ {
+			square := j * j
+			if i-square < 0 {
+				break
+			}
+			if dp[i-square] == 0 {
+				aliceWins = true
+				break
+			}
+		}
+		if aliceWins {
+			dp[i] = 1
+		}
+	}
+	return dp[n] == 1
+}
+
+/*
+Bag of Tokens
+You have an initial power of P, an initial score of 0, and a bag of tokens where tokens[i]
+is the value of the ith token (0-indexed).
+
+Your goal is to maximize your total score by potentially playing each token in one of two ways:
+
+If your current power is at least tokens[i], you may play the ith token face up, losing tokens[i] power and gaining 1 score.
+If your current score is at least 1, you may play the ith token face down, gaining tokens[i] power and losing 1 score.
+Each token may be played at most once and in any order. You do not have to play all the tokens.
+
+Return the largest possible score you can achieve after playing any number of tokens.
+*/
+
+func bagOfTokensScore(tokens []int, power int) int {
+	sort.Ints(tokens)
+
+	var score int
+	for {
+		// acquire as much tokens as we can
+		var acquiredCount int
+		for i := 0; i < len(tokens); i++ {
+			if tokens[i] > power {
+				break
+			}
+			power -= tokens[i]
+			score++
+			acquiredCount++
+		}
+
+		// stop, if we can't acquire tokens at the expense of trading one score for highest value token
+		if acquiredCount == 0 || len(tokens) <= acquiredCount+1 || tokens[len(tokens)-1]+power < tokens[acquiredCount] {
+			break
+		}
+		power += tokens[len(tokens)-1]
+		tokens = tokens[acquiredCount : len(tokens)-1]
+		score--
+	}
+
+	return score
+}
+
+func TestBagOfTokensScore1(t *testing.T) {
+	t.Logf("result=%d", bagOfTokensScore([]int{6, 0, 39, 52, 45, 49, 59, 68, 42, 37}, 99))
+}
+
+func TestBagOfTokensScore2(t *testing.T) {
+	t.Logf("result=%d", bagOfTokensScore([]int{1, 2, 3, 4}, 2))
+}
+
+/*
+132 Pattern
+Given an array of n integers nums, a 132 pattern is a subsequence of three integers
+nums[i], nums[j] and nums[k] such that i < j < k and nums[i] < nums[k] < nums[j].
+
+Return true if there is a 132 pattern in nums, otherwise, return false.
+
+Follow up: The O(n^2) is trivial, could you come up with the O(n logn) or the O(n) solution?
+
+Constraints:
+
+n == nums.length
+1 <= n <= 10^4
+-10^9 <= nums[i] <= 10^9
+*/
+
+func find132patternOption1(nums []int) bool {
+	right, max := len(nums), math.MinInt64
+	for i := len(nums) - 1; i >= 0; i-- {
+		if nums[i] < max {
+			return true
+		}
+		for right < len(nums) && nums[i] > nums[right] {
+			max = nums[right]
+			right++
+		}
+		right--
+		nums[right] = nums[i]
+	}
+	return false
+}
+
+func find132patternOption2(nums []int) bool {
+	if len(nums) < 3 {
+		return false
+	}
+
+	// fill out minimum elements
+	mins := make([]int, len(nums))
+	mins[0] = nums[0]
+	for i := 1; i < len(nums); i++ {
+		mins[i] = intMin(mins[i-1], nums[i])
+	}
+
+	k := len(nums)
+	for i := len(nums) - 1; i >= 0; i-- {
+		if nums[i] <= mins[i] {
+			continue
+		}
+		for k < len(nums) && nums[k] <= mins[i] {
+			k++
+		}
+		if k < len(nums) && nums[k] < nums[i] {
+			return true
+		}
+		k--
+		nums[k] = nums[i]
+	}
+
+	return false
+}
+
+/*
+Minimum Depth of Binary Tree
+Given a binary tree, find its minimum depth.
+
+The minimum depth is the number of nodes along the shortest path from the root node down to the nearest leaf node.
+
+Note: A leaf is a node with no children.
+*/
+
+func minDepth(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+	if root.Left == nil && root.Right == nil {
+		return 1
+	}
+	var childrenDepth int = math.MaxInt32
+	if root.Left != nil {
+		childrenDepth = intMin(childrenDepth, minDepth(root.Left))
+	}
+	if root.Right != nil {
+		childrenDepth = intMin(childrenDepth, minDepth(root.Right))
+	}
+	return 1 + childrenDepth
+}
+
+/*
+Asteroid Collision
+We are given an array asteroids of integers representing asteroids in a row.
+
+For each asteroid, the absolute value represents its size, and the sign represents its direction
+(positive meaning right, negative meaning left). Each asteroid moves at the same speed.
+
+Find out the state of the asteroids after all collisions. If two asteroids meet, the smaller one will explode.
+If both are the same size, both will explode. Two asteroids moving in the same direction will never meet.
+
+Constraints:
+
+1 <= asteroids <= 104
+-1000 <= asteroids[i] <= 1000
+asteroids[i] != 0
+*/
+
+func asteroidCollision(asteroids []int) []int {
+	var moveRight []int
+	var result []int
+
+	for _, a := range asteroids {
+		if a > 0 {
+			moveRight = append(moveRight, a)
+			continue
+		}
+
+		// asteroid moves to the left, terminate all asteroids that are still moving to the right
+		var exploded bool
+		for len(moveRight) > 0 {
+			last := moveRight[len(moveRight)-1]
+			if last > -a {
+				exploded = true
+				break
+			}
+
+			moveRight = moveRight[0 : len(moveRight)-1] // exclude this asteroid
+			if last == -a {
+				exploded = true
+				break
+			}
+		}
+
+		if exploded {
+			continue
+		}
+
+		result = append(result, a)
+	}
+
+	result = append(result, moveRight...)
+	return result
+}
+
+/*
+Clone Graph
+Given a reference of a node in a connected undirected graph.
+
+Return a deep copy (clone) of the graph.
+
+Each node in the graph contains a val (int) and a list (List[Node]) of its neighbors.
+
+class Node {
+    public int val;
+    public List<Node> neighbors;
+}
+
+
+Test case format:
+
+For simplicity sake, each node's value is the same as the node's index (1-indexed).
+For example, the first node with val = 1, the second node with val = 2, and so on.
+The graph is represented in the test case using an adjacency list.
+Adjacency list is a collection of unordered lists used to represent a finite graph.
+Each list describes the set of neighbors of a node in the graph.
+The given node will always be the first node with val = 1. You must return the copy of the given node as
+a reference to the cloned graph.
+*/
+
+/*
+Minimum Domino Rotations For Equal Row
+In a row of dominoes, A[i] and B[i] represent the top and bottom halves of the ith domino.
+(A domino is a tile with two numbers from 1 to 6 - one on each half of the tile.)
+
+We may rotate the ith domino, so that A[i] and B[i] swap values.
+
+Return the minimum number of rotations so that all the values in A are the same, or all the values in B are the same.
+
+If it cannot be done, return -1.
+
+2 <= A.length == B.length <= 2 * 104
+1 <= A[i], B[i] <= 6
+
+Constraints:
+
+1 <= Node.val <= 100
+Node.val is unique for each node.
+Number of Nodes will not exceed 100.
+There is no repeated edges and no self-loops in the graph.
+The Graph is connected and all nodes can be visited starting from the given node.
+*/
+
+func cloneGraph(node *GraphNode) *GraphNode {
+	if node == nil {
+		return nil
+	}
+
+	// NB: constraint - 1 <= Node.val <= 100
+	nodes := make([]*GraphNode, 100)
+	var recursiveClone func(*GraphNode) *GraphNode
+
+	recursiveClone = func(n *GraphNode) *GraphNode {
+		index := n.Val - 1
+		if nodes[index] != nil {
+			return nodes[index]
+		}
+
+		newNode := &GraphNode{Val: n.Val}
+		nodes[index] = newNode
+
+		for _, nb := range n.Neighbors {
+			newNode.Neighbors = append(newNode.Neighbors, recursiveClone(nb))
+		}
+		return newNode
+	}
+
+	return recursiveClone(node)
+}
+
+/* Return minimum number (-1 if not possible) of domino rotations, so that one side has all-equal numbers */
+
+func minDominoRotations(a []int, b []int) int {
+	size := len(a)
+	if size == 0 || len(b) != size {
+		return -1
+	}
+
+	var numFreq [6]int
+	for i, ia := range a {
+		numFreq[ia-1]++
+		ib := b[i]
+		if ia != ib {
+			numFreq[ib-1]++
+		}
+	}
+
+	num := -1
+	for n, freq := range numFreq {
+		if freq == size {
+			num = n + 1
+			break
+		}
+	}
+
+	if num < 0 {
+		return -1
+	}
+
+	var af, bf int
+	for i, ia := range a {
+		if ia == num {
+			if ia == b[i] {
+				continue
+			}
+
+			af++
+		} else {
+			bf++
+		}
+	}
+
+	if af < bf {
+		return af
+	}
+	return bf
+}
+
+func TestMinDominoRotations(t *testing.T) {
+	t.Logf("result=%d", minDominoRotations(
+		[]int{2, 1, 2, 4, 2, 2},
+		[]int{5, 2, 6, 2, 3, 2},
+	))
+}
+
+/*
+Best Time to Buy and Sell Stock IV
+You are given an integer array prices where prices[i] is the price of a given stock on the ith day.
+
+Design an algorithm to find the maximum profit. You may complete at most k transactions.
+
+Notice that you may not engage in multiple transactions simultaneously (i.e., you must sell the stock before you buy again).
+
+
+
+Example 1:
+
+Input: k = 2, prices = [2,4,1]
+Output: 2
+Explanation: Buy on day 1 (price = 2) and sell on day 2 (price = 4), profit = 4-2 = 2.
+Example 2:
+
+Input: k = 2, prices = [3,2,6,5,0,3]
+Output: 7
+Explanation: Buy on day 2 (price = 2) and sell on day 3 (price = 6), profit = 6-2 = 4.
+Then buy on day 5 (price = 0) and sell on day 6 (price = 3), profit = 3-0 = 3.
+
+
+Constraints:
+
+0 <= k <= 10^9
+0 <= prices.length <= 10^4
+0 <= prices[i] <= 1000
+*/
+
+func maxProfitIVBruteforce(k int, prices []int) int {
+	sc := maxProfitIVScanContext{k: k, prices: prices}
+	sc.scan(0)
+	return sc.totalMaxProfit
+}
+
+type maxProfitIVScanContext struct {
+	prices         []int
+	k              int
+	maxProfitSoFar int
+	totalMaxProfit int
+}
+
+func (t *maxProfitIVScanContext) scan(pos int) {
+	if t.maxProfitSoFar > t.totalMaxProfit {
+		t.totalMaxProfit = t.maxProfitSoFar // capture max profit found so far
+	}
+	if t.k == 0 {
+		return // no more transactions possible
+	}
+
+	// save mutable context
+	prevMaxProfitSoFar := t.maxProfitSoFar
+	t.k--
+
+	for j := pos; j < len(t.prices)-1; j++ {
+		src, maxPrevDiff := t.prices[j], 0
+		for i := j + 1; i < len(t.prices); i++ {
+			diff := t.prices[i] - src
+			if diff > maxPrevDiff {
+				maxPrevDiff = diff                                        // there is no point trying transaction that follows bigger previous one
+				t.maxProfitSoFar = prevMaxProfitSoFar + t.prices[i] - src // found one possible transaction
+				t.scan(i + 1)                                             // scan right after this transaction
+			}
+		}
+	}
+
+	// restore context
+	t.k++
+	t.maxProfitSoFar = prevMaxProfitSoFar
+}
+
+//
+// Optimized, DP-based solution
+//
+
+func maxProfitIVDP(k int, prices []int) int {
+	// sanity check
+	if k == 0 || len(prices) <= 1 {
+		return 0
+	}
+
+	// normalize number of transactions
+	if k > len(prices)/2 {
+		k = len(prices) / 2
+	}
+
+	txs := make([]int, k*2)
+	for i := 0; i < k; i++ {
+		txs[i*2] = math.MinInt32
+	}
+	for _, p := range prices {
+		txs[0] = intMax(txs[0], -p)
+		for i := 1; i < len(txs); i++ {
+			if i%2 == 1 {
+				txs[i] = intMax(txs[i], txs[i-1]+p) // sell transaction
+			} else {
+				txs[i] = intMax(txs[i], txs[i-1]-p) // buy transaction
+			}
+		}
+	}
+
+	return txs[len(txs)-1]
+}
+
+func TestMaxProfitIVMatch1(t *testing.T) {
+	testCases := []struct {
+		k        int
+		prices   []int
+		expected int
+	}{
+		{k: 2, expected: 7, prices: []int{3, 2, 6, 5, 0, 3}},
+		{k: 2, expected: 2, prices: []int{2, 4, 1}},
+		{k: 2, expected: 7, prices: []int{6, 1, 3, 2, 4, 7}},
+		{k: 1, expected: 6, prices: []int{6, 1, 3, 2, 4, 7}},
+		{k: 1, expected: 37, prices: []int{0, 10, 3, 11, 5, 12, 7, 37, 0}},
+		{k: 2, expected: 44, prices: []int{0, 10, 3, 11, 5, 12, 7, 37, 0}},
+		{k: 3, expected: 50, prices: []int{0, 10, 3, 11, 5, 12, 7, 37, 0}},
+		{k: 4, expected: 55, prices: []int{0, 10, 3, 11, 5, 12, 7, 37, 0}},
+		{k: 5, expected: 55, prices: []int{0, 10, 3, 11, 5, 12, 7, 37, 0}},
+	}
+	//maxProfitIV := maxProfitIVBruteforce
+	maxProfitIV := maxProfitIVDP
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("k=%d prices=%v", tc.k, tc.prices), func(t *testing.T) {
+			actual := maxProfitIV(tc.k, tc.prices)
+			if tc.expected < 0 {
+				t.Logf("result=%d", actual)
+				return
+			}
+			if tc.expected != actual {
+				t.Errorf("expected=%d, got=%d", tc.expected, actual)
+			}
+		})
+	}
+}
+
+func TestMaxProfitIVMatchStress(t *testing.T) {
+	result := maxProfitIVDP(29 /*orig: 29*/, []int{
+		70, 4, 83, 56, 94, 72, 78, 43, 2, 86, 65, 100, 94, 56, 41, 66, 3, 33, 10, 3, 45, 94, 15, 12, 78, 60, 58, 0, 58, 15, 21, 7, 11, 41, 12, 96, 83, 77, 47,
+		62, 27, 19, 40, 63, 30, 4, 77, 52, 17, 57, 21, 66, 63, 29, 51, 40, 37, 6, 44, 42, 92, 16, 64, 33, 31, 51, 36, 0, 29, 95, 92, 35, 66, 91, 19, 21, 100,
+		95, 40, 61, 15, 83, 31, 55, 59, 84, 21, 99, 45, 64, 90, 25, 40, 6, 41, 5, 25, 52, 59, 61, 51, 37, 92, 90, 20, 20, 96, 66, 79, 28, 83, 60, 91, 30, 52,
+		55, 1, 99, 8, 68, 14, 84, 59, 5, 34, 93, 25, 10, 93, 21, 35, 66, 88, 20, 97, 25, 63, 80, 20, 86, 33, 53, 43, 86, 53, 55, 61, 77, 9, 2, 56, 78, 43, 19,
+		68, 69, 49, 1, 6, 5, 82, 46, 24, 33, 85, 24, 56, 51, 45, 100, 94, 26, 15, 33, 35, 59, 25, 65, 32, 26, 93, 73, 0, 40, 92, 56, 76, 18, 2, 45, 64, 66, 64,
+		39, 77, 1, 55, 90, 10, 27, 85, 40, 95, 78, 39, 40, 62, 30, 12, 57, 84, 95, 86, 57, 41, 52, 77, 17, 9, 15, 33, 17, 68, 63, 59, 40, 5, 63, 30, 86, 57,
+		5, 55, 47, 0, 92, 95, 100, 25, 79, 84, 93, 83, 93, 18, 20, 32, 63, 65, 56, 68, 7, 31, 100, 88, 93, 11, 43, 20, 13, 54, 34, 29, 90, 50, 24, 13, 44, 89,
+		57, 65, 95, 58, 32, 67, 38, 2, 41, 4, 63, 56, 88, 39, 57, 10, 1, 97, 98, 25, 45, 96, 35, 22, 0, 37, 74, 98, 14, 37, 77, 54, 40, 17, 9, 28, 83, 13, 92,
+		3, 8, 60, 52, 64, 8, 87, 77, 96, 70, 61, 3, 96, 83, 56, 5, 99, 81, 94, 3, 38, 91, 55, 83, 15, 30, 39, 54, 79, 55, 86, 85, 32, 27, 20, 74, 91, 99, 100,
+		46, 69, 77, 34, 97, 0, 50, 51, 21, 12, 3, 84, 84, 48, 69, 94, 28, 64, 36, 70, 34, 70, 11, 89, 58, 6, 90, 86, 4, 97, 63, 10, 37, 48, 68, 30, 29, 53, 4,
+		91, 7, 56, 63, 22, 93, 69, 93, 1, 85, 11, 20, 41, 36, 66, 67, 57, 76, 85, 37, 80, 99, 63, 23, 71, 11, 73, 41, 48, 54, 61, 49, 91, 97, 60, 38, 99, 8, 17,
+		2, 5, 56, 3, 69, 90, 62, 75, 76, 55, 71, 83, 34, 2, 36, 56, 40, 15, 62, 39, 78, 7, 37, 58, 22, 64, 59, 80, 16, 2, 34, 83, 43, 40, 39, 38, 35, 89, 72,
+		56, 77, 78, 14, 45, 0, 57, 32, 82, 93, 96, 3, 51, 27, 36, 38, 1, 19, 66, 98, 93, 91, 18, 95, 93, 39, 12, 40, 73, 100, 17, 72, 93, 25, 35, 45, 91, 78,
+		13, 97, 56, 40, 69, 86, 69, 99, 4, 36, 36, 82, 35, 52, 12, 46, 74, 57, 65, 91, 51, 41, 42, 17, 78, 49, 75, 9, 23, 65, 44, 47, 93, 84, 70, 19, 22, 57,
+		27, 84, 57, 85, 2, 61, 17, 90, 34, 49, 74, 64, 46, 61, 0, 28, 57, 78, 75, 31, 27, 24, 10, 93, 34, 19, 75, 53, 17, 26, 2, 41, 89, 79, 37, 14, 93, 55, 74,
+		11, 77, 60, 61, 2, 68, 0, 15, 12, 47, 12, 48, 57, 73, 17, 18, 11, 83, 38, 5, 36, 53, 94, 40, 48, 81, 53, 32, 53, 12, 21, 90, 100, 32, 29, 94, 92, 83,
+		80, 36, 73, 59, 61, 43, 100, 36, 71, 89, 9, 24, 56, 7, 48, 34, 58, 0, 43, 34, 18, 1, 29, 97, 70, 92, 88, 0, 48, 51, 53, 0, 50, 21, 91, 23, 34, 49, 19, 17,
+		9, 23, 43, 87, 72, 39, 17, 17, 97, 14, 29, 4, 10, 84, 10, 33, 100, 86, 43, 20, 22, 58, 90, 70, 48, 23, 75, 4, 66, 97, 95, 1, 80, 24, 43, 97, 15, 38, 53,
+		55, 86, 63, 40, 7, 26, 60, 95, 12, 98, 15, 95, 71, 86, 46, 33, 68, 32, 86, 89, 18, 88, 97, 32, 42, 5, 57, 13, 1, 23, 34, 37, 13, 65, 13, 47, 55, 85, 37,
+		57, 14, 89, 94, 57, 13, 6, 98, 47, 52, 51, 19, 99, 42, 1, 19, 74, 60, 8, 48, 28, 65, 6, 12, 57, 49, 27, 95, 1, 2, 10, 25, 49, 68, 57, 32, 99, 24, 19, 25,
+		32, 89, 88, 73, 96, 57, 14, 65, 34, 8, 82, 9, 94, 91, 19, 53, 61, 70, 54, 4, 66, 26, 8, 63, 62, 9, 20, 42, 17, 52, 97, 51, 53, 19, 48, 76, 40, 80, 6, 1,
+		89, 52, 70, 38, 95, 62, 24, 88, 64, 42, 61, 6, 50, 91, 87, 69, 13, 58, 43, 98, 19, 94, 65, 56, 72, 20, 72, 92, 85, 58, 46, 67, 2, 23, 88, 58, 25, 88,
+		18, 92, 46, 15, 18, 37, 9, 90, 2, 38, 0, 16, 86, 44, 69, 71, 70, 30, 38, 17, 69, 69, 80, 73, 79, 56, 17, 95, 12, 37, 43, 5, 5, 6, 42, 16, 44, 22, 62, 37,
+		86, 8, 51, 73, 46, 44, 15, 98, 54, 22, 47, 28, 11, 75, 52, 49, 38, 84, 55, 3, 69, 100, 54, 66, 6, 23, 98, 22, 99, 21, 74, 75, 33, 67, 8, 80, 90, 23, 46,
+		93, 69, 85, 46, 87, 76, 93, 38, 77, 37, 72, 35, 3, 82, 11, 67, 46, 53, 29, 60, 33, 12, 62, 23, 27, 72, 35, 63, 68, 14, 35, 27, 98, 94, 65, 3, 13, 48, 83,
+		27, 84, 86, 49, 31, 63, 40, 12, 34, 79, 61, 47, 29, 33, 52, 100, 85, 38, 24, 1, 16, 62, 89, 36, 74, 9, 49, 62, 89,
+	})
+	t.Logf("result=%d", result)
+}
+
+/*
+Repeated DNA Sequences
+
+All DNA is composed of a series of nucleotides abbreviated as 'A', 'C', 'G', and 'T', for example: "ACGAATTCCG".
+When studying DNA, it is sometimes useful to identify repeated sequences within the DNA.
+
+Write a function to find all the 10-letter-long sequences (substrings) that occur more than once in a DNA molecule.
+
+Example 1:
+
+Input: s = "AAAAACCCCCAAAAACCCCCCAAAAAGGGTTT"
+Output: ["AAAAACCCCC","CCCCCAAAAA"]
+Example 2:
+
+Input: s = "AAAAAAAAAAAAA"
+Output: ["AAAAAAAAAA"]
+
+
+Constraints:
+
+0 <= s.length <= 105
+s[i] is 'A', 'C', 'G', or 'T'.
+*/
+
+func findRepeatedDnaSequences(s string) []string {
+	var root dnaTrieNode
+	var result []string
+	var cursors [dnaTrieSequenceLen]*dnaTrieCursor
+	for i := 0; i < len(s); i++ {
+		dnaCode := packedDnaCode(s[i])
+		firstAssigned := false
+		for j, c := range cursors {
+			if c == nil {
+				if firstAssigned {
+					continue
+				}
+				firstAssigned = true
+				c = &dnaTrieCursor{it: &root}
+				cursors[j] = c
+			}
+
+			nextChild := c.it.children[dnaCode]
+			if nextChild == nil {
+				nextChild = &dnaTrieNode{}
+				c.it.children[dnaCode] = nextChild
+			}
+			c.it = nextChild
+			c.len++
+
+			if c.len == dnaTrieSequenceLen {
+				if nextChild.count == 1 {
+					result = append(result, s[i-dnaTrieSequenceLen+1:i+1])
+				}
+				nextChild.count++
+				c.it = &root
+				c.len = 0
+			}
+		}
+	}
+	return result
+}
+
+type dnaTrieCursor struct {
+	it  *dnaTrieNode
+	len int
+}
+
+type dnaTrieNode struct {
+	children [4]*dnaTrieNode
+	count    int // TODO: optimize: count is needed only for a union node
+}
+
+const dnaTrieSequenceLen = 10
+
+func packedDnaCode(b byte) uint {
+	switch b {
+	case 'A':
+		return 0
+	case 'C':
+		return 1
+	case 'G':
+		return 2
+	case 'T':
+		return 3
+	}
+	panic("unknown DNA char")
+}
+
+const dnaSequenceMask uint32 = (1 << (2 * dnaTrieSequenceLen)) - 1
+
+// alt solution using bit masks
+func findRepeatedDnaSequences2(s string) []string {
+	if len(s) <= dnaTrieSequenceLen {
+		return nil
+	}
+
+	var dna uint32 // 2 bits * 10 = 20 bits
+	for i := 0; i < dnaTrieSequenceLen-1; i++ {
+		dna = dna << 2
+		dna |= uint32(packedDnaCode(s[i]))
+	}
+
+	var result []string
+	dnaMap := map[uint32]int{}
+	for i := dnaTrieSequenceLen - 1; i < len(s); i++ {
+		dna = ((dna << 2) | uint32(packedDnaCode(s[i]))) & dnaSequenceMask
+		count := dnaMap[dna]
+		dnaMap[dna] = count + 1
+		if count == 1 {
+			result = append(result, s[i-dnaTrieSequenceLen+1:i+1])
+		}
+	}
+
+	return result
+}
+
+func TestRepeatedDnaSequence(t *testing.T) {
+	t.Logf("result=%v", findRepeatedDnaSequences2("AAAAACCCCCAAAAACCCCCCAAAAAGGGTTT"))
+	t.Logf("result=%v", findRepeatedDnaSequences2("AAAAAAAAAAAAA"))
+}
+
+/*
+Write an efficient algorithm that searches for a value in an m x n matrix. This matrix has the following properties:
+
+Integers in each row are sorted from left to right.
+The first integer of each row is greater than the last integer of the previous row.
+
+Constraints:
+
+m == matrix.length
+n == matrix[i].length
+0 <= m, n <= 100
+-10^4 <= matrix[i][j], target <= 10^4
+*/
+
+func searchMatrix(matrix [][]int, target int) bool {
+	if len(matrix) == 0 || len(matrix[0]) == 0 {
+		return false
+	}
+	height, width := len(matrix), len(matrix[0])
+	len := height * width
+	index := sort.Search(len, func(pos int) bool {
+		h := pos / width
+		w := pos % width
+		e := matrix[h][w]
+		return e >= target
+	})
+	if index < len && matrix[index/width][index%width] == target {
+		return true
+	}
+	return false
+}
+
+/*
+Given an array, rotate the array to the right by k steps, where k is non-negative.
+
+Follow up:
+
+Try to come up as many solutions as you can, there are at least 3 different ways to solve this problem.
+Could you do it in-place with O(1) extra space?
+
+
+Example 1:
+
+Input: nums = [1,2,3,4,5,6,7], k = 3
+Output: [5,6,7,1,2,3,4]
+Explanation:
+rotate 1 steps to the right: [7,1,2,3,4,5,6]
+rotate 2 steps to the right: [6,7,1,2,3,4,5]
+rotate 3 steps to the right: [5,6,7,1,2,3,4]
+Example 2:
+
+Input: nums = [-1,-100,3,99], k = 2
+Output: [3,99,-1,-100]
+Explanation:
+rotate 1 steps to the right: [99,-1,-100,3]
+rotate 2 steps to the right: [3,99,-1,-100]
+
+
+Constraints:
+
+1 <= nums.length <= 2 * 10^4
+-2^31 <= nums[i] <= 2^31 - 1
+0 <= k <= 10^5
+*/
+
+func rotateArr(nums []int, k int) {
+	if k == 0 || len(nums) <= 1 {
+		return
+	}
+	k = k % len(nums)
+	gcd := intGcd(k, len(nums))
+	for startPos := 0; startPos < gcd; startPos++ {
+		pos, nextElement := startPos, nums[startPos]
+		for {
+			pos = (pos + k) % len(nums)
+			nextElement, nums[pos] = nums[pos], nextElement
+			if pos == startPos {
+				break
+			}
+		}
+	}
+}
+
+func TestRotateArr1(t *testing.T) {
+	testCases := []struct {
+		src      []int
+		k        int
+		expected []int
+	}{
+		{src: []int{1, 2, 3}, k: 1, expected: []int{3, 1, 2}},
+		{src: []int{1, 2, 3}, k: 2, expected: []int{2, 3, 1}},
+		{src: []int{1, 2, 3}, k: 5, expected: []int{2, 3, 1}},
+		{src: []int{1, 2, 3}, k: 3, expected: []int{1, 2, 3}},
+		{src: []int{1, 2, 3, 4}, k: 2, expected: []int{3, 4, 1, 2}},
+	}
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("rotate arr %v for k=%d", tc.src, tc.k), func(t *testing.T) {
+			rotateArr(tc.src, tc.k)
+			if !reflect.DeepEqual(tc.src, tc.expected) {
+				t.Errorf("unexpected rotation product=%v", tc.src)
+			}
+		})
+	}
+}
+
+/*
+https://leetcode.com/explore/challenge/card/october-leetcoding-challenge/560/week-2-october-8th-october-14th/3494/
+
+Maximize sum for an array given that you can NEVER pick two adjacent indices for your elements that constitute the sum.
+Array is also circular, meaning that first and last elements are considered adjacent (== can't be picked up).
+*/
+
+func rob2(nums []int) int {
+	if len(nums) == 1 {
+		return nums[0] // TODO: optimize this along with two passes that we do below
+	}
+	var m0, m1 int
+	var n0, n1 int
+	for i := 0; i < len(nums)-1; i++ {
+		m0, m1 = intMax(m0, m1), intMax(m1, m0+nums[i])
+		n0, n1 = intMax(n0, n1), intMax(n1, n0+nums[i+1])
+	}
+	return intMax(m1, n1)
+}
+
+/*
+Sort List
+Given the head of a linked list, return the list after sorting it in ascending order.
+Follow up: Can you sort the linked list in O(n logn) time and O(1) memory (i.e. constant space)?
+
+Constraints:
+
+The number of nodes in the list is in the range [0, 5 * 104].
+-10^5 <= Node.val <= 10^5
+*/
+
+// sortList sorts list in ascending order using O(1) memory using insertion sort
+// best case runtime: O(n), worst case: O(n^2)
+func sortList(head *ListNode) *ListNode {
+	var prev, next *ListNode
+	for i := head; i != nil; i = next {
+		// reverse list inplace
+		next = i.Next
+		i.Next = prev
+		prev = i
+
+		for j := i; j != nil; j = j.Next {
+			jnext := j.Next
+			if jnext == nil || jnext.Val >= j.Val {
+				break
+			}
+			jnext.Val, j.Val = j.Val, jnext.Val
+		}
+	}
+	return prev
+}
+
+func sortListUsingMergeSort(head *ListNode) *ListNode {
+	if head == nil || head.Next == nil {
+		return head // nil or single-element list is by-default sorted
+	}
+
+	lists, listpos := [2]*ListNode{}, 0
+	for i := head; i != nil; {
+		next := i.Next
+		i.Next, lists[listpos] = lists[listpos], i
+		listpos, i = (listpos+1)%2, next
+	}
+
+	lists[0] = sortListUsingMergeSort(lists[0])
+	lists[1] = sortListUsingMergeSort(lists[1])
+
+	return mergeSortedLists(lists)
+}
+
+func mergeSortedLists(lists [2]*ListNode) *ListNode {
+	var result ListNode
+	resultlast := &result
+	for lists[0] != nil && lists[1] != nil {
+		var pos int
+		if lists[0].Val > lists[1].Val {
+			pos = 1
+		}
+		next := lists[pos].Next
+
+		resultlast.Next = lists[pos]
+		lists[pos].Next = nil
+		resultlast = lists[pos]
+
+		lists[pos] = next
+	}
+	for i := 0; i < 2; i++ {
+		for j := lists[i]; j != nil; {
+			next := j.Next
+
+			resultlast.Next = j
+			j.Next = nil
+			resultlast = j
+
+			j = next
+		}
+	}
+	return result.Next
+}
+
+func TestSortList(t *testing.T) {
+	l := newList(5, 1, 4, 2, 3)
+	//l = sortList(l)
+	l = sortListUsingMergeSort(l)
+	t.Logf("result=%s", l.String())
+}
+
+/*
+Return true, if one string could be made equal to the other by swapping two chars at distinct positions.
+*/
+
+func buddyStrings(a, b string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	var diffPos []int
+	freq := [26]int{}
+	for i := 0; i < len(a); i++ {
+		freq[a[i]-'a']++
+		if a[i] != b[i] {
+			if len(diffPos) >= 2 {
+				return false
+			}
+			diffPos = append(diffPos, i)
+		}
+	}
+
+	if len(diffPos) == 0 {
+		for _, f := range freq {
+			if f > 1 {
+				return true
+			}
+		}
+		return false
+	} else if len(diffPos) != 2 {
+		return false
+	}
+
+	if b[diffPos[1]] != a[diffPos[0]] || b[diffPos[0]] != a[diffPos[1]] {
+		return false
+	}
+
+	return true
+}
+
+func TestBuddyStrings(t *testing.T) {
+	t.Logf("result=%t", buddyStrings("ab", "ca"))
+}
+
+/*
+Remove Duplicate Letters
+Given a string s, remove duplicate letters so that every letter appears once and only once.
+You must make sure your result is the smallest in lexicographical order among all possible results.
+
+Constraints:
+
+1 <= s.length <= 104
+s consists of lowercase English letters.
+*/
+
+func removeDuplicateLetters3(s string) string {
+	r := newRdlFinderContext(s)
+	r.scan(0, 0)
+	// normalize result
+	for i := range r.result {
+		r.result[i] += 'a'
+	}
+	return string(r.result)
+}
+
+type rdlFinderContext struct {
+	freq      [26]int
+	mask      int32
+	bs        []byte
+	candidate []byte
+	result    []byte
+}
+
+func newRdlFinderContext(s string) *rdlFinderContext {
+	var r rdlFinderContext
+
+	r.bs = make([]byte, len(s)) // fill out the frequencies and initialize character presence bitmask
+	var uniqueCharCount int
+	for i := 0; i < len(s); i++ {
+		idx := s[i] - 'a'
+		r.bs[i] = idx
+		if 0 == r.mask&(1<<idx) {
+			uniqueCharCount++ // compute number of unique characters
+			r.mask |= (1 << idx)
+		}
+		r.freq[idx] = r.freq[idx] + 1 // compute character frequencies
+	}
+
+	r.candidate = make([]byte, uniqueCharCount)
+
+	return &r
+}
+
+func (r *rdlFinderContext) scan(resultPos int, bsPos int) {
+	if resultPos >= len(r.candidate) {
+		// we've found a candidate
+		if r.result == nil || bytes.Compare(r.candidate, r.result) < 0 {
+			r.result = append([]byte{}, r.candidate...)
+		}
+		return
+	}
+
+	var charIndex byte // skip this character until we get something that we can take into an account
+	for ; ; bsPos++ {
+		charIndex = r.bs[bsPos]
+		if 0 != r.mask&(1<<charIndex) {
+			break
+		}
+	}
+
+	// capture current values
+	oldFreq, oldMask := r.freq[charIndex], r.mask
+
+	newFreq := oldFreq - 1
+	r.freq[charIndex] = newFreq // update frequencies
+	if newFreq > 0 && 0 != r.mask&((1<<charIndex)-1) {
+		r.scan(resultPos, bsPos+1) // try continuing without this character added if this is not the smallest char
+	}
+
+	r.mask &= ^(1 << charIndex)
+	r.candidate[resultPos] = charIndex
+	r.scan(resultPos+1, bsPos+1) // try continuing with this character added
+
+	// restore old values
+	r.freq[charIndex], r.mask = oldFreq, oldMask
+}
+
+func removeDuplicateLetters1(s string) string {
+	lastIndices := [26]int{} // tracks last indices for each unique char
+	for i := 0; i < len(s); i++ {
+		lastIndices[s[i]-'a'] = i
+	}
+
+	var stack []byte  // tracks constructed string (smaller indices in stack == smaller indices in the result string)
+	var visited int32 // tracks if certain character has been already seen (added to stack)
+	for i := 0; i < len(s); i++ {
+		charIndex := s[i] - 'a'
+		if 0 != visited&(1<<charIndex) { // if visited[charIndex]
+			continue
+		}
+		for len(stack) > 0 {
+			peek := stack[len(stack)-1]
+			if peek <= charIndex || i >= lastIndices[peek] {
+				break
+			}
+			stack = stack[0 : len(stack)-1] // stack.pop()
+			visited &= ^(1 << peek)         // visited[peek] = false
+		}
+		stack = append(stack, charIndex) // stack.push(charIndex)
+		visited |= (1 << charIndex)      // visited[charIndex] = true
+	}
+
+	var sb []byte
+	for i := 0; i < len(stack); i++ {
+		sb = append(sb, stack[i]+'a') // sb <- reverse(stack)
+	}
+	return string(sb)
+}
+
+func TestRemoveDuplicateChars(t *testing.T) {
+	testCases := []struct{ src, expected string }{
+		{src: "yioccqiorhtoslwlvfgzycahonecugtatbyphpuunwvaalcpndabyldkdtzfjlgwqk", expected: "ciorhsaebpunvdyktzfjlgwq"},
+		{src: "stswat", expected: "stwa"},
+		{src: "zbdcndazbc", expected: "bcndaz"},
+		{src: "mitnlruhznjfyzmtmfnstsxwktxlboxutbic", expected: "ilrhjfyzmnstwkboxuc"},
+		{src: "thesqtitxyetpxloeevdeqifkz", expected: "hesitxyplovdqfkz"},
+		{src: "acqbecb", expected: "acqbe"},
+		{src: "acqbecq", expected: "abecq"},
+		{src: "abacb", expected: "abc"},
+		{src: "bcabc", expected: "abc"},
+		{src: "cbacdcbc", expected: "acdb"},
+		{src: "cbacdcbcd", expected: "abcd"},
+	}
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("remove duplicate chars for %s", tc.src), func(t *testing.T) {
+			actual := removeDuplicateLetters1(tc.src)
+			if actual != tc.expected {
+				t.Errorf("mismatch: actual=%s, expected=%s", actual, tc.expected)
+			}
+		})
+	}
+}
+
+/*
+Minimum Number of Arrows to Burst Balloons
+There are some spherical balloons spread in two-dimensional space. For each balloon, provided input is the start and
+end coordinates of the horizontal diameter. Since it's horizontal, y-coordinates don't matter, and hence the
+x-coordinates of start and end of the diameter suffice. The start is always smaller than the end.
+
+An arrow can be shot up exactly vertically from different points along the x-axis. A balloon with xstart and xend bursts
+by an arrow shot at x if xstart ≤ x ≤ xend. There is no limit to the number of arrows that can be shot.
+An arrow once shot keeps traveling up infinitely.
+
+Given an array points where points[i] = [xstart, xend], return the minimum number of arrows
+that must be shot to burst all balloons.
+
+Constraints:
+
+0 <= points.length <= 10^4
+points.length == 2
+-2^31 <= xstart < xend <= 2^31 - 1
+*/
+
+func findMinArrowShots(points [][]int) int {
+	if len(points) == 0 {
+		return 0
+	}
+	sort.Slice(points, func(i, j int) bool { return points[i][0] < points[j][0] })
+	count, itEnd := 1, points[0][1]
+	for i := 1; i < len(points); i++ {
+		point := points[i]
+		if point[0] <= itEnd {
+			itEnd = intMin(itEnd, point[1])
+		} else {
+			count++
+			itEnd = point[1]
+		}
+	}
+	return count
+}
+
+func TestFindMinArrowShots(t *testing.T) {
+	t.Logf("result=%d", findMinArrowShots([][]int{{2, 3}, {2, 3}}))
+}
+
+/*
+Serialize and Deserialize BST
+
+Solution
+Serialization is converting a data structure or object into a sequence of bits so that it can be stored in a file
+or memory buffer, or transmitted across a network connection link to be reconstructed later in the same or
+another computer environment.
+
+Design an algorithm to serialize and deserialize a binary search tree. There is no restriction on how your
+serialization/deserialization algorithm should work. You need to ensure that a binary search tree can be serialized
+to a string, and this string can be deserialized to the original tree structure.
+
+The encoded string should be as compact as possible.
+
+Constraints:
+
+The number of nodes in the tree is in the range [0, 104].
+0 <= Node.val <= 104
+The input tree is guaranteed to be a binary search tree.
+*/
+
+type lcCodec struct {
+}
+
+func lcConstructor() lcCodec {
+	return lcCodec{}
+}
+
+func (t *lcCodec) serialize(root *TreeNode) string {
+	var elements []string
+	var recMarshal func(n *TreeNode) int
+	recMarshal = func(n *TreeNode) int {
+		if n == nil {
+			return -1
+		}
+		p := len(elements)
+		elements = append(elements, "")
+		leftPos := recMarshal(n.Left)
+		rightPos := recMarshal(n.Right)
+		elements[p] = fmt.Sprintf("%d,%d,%d", n.Val, leftPos, rightPos)
+		return p
+	}
+	recMarshal(root)
+	return strings.Join(elements, ";")
+}
+
+func (t *lcCodec) deserialize(data string) *TreeNode {
+	if len(data) == 0 {
+		return nil
+	}
+	packedNodes := strings.Split(data, ";")
+	nodeArr := make([]*TreeNode, len(packedNodes))
+	for i := range nodeArr {
+		nodeArr[i] = &TreeNode{}
+	}
+
+	var err error
+	for i, node := range nodeArr {
+		values := strings.Split(packedNodes[i], ",")
+		node.Val, err = strconv.Atoi(values[0])
+		if err != nil {
+			panic(err)
+		}
+
+		var leftIndex, rightIndex int
+
+		leftIndex, err = strconv.Atoi(values[1])
+		if err != nil {
+			panic(err)
+		}
+
+		rightIndex, err = strconv.Atoi(values[2])
+		if err != nil {
+			panic(err)
+		}
+
+		if leftIndex >= 0 {
+			node.Left = nodeArr[leftIndex]
+		}
+
+		if rightIndex >= 0 {
+			node.Right = nodeArr[rightIndex]
+		}
+	}
+
+	return nodeArr[0]
+}
+
+/*
+Binary Search
+Given a sorted (in ascending order) integer array nums of n elements and a target value,
+write a function to search target in nums. If target exists, then return its index, otherwise return -1.
+
+Note:
+
+You may assume that all elements in nums are unique.
+n will be in the range [1, 10000].
+The value of each element in nums will be in the range [-9999, 9999].
+*/
+
+func search(nums []int, target int) int {
+	for left, right := 0, len(nums)-1; left <= right; {
+		mid := left + (right-left)/2
+		if nums[mid] == target {
+			return mid
+		} else if nums[mid] > target {
+			right = mid - 1
+			continue
+		}
+		left = mid + 1
+	}
+	return -1
+}
+
+/*
+Rotate List
+Given a linked list, rotate the list to the right by k places, where k is non-negative.
+*/
+
+func rotateRight(head *ListNode, k int) *ListNode {
+	var len int
+	var last *ListNode
+	for n := head; n != nil; n = n.Next {
+		len++
+		last = n
+	}
+	if len == 0 {
+		return nil // this is an empty list
+	}
+
+	k %= len
+	if k == 0 {
+		return head // no rotation is needed
+	}
+
+	// rotation is needed and it suffices to set up a connection between last and first node
+	// and break connection pointing to the now-first node
+	last.Next = head
+	it := head
+	headPredOffset := len - k - 1
+	for i := 0; i < headPredOffset; i++ {
+		it = it.Next
+	}
+
+	newHead := it.Next
+	it.Next = nil
+
+	return newHead
+}
+
+func TestRotateRight1(t *testing.T) {
+	l := newList(0, 1, 2)
+	lStr := l.String()
+	l = rotateRight(l, 1)
+	t.Logf("src=%s, result=%s", lStr, l.String())
+}
+
+func TestRotateRight2(t *testing.T) {
+	l := newList(1, 2)
+	lStr := l.String()
+	l = rotateRight(l, 1)
+	t.Logf("src=%s, result=%s", lStr, l.String())
+}
+
+/*
+Insert into a Binary Search Tree
+You are given the root node of a binary search tree (BST) and a value to insert into the tree.
+Return the root node of the BST after the insertion.
+It is guaranteed that the new value does not exist in the original BST.
+
+Notice that there may exist multiple valid ways for the insertion, as long as the tree remains a BST after insertion.
+You can return any of them.
+
+Constraints:
+
+The number of nodes in the tree will be in the range [0, 104].
+-108 <= Node.val <= 108
+All the values Node.val are unique.
+-108 <= val <= 108
+It's guaranteed that val does not exist in the original BST.
+*/
+
+func insertIntoBST(root *TreeNode, val int) *TreeNode {
+	pp := &root
+	for n := root; n != nil; n = *pp {
+		if val > n.Val {
+			pp = &n.Right
+		} else {
+			pp = &n.Left //< use constraint: `All the values Node.val are unique.`
+		}
+	}
+	*pp = &TreeNode{Val: val}
+	return root
+}
+
+func TestInsertBST(t *testing.T) {
+	n := insertIntoBST(nil, 1)
+	t.Logf("result=%d", n.Val)
+}
+
+/*
+Complement of Base 10 Integer
+Every non-negative integer N has a binary representation.  For example, 5 can be represented as "101" in binary,
+11 as "1011" in binary, and so on.  Note that except for N = 0, there are no leading zeroes in any binary representation.
+
+The complement of a binary representation is the number in binary you get when changing every 1 to a 0 and 0 to a 1.
+For example, the complement of "101" in binary is "010" in binary.
+
+For a given number N in base-10, return the complement of it's binary representation as a base-10 integer.
+
+Example 1:
+
+Input: 5
+Output: 2
+Explanation: 5 is "101" in binary, with complement "010" in binary, which is 2 in base-10.
+Example 2:
+
+Input: 7
+Output: 0
+Explanation: 7 is "111" in binary, with complement "000" in binary, which is 0 in base-10.
+Example 3:
+
+Input: 10
+Output: 5
+Explanation: 10 is "1010" in binary, with complement "0101" in binary, which is 5 in base-10.
+
+Note:
+
+0 <= N < 10^9
+This question is the same as 476: https://leetcode.com/problems/number-complement/
+*/
+
+func bitwiseComplement(n int) int {
+	if n <= 0 {
+		return 1
+	}
+
+	u, b := uint(n), uint(1)
+	for b < u {
+		b <<= 1
+	}
+
+	return int((^u) & (b - 1))
 }
 
 /*
@@ -2771,35 +4128,6 @@ func reorderList(head *ListNode) {
 		it.Next = last
 		it, last = last.Next, tmp
 	}
-}
-
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
-
-func newList(nums ...int) *ListNode {
-	var source ListNode
-	it := &source.Next
-	for _, n := range nums {
-		node := &ListNode{Val: n}
-		*it = node
-		it = &node.Next
-	}
-	return source.Next
-}
-
-func (t *ListNode) String() string {
-	var sb strings.Builder
-	sb.WriteByte('[')
-	for it := t; it != nil; it = it.Next {
-		if it != t {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(strconv.Itoa(it.Val))
-	}
-	sb.WriteByte(']')
-	return sb.String()
 }
 
 func TestListNode(t *testing.T) {
