@@ -19,6 +19,426 @@ func TestSample(t *testing.T) {
 }
 
 /*
+Convert Binary Number in a Linked List to Integer
+Given head which is a reference node to a singly-linked list.
+The value of each node in the linked list is either 0 or 1. The linked list holds the binary representation of a number.
+
+Return the decimal value of the number in the linked list.
+*/
+
+func getDecimalValue(head *ListNode) int {
+	var result int
+	for ; head != nil; head = head.Next {
+		result = result << 1
+		if head.Val != 0 {
+			result |= 1
+		}
+	}
+	return result
+}
+
+/*
+Recover Binary Search Tree
+You are given the root of a binary search tree (BST), where exactly two nodes of the tree were swapped by mistake.
+Recover the tree without changing its structure.
+
+Follow up: A solution using O(n) space is pretty straight forward. Could you devise a constant space solution?
+
+A = {a(0), ..., a(n-1)}; A' -> A | swap(i, j)
+*/
+
+func recoverTree(root *TreeNode) {
+	var invalidNodes []*TreeNode
+	var scan func(n *TreeNode)
+	var previous *TreeNode
+	scan = func(n *TreeNode) {
+		if n == nil {
+			return
+		}
+		scan(n.Left)
+		if previous != nil && previous.Val > n.Val {
+			if len(invalidNodes) > 0 {
+				// resolve immediately: first of possible invalid nodes and current node need to be swapped
+				invalidNodes[0].Val, n.Val = n.Val, invalidNodes[0].Val
+				invalidNodes = nil
+			} else {
+				// previous value is greater than current one, so either this or previous one is invalid
+				invalidNodes = append(invalidNodes, previous, n)
+			}
+		}
+		previous = n
+		scan(n.Right)
+	}
+	scan(root)
+	if len(invalidNodes) > 0 {
+		// swap first and second values
+		invalidNodes[0].Val, invalidNodes[1].Val = invalidNodes[1].Val, invalidNodes[0].Val
+	}
+}
+
+/*
+Number of Longest Increasing Subsequence
+Given an integer array nums, return the number of longest increasing subsequences.
+
+Constraints:
+
+0 <= nums.length <= 2000
+-10^6 <= nums[i] <= 10^6
+*/
+
+func findNumberOfLIS(nums []int) int {
+	if len(nums) == 0 {
+		return 0
+	}
+
+	maxSubseqNumOfElems := make([]int, len(nums))
+	maxSubseqCount := make([]int, len(nums))
+	maxSeqNumOfElems, maxSeqCount := 1, 0
+
+	var fillSubseqStats func(pos int)
+	fillSubseqStats = func(pos int) {
+		if maxSubseqCount[pos] != 0 {
+			return
+		}
+
+		maxCurSubseqNumOfElems, maxCurSubseqCount := 1, 1
+		num := nums[pos]
+		minOtherNum := math.MaxInt32
+		for j := pos + 1; j < len(nums); j++ {
+			otherNum := nums[j]
+			if otherNum <= num || otherNum > minOtherNum {
+				continue
+			}
+			minOtherNum = intMin(minOtherNum, otherNum)
+			fillSubseqStats(j)
+
+			curSubseqNumOfElems, curSubseqCount := 1+maxSubseqNumOfElems[j], maxSubseqCount[j]
+
+			if curSubseqNumOfElems > maxCurSubseqNumOfElems {
+				maxCurSubseqCount = curSubseqCount
+				maxCurSubseqNumOfElems = curSubseqNumOfElems
+			} else if curSubseqNumOfElems == maxCurSubseqNumOfElems {
+				maxCurSubseqCount += curSubseqCount
+			}
+		}
+
+		maxSubseqNumOfElems[pos], maxSubseqCount[pos] = maxCurSubseqNumOfElems, maxCurSubseqCount
+		if maxCurSubseqNumOfElems > maxSeqNumOfElems {
+			maxSeqNumOfElems = maxCurSubseqNumOfElems
+			maxSeqCount = maxCurSubseqCount
+		} else if maxCurSubseqNumOfElems == maxSeqNumOfElems {
+			maxSeqCount += maxCurSubseqCount
+		}
+	}
+
+	for i := 0; i < len(nums); i++ {
+		fillSubseqStats(i)
+	}
+
+	return maxSeqCount
+}
+
+/*
+Segment Tree Solution:
+
+class Solution {
+    public Value merge(Value v1, Value v2) {
+        if (v1.length == v2.length) {
+            if (v1.length == 0) return new Value(0, 1);
+            return new Value(v1.length, v1.count + v2.count);
+        }
+        return v1.length > v2.length ? v1 : v2;
+    }
+
+    public void insert(Node node, int key, Value val) {
+        if (node.range_left == node.range_right) {
+            node.val = merge(val, node.val);
+            return;
+        } else if (key <= node.getRangeMid()) {
+            insert(node.getLeft(), key, val);
+        } else {
+            insert(node.getRight(), key, val);
+        }
+        node.val = merge(node.getLeft().val, node.getRight().val);
+    }
+
+    public Value query(Node node, int key) {
+        if (node.range_right <= key) return node.val;
+        else if (node.range_left > key) return new Value(0, 1);
+        else return merge(query(node.getLeft(), key), query(node.getRight(), key));
+    }
+
+    public int findNumberOfLIS(int[] nums) {
+        if (nums.length == 0) return 0;
+        int min = nums[0], max = nums[0];
+        for (int num: nums) {
+            min = Math.min(min, num);
+            max = Math.max(max, num);
+        }
+        Node root = new Node(min, max);
+        for (int num: nums) {
+            Value v = query(root, num-1);
+            insert(root, num, new Value(v.length + 1, v.count));
+        }
+        return root.val.count;
+    }
+}
+
+class Node {
+    int range_left, range_right;
+    Node left, right;
+    Value val;
+    public Node(int start, int end) {
+        range_left = start;
+        range_right = end;
+        left = null;
+        right = null;
+        val = new Value(0, 1);
+    }
+    public int getRangeMid() {
+        return range_left + (range_right - range_left) / 2;
+    }
+    public Node getLeft() {
+        if (left == null) left = new Node(range_left, getRangeMid());
+        return left;
+    }
+    public Node getRight() {
+        if (right == null) right = new Node(getRangeMid() + 1, range_right);
+        return right;
+    }
+}
+
+class Value {
+    int length;
+    int count;
+    public Value(int len, int ct) {
+        length = len;
+        count = ct;
+    }
+}
+
+Links:
+https://leetcode.com/problems/number-of-longest-increasing-subsequence/solution/
+https://leetcode.com/articles/a-recursive-approach-to-segment-trees-range-sum-queries-lazy-propagation/
+*/
+
+func TestNumberOfLIS(t *testing.T) {
+	t.Logf("result=%d", findNumberOfLIS([]int{2, 2, 2, 2, 2}))
+	t.Logf("result=%d", findNumberOfLIS([]int{1, 3, 5, 4, 7}))
+}
+
+/*
+Maximize Distance to Closest Person
+You are given an array representing a row of seats where seats[i] = 1 represents a person sitting in the ith seat,
+and seats[i] = 0 represents that the ith seat is empty (0-indexed).
+
+There is at least one empty seat, and at least one person sitting.
+
+Alex wants to sit in the seat such that the distance between him and the closest person to him is maximized.
+
+Return that maximum distance to the closest person.
+*/
+
+func maxDistToClosest(seats []int) int {
+	var maxDistance int
+	var prev int
+	for i := 0; i <= len(seats); i++ {
+		seat := 1
+		if i < len(seats) {
+			seat = seats[i]
+		}
+		if seat == 0 {
+			continue
+		}
+		if prev == 0 || i == len(seats) {
+			maxDistance = intMax(i-prev, maxDistance)
+		} else {
+			maxDistance = intMax((i-prev+1)/2, maxDistance)
+		}
+		prev = i + 1
+	}
+	return maxDistance
+}
+
+/*
+Summary Ranges
+You are given a sorted unique integer array nums.
+
+Return the smallest sorted list of ranges that cover all the numbers in the array exactly.
+That is, each element of nums is covered by exactly one of the ranges, and there is no integer
+x such that x is in one of the ranges but not in nums.
+
+Each range [a,b] in the list should be output as:
+
+"a->b" if a != b
+"a" if a == b
+*/
+
+func summaryRanges(nums []int) []string {
+	if len(nums) == 0 {
+		return nil
+	}
+	var result []string
+	prev := nums[0]
+	for i := 1; i <= len(nums); i++ {
+		var n int
+		if i < len(nums) {
+			n = nums[i]
+		} else {
+			n = nums[i-1] + 2
+		}
+
+		if n-1 == nums[i-1] {
+			continue
+		}
+
+		if prev == nums[i-1] {
+			result = append(result, strconv.Itoa(prev))
+		} else {
+			result = append(result, fmt.Sprintf("%d->%d", prev, nums[i-1]))
+		}
+		prev = n
+	}
+
+	return result
+}
+
+/*
+Linked List Cycle II
+Given a linked list, return the node where the cycle begins. If there is no cycle, return null.
+
+There is a cycle in a linked list if there is some node in the list that can be reached again by
+continuously following the next pointer. Internally, pos is used to denote the index of the node that tail's next
+pointer is connected to. Note that pos is not passed as a parameter.
+
+Notice that you should not modify the linked list.
+
+Follow up:
+
+Can you solve it using O(1) (i.e. constant) memory?
+
+Constraints:
+
+The number of the nodes in the list is in the range [0, 10^4].
+-10^5 <= Node.val <= 10^5
+pos is -1 or a valid index in the linked-list.
+*/
+
+func detectCycle(head *ListNode) *ListNode {
+	if head == nil {
+		return nil
+	}
+
+	var nodeInLoop *ListNode
+	for it, it0, jump0 := head.Next, head, false; it != nil; it = it.Next {
+		if jump0 {
+			it0 = it0.Next
+		}
+		jump0 = !jump0 //=> `it` jumps twice as fast as it0
+
+		if it0 == it {
+			nodeInLoop = it
+			break
+		}
+	}
+	if nodeInLoop == nil {
+		return nil
+	}
+
+	// O(1) position detection
+	for it := head; ; it = it.Next {
+		if it == nodeInLoop {
+			return it
+		}
+		for j := nodeInLoop.Next; j != nodeInLoop; j = j.Next {
+			if j == it {
+				return j
+			}
+		}
+	}
+}
+
+/*
+Best Solution:
+func detectCycle(head *ListNode) *ListNode {
+    i, j := head, head
+    for j != nil && j.Next != nil {
+        i, j = i.Next, j.Next.Next
+        if i == j {
+            break
+        }
+    }
+    if j == nil || j.Next == nil {
+        return nil
+    }
+    for i = head; i != j; {
+        i, j = i.Next, j.Next
+    }
+    return fast
+}
+*/
+
+/*
+Champagne Tower
+We stack glasses in a pyramid, where the first row has 1 glass, the second row has 2 glasses, and so on until
+the 100th row.  Each glass holds one cup (250ml) of champagne.
+
+Then, some champagne is poured in the first glass at the top.  When the topmost glass is full,
+any excess liquid poured will fall equally to the glass immediately to the left and right of it.
+When those glasses become full, any excess champagne will fall equally to the left and right of those glasses,
+and so on.  (A glass at the bottom row has its excess champagne fall on the floor.)
+
+For example, after one cup of champagne is poured, the top most glass is full.
+After two cups of champagne are poured, the two glasses on the second row are half full.
+After three cups of champagne are poured, those two cups become full - there are 3 full glasses total now.
+After four cups of champagne are poured, the third row has the middle glass half full, and the two outside glasses
+are a quarter full.
+
+Constraints:
+
+0 <= poured <= 10^9
+0 <= query_glass <= query_row < 100
+*/
+
+const champagneTowerMaxHeight = 100
+
+func champagneTower(poured int, queryRow int, queryGlass int) float64 {
+	dp := make([]float64, champagneTowerMaxHeight*(champagneTowerMaxHeight+1)/2) // total number of cups
+	dp[0] = float64(poured)
+	maxRows := intMin(champagneTowerMaxHeight, queryRow+2)
+	// TODO: use symmetry: all cups in a row after len(row)/2 will have exact same values as they symmetric cousins
+	for row := 1; row < maxRows; row++ {
+		offset := row * (row + 1) / 2
+		var overpoured bool
+		for j := 0; j < row; j++ {
+			src := offset - row + j
+			if dp[src] < 1.0 {
+				continue
+			}
+			overpoured = true
+			remainder := dp[src] - 1.0
+			dp[src] = 1.0
+			dp[offset+j] += remainder / 2
+			dp[offset+j+1] += remainder / 2
+		}
+
+		if !overpoured {
+			break
+		}
+	}
+
+	return dp[queryGlass+(queryRow*(queryRow+1))/2]
+}
+
+func TestChampaigneTower1(t *testing.T) {
+	t.Logf("result=%f", champagneTower(100000009, 33, 17))
+	t.Logf("result=%f", champagneTower(4, 2, 0))
+	t.Logf("result=%f", champagneTower(1, 0, 0))
+	t.Logf("result=%f", champagneTower(2, 1, 0))
+	t.Logf("result=%f", champagneTower(2, 1, 1))
+}
+
+/*
 Stone Game IV
 Alice and Bob take turns playing a game, with Alice starting first.
 
