@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"math/big"
 	"math/bits"
 	"math/rand"
 	"reflect"
@@ -16,6 +17,270 @@ import (
 
 func TestSample(t *testing.T) {
 	t.Logf("result=%d", rand.Intn(10))
+}
+
+/*
+Binary Tree Tilt
+Given the root of a binary tree, return the sum of every tree node's tilt.
+
+The tilt of a tree node is the absolute difference between the sum of all left subtree node values and all right
+subtree node values. If a node does not have a left child, then the sum of the left subtree node values is treated as 0.
+The rule is similar if there the node does not have a right child.
+*/
+
+func findTilt(root *TreeNode) int {
+	var c tiltCalculator
+	c.sum(root)
+	return c.tiltSum
+}
+
+type tiltCalculator struct {
+	tiltSum int
+}
+
+func (t *tiltCalculator) sum(n *TreeNode) int {
+	if n == nil {
+		return 0
+	}
+
+	nodeSum1 := t.sum(n.Left)
+	nodeSum2 := t.sum(n.Right)
+
+	tilt := intAbs(nodeSum1 - nodeSum2)
+	t.tiltSum += tilt
+
+	return n.Val + nodeSum1 + nodeSum2
+}
+
+/*
+Add Two Numbers II
+You are given two non-empty linked lists representing two non-negative integers.
+The most significant digit comes first and each of their nodes contain a single digit.
+Add the two numbers and return it as a linked list.
+
+You may assume the two numbers do not contain any leading zero, except the number 0 itself.
+
+Follow up:
+What if you cannot modify the input lists? In other words, reversing the lists is not allowed.
+*/
+
+// NB: the easiest solution is w/ stack; below is a fancier but less effective big-int solution
+
+var (
+	bigTen  = big.NewInt(10)
+	bigZero = big.NewInt(0)
+)
+
+func addTwoNumbersII(l1 *ListNode, l2 *ListNode) *ListNode {
+	c := toNumber(l1)
+	c.Add(c, toNumber(l2))
+	if c.Cmp(bigZero) == 0 {
+		return &ListNode{Val: 0}
+	}
+	var r *ListNode
+	for c.Cmp(bigZero) != 0 {
+		_, m := c.DivMod(c, bigTen, new(big.Int))
+		r = &ListNode{Val: int(m.Int64()), Next: r}
+	}
+	return r
+}
+
+func toNumber(l *ListNode) *big.Int {
+	var r big.Int
+	for ; l != nil; l = l.Next {
+		r.Mul(&r, bigTen)
+		r.Add(&r, big.NewInt(int64(l.Val))) // r = r*10 + uint64(l.Val)
+	}
+	return &r
+}
+
+func TestAddTwoNumbersII(t *testing.T) {
+	n := addTwoNumbersII(newList(7, 2, 4, 3), newList(5, 6, 4))
+	t.Logf("result=%s", n.String())
+}
+
+/*
+Find the Smallest Divisor Given a Threshold
+Given an array of integers nums and an integer threshold, we will choose a positive integer divisor and divide all
+the array by it and sum the result of the division. Find the smallest divisor such that the result mentioned above is
+less than or equal to threshold.
+
+Each result of division is rounded to the nearest integer greater than or equal to that element.
+(For example: 7/3 = 3 and 10/2 = 5).
+
+It is guaranteed that there will be an answer.
+
+Constraints:
+
+1 <= nums.length <= 5 * 10^4
+1 <= nums[i] <= 10^6
+nums.length <= threshold <= 10^6
+*/
+
+func smallestDivisor(nums []int, threshold int) int {
+	maxDivisor := 1
+	for _, n := range nums {
+		if n > maxDivisor {
+			maxDivisor = n
+		}
+	}
+
+	r := sort.Search(maxDivisor+1, func(n int) bool {
+		sum, divisor := 0, n+1
+		for _, num := range nums {
+			sum += num / divisor
+			if (num % divisor) > 0 {
+				sum++
+			}
+		}
+		return threshold >= sum
+	})
+	return r + 1
+}
+
+func TestSmallestDivisor(t *testing.T) {
+	t.Logf("result=%d", smallestDivisor([]int{962551, 933661, 905225, 923035, 990560}, 10))
+	t.Logf("result=%d", smallestDivisor([]int{1, 2, 5, 9}, 6))
+}
+
+/*
+Minimum Cost to Move Chips to The Same Position
+We have n chips, where the position of the ith chip is position[i].
+
+We need to move all the chips to the same position.
+In one step, we can change the position of the ith chip from position[i] to:
+
+position[i] + 2 or position[i] - 2 with cost = 0.
+position[i] + 1 or position[i] - 1 with cost = 1.
+Return the minimum cost needed to move all the chips to the same position.
+*/
+
+func minCostToMoveChips(position []int) int {
+	if len(position) <= 1 {
+		return 0
+	}
+
+	var first, second int
+	for _, p := range position {
+		if p%2 == 0 {
+			first++
+		} else {
+			second++
+		}
+	}
+	return intMin(first, second)
+}
+
+/*
+Minimum Height Trees
+A tree is an undirected graph in which any two vertices are connected by exactly one path.
+In other words, any connected graph without simple cycles is a tree.
+
+Given a tree of n nodes labelled from 0 to n - 1, and an array of n - 1 edges where edges[i] = [ai, bi] indicates that
+there is an undirected edge between the two nodes ai and bi in the tree, you can choose any node of the tree
+as the root. When you select a node x as the root, the result tree has height h.
+Among all possible rooted trees, those with minimum height (i.e. min(h))  are called minimum height trees (MHTs).
+
+Return a list of all MHTs' root labels. You can return the answer in any order.
+
+The height of a rooted tree is the number of edges on the longest downward path between the root and a leaf.
+*/
+
+func findMinHeightTrees(n int, edges [][]int) []int {
+	if n <= 2 {
+		var result []int
+		for i := 0; i < n; i++ {
+			result = append(result, i)
+		}
+		return result
+	}
+
+	// an idea is to find all possible max-paths for all nodes and then pick up min paths from these
+	graph := make([][]int, n)
+	edgeCount := make([]int, n) // a collection of edges
+
+	// prepare edge map
+	for _, edge := range edges {
+		graph[edge[0]] = append(graph[edge[0]], edge[1])
+		edgeCount[edge[0]]++
+
+		graph[edge[1]] = append(graph[edge[1]], edge[0])
+		edgeCount[edge[1]]++
+	}
+
+	// prepare layers
+	var layer []int
+	for {
+		layer = layer[0:0] // reset layer array
+		var graphHasMoreLayers bool
+		for i := 0; i < n; i++ {
+			c := edgeCount[i]
+			if c > 1 {
+				graphHasMoreLayers = true
+				continue
+			}
+			if c == 1 {
+				layer = append(layer, i)
+			}
+		}
+
+		if !graphHasMoreLayers {
+			break
+		}
+
+		for _, node := range layer {
+			edgeCount[node] = 0
+		}
+
+		// decrement edge count for all references
+		for _, node := range layer {
+			for _, otherNode := range graph[node] {
+				if edgeCount[otherNode]--; edgeCount[otherNode] == 0 {
+					// this is the only remaining node
+					return []int{otherNode}
+				}
+			}
+		}
+	}
+
+	// get remaining nodes
+	return layer
+}
+
+func TestMinHeightTree1(t *testing.T) {
+	t.Logf("result=%d", findMinHeightTrees(4, [][]int{
+		{1, 0}, {1, 2}, {1, 3},
+	}))
+
+	t.Logf("result=%d", findMinHeightTrees(7, [][]int{
+		{0, 1}, {1, 2}, {1, 3}, {2, 4}, {3, 5}, {4, 6},
+	}))
+}
+
+/*
+Insertion Sort List
+Sort a linked list using insertion sort.
+*/
+
+func insertionSortList(head *ListNode) *ListNode {
+	var result ListNode
+	result.Next = head
+	prev := &result
+	for head != nil {
+		if prev == &result || prev.Val <= head.Val {
+			prev, head = head, head.Next // skip insertion if node doesn't need to be moved
+			continue
+		}
+		prev.Next = head.Next // head needs to be excluded and inserted where it belongs to
+		for it := &result; ; it = it.Next {
+			if it.Next.Val > head.Val {
+				it.Next, head.Next = head, it.Next // found insertion point
+				break
+			}
+		}
+		head = prev.Next
+	}
+	return result.Next
 }
 
 /*
