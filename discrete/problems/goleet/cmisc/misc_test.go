@@ -20,6 +20,546 @@ func TestSample(t *testing.T) {
 }
 
 /*
+Unique Morse Code Words
+International Morse Code defines a standard encoding where each letter is mapped to a series of dots and dashes,
+as follows: "a" maps to ".-", "b" maps to "-...", "c" maps to "-.-.", and so on.
+
+For convenience, the full table for the 26 letters of the English alphabet is given below:
+*/
+
+var morseAlphabet = []string{
+	".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", "...", "-", "..-", "...-", ".--", "-..-", "-.--", "--..",
+}
+
+func uniqueMorseRepresentations(words []string) int {
+	m := map[string]int{}
+	var buf []byte
+	for _, w := range words {
+		for i := 0; i < len(w); i++ {
+			token := []byte(morseAlphabet[w[i]-'a'])
+			buf = append(buf, token...)
+		}
+		m[string(buf)]++
+		buf = buf[0:0]
+	}
+	return len(m)
+}
+
+/*
+Numbers At Most N Given Digit Set
+Given an array of digits, you can write numbers using each digits[i] as many times as we want.
+For example, if digits = ['1','3','5'], we may write numbers such as '13', '551', and '1351315'.
+
+Return the number of positive integers that can be generated that are less than or equal to a given integer n.
+
+Constraints:
+
+1 <= digits.length <= 9
+digits[i].length == 1
+digits[i] is a digit from '1' to '9'.
+All the values in digits are unique.
+1 <= n <= 10^9
+*/
+
+func atMostNGivenDigitSet(digits []string, n int) int {
+	sort.Strings(digits)
+	ns := strconv.Itoa(n)
+	var count int
+	for i := 1; i < len(ns); i++ {
+		count += intPow(len(digits), i)
+	}
+
+	i := 0
+	for ; i < len(ns); i++ {
+		j := 0
+		for ; j < len(digits) && digits[j][0] < ns[i]; j++ {
+			count += intPow(len(digits), len(ns)-1-i)
+		}
+		if j == len(digits) || digits[j][0] > ns[i] {
+			break
+		}
+	}
+	if i == len(ns) {
+		count++
+	}
+	return count
+}
+
+func TestAtMostNGivenDigitSet(t *testing.T) {
+	t.Logf("result=%d", atMostNGivenDigitSet([]string{"5", "7", "8"}, 59))
+	t.Logf("result=%d", atMostNGivenDigitSet([]string{"2", "5", "8"}, 6))
+	t.Logf("result=%d", atMostNGivenDigitSet([]string{"1", "4", "9"}, 1000000000))
+	t.Logf("result=%d", atMostNGivenDigitSet([]string{"1", "3", "5", "7"}, 100))
+}
+
+/*
+ Search in Rotated Sorted Array II
+Suppose an array sorted in ascending order is rotated at some pivot unknown to you beforehand.
+
+(i.e., [0,0,1,2,2,5,6] might become [2,5,6,0,0,1,2]).
+
+You are given a target value to search. If found in the array return true, otherwise return false.
+*/
+
+func rotatedSortedArraySearchII(nums []int, target int) bool {
+	// trim same elements at both ends of an array
+	left, right := 0, len(nums)-1
+	for left < right && nums[left] == nums[right] {
+		if nums[left] == target {
+			return true
+		}
+		left++
+		right--
+	}
+
+	if left >= right {
+		return left < len(nums) && nums[left] == target // empty array or reduced to a single number
+	}
+
+	nums = nums[left : right+1]
+	left, right = 0, len(nums)-1
+	for nums[left] > nums[right] {
+		delta := (right - left) / 2
+		median := right - delta
+		if nums[left] > nums[median] {
+			right = median
+			left++
+		} else {
+			left = median
+		}
+		if delta == 0 {
+			break
+		}
+	}
+
+	index := sort.Search(len(nums), func(n int) bool {
+		return target <= nums[(n+left)%len(nums)]
+	})
+	index = (index + left) % len(nums) // adjust index
+	return index < len(nums) && nums[index] == target
+}
+
+func TestRotatedSortedArraySearchII(t *testing.T) {
+	search := rotatedSortedArraySearchII
+	// if t.Name() != "1" {
+	// 	search = rotatedSortedArraySearchIISolution2
+	// }
+	t.Logf("result=%t", search([]int{2, 5, 6, 0, 0, 1, 2}, 0))
+	t.Logf("result=%t", search([]int{1, 3}, 1))
+}
+
+func rotatedSortedArraySearchIISolution2(nums []int, target int) bool {
+	if len(nums) == 0 {
+		return false
+	}
+	l, r := 0, len(nums)-1
+	for l+1 < r {
+		median := l + (r-l)/2
+		if nums[median] == target {
+			return true
+		}
+		if nums[median] <= nums[r] {
+			if nums[median] == nums[r] {
+				r--
+			} else if target >= nums[median] && target <= nums[r] {
+				l = median
+			} else {
+				r = median
+			}
+		} else {
+			if target <= nums[median] && target >= nums[l] {
+				r = median
+			} else {
+				l = median
+			}
+		}
+	}
+	return nums[l] == target || nums[r] == target
+}
+
+/*
+Decode String
+Given an encoded string, return its decoded string.
+
+The encoding rule is: k[encoded_string], where the encoded_string inside the square brackets is being repeated exactly
+k times. Note that k is guaranteed to be a positive integer.
+
+You may assume that the input string is always valid; No extra white spaces, square brackets are well-formed, etc.
+
+Furthermore, you may assume that the original data does not contain any digits and that digits are only for those
+repeat numbers, k. For example, there won't be input like 3a or 2[4].
+*/
+
+func decodeString(s string) string {
+	var d stringDecoder
+	d.decode(s)
+	return string(d.buf)
+}
+
+type stringDecoder struct {
+	buf []byte
+}
+
+func (t *stringDecoder) decode(src string) int {
+	pos := 0
+	for ; pos < len(src); pos++ {
+		b, end := src[pos], pos
+		if b == ']' {
+			break
+		}
+
+		for b >= '0' && b <= '9' {
+			end++
+			b = src[end]
+		}
+		if end == pos {
+			// non-alphanumeric character, print it as is
+			t.buf = append(t.buf, b)
+			continue
+		}
+
+		k, err := strconv.Atoi(src[pos:end])
+		if err != nil || k <= 0 {
+			panic("unable to decode k or wrong value")
+		}
+
+		if src[end] != '[' {
+			panic("missing start of endcoded substring")
+		}
+
+		decodeStart := len(t.buf) // for repeating written sequence
+		last := t.decode(src[end+1:])
+		decodeEnd := len(t.buf)
+		for i := 1; i < k; i++ {
+			// memoize: we just need to repeat last `last` bytes
+			for j := decodeStart; j < decodeEnd; j++ {
+				t.buf = append(t.buf, t.buf[j])
+			}
+		}
+		pos = end + last + 1 // proceed to the next character
+	}
+	return pos
+}
+
+func TestDecodeString(t *testing.T) {
+	t.Logf("result=%s", decodeString("3[a2[c]]"))
+	t.Logf("result=%s", decodeString("3[a]2[bc]"))
+}
+
+/*
+Merge Intervals
+Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals,
+and return an array of the non-overlapping intervals that cover all the intervals in the input.
+
+Constraints:
+1 <= intervals.length <= 10^4
+intervals[i].length == 2
+0 <= start(i) <= end(i) <= 10^4
+*/
+
+func mergeIntervals(intervals [][]int) [][]int {
+	if len(intervals) == 0 {
+		return nil
+	}
+
+	sort.Slice(intervals, func(i, j int) bool { return intervals[i][0] < intervals[j][0] })
+	var result [][]int
+	mStart, mEnd := intervals[0][0], intervals[0][1]
+	for i := 1; i <= len(intervals); i++ {
+		var cStart, cEnd int
+		if i < len(intervals) {
+			cStart, cEnd = intervals[i][0], intervals[i][1]
+		} else {
+			cStart = math.MaxInt32 // sentinel value for flushing accumulated intervals
+		}
+		if mEnd < cStart {
+			result = append(result, []int{mStart, mEnd})
+			mStart, mEnd = cStart, cEnd
+			continue
+		}
+		mEnd = intMax(mEnd, cEnd)
+	}
+	return result
+}
+
+/*
+Mirror Reflection
+There is a special square room with mirrors on each of the four walls.
+Except for the southwest corner, there are receptors on each of the remaining corners, numbered 0, 1, and 2.
+
+The square room has walls of length p, and a laser ray from the southwest corner first meets the east wall at a
+distance q from the 0th receptor.
+
+Return the number of the receptor that the ray meets first.
+(It is guaranteed that the ray will meet a receptor eventually.)
+
+Note:
+
+1 <= p <= 1000
+0 <= q <= p
+*/
+
+var mirrorReflectionResults = []int{-1, 2, 0, 1}
+
+func mirrorReflection(p int, q int) int {
+	gcd := intGcd(p, q) // solution: continue square upwards, so "beam" keeps reflecting against two "walls"
+	a, b := q/gcd, p/gcd
+	return mirrorReflectionResults[a%2+2*(b%2)]
+}
+
+/*
+Longest Mountain in Array
+Let's call any (contiguous) subarray B (of A) a mountain if the following properties hold:
+
+B.length >= 3
+There exists some 0 < i < B.length - 1 such that B[0] < B[1] < ... B[i-1] < B[i] > B[i+1] > ... > B[B.length - 1]
+(Note that B could be any subarray of A, including the entire array A.)
+
+Given an array A of integers, return the length of the longest mountain.
+
+Return 0 if there is no mountain.
+
+Note:
+
+0 <= A.length <= 10000
+0 <= A[i] <= 10000
+Follow up:
+
+Can you solve it using only one pass?
+Can you solve it in O(1) space?
+*/
+
+func longestMountain(arr []int) int {
+	if len(arr) == 0 {
+		return 0
+	}
+
+	var maxMountainLength int
+	startIndex, prev := 0, arr[0] // start seeking a new mountain from the first index
+	uphill := true
+
+	for i := 1; i <= len(arr); i++ {
+		n, p := arr[intMin(i, len(arr)-1)], prev // compute current and previous values
+		prev = n
+
+		if uphill {
+			if n > p {
+				continue // we continue going uphill
+			}
+			if n < p && (i-startIndex) > 1 {
+				uphill = false // we started going downhill IFF uphill slope has at least two elements with a peak included
+				continue
+			}
+		} else {
+			if n < p {
+				continue // we continue going downhill
+			}
+
+			// at this point a mountain has formed
+			maxMountainLength = intMax(maxMountainLength, i-startIndex)
+
+			if n > p {
+				startIndex, uphill = i-1, true // special case: previous index is a base for a new potential mountain
+				continue
+			}
+		}
+
+		startIndex, uphill = i, true // equal case: try seeking a new mountain from this index
+	}
+
+	return maxMountainLength
+}
+
+func TestLongestMountain(t *testing.T) {
+	t.Logf("[1] result=%d", longestMountain([]int{875, 884, 239, 731, 723, 685}))
+	t.Logf("[2] result=%d", longestMountain([]int{20, 10, 40, 70, 30, 20, 50}))
+}
+
+/*
+Range Sum of BST
+Given the root node of a binary search tree, return the sum of values of all nodes with a value in
+the range [low, high].
+*/
+
+func rangeSumBST(root *TreeNode, low int, high int) int {
+	if root == nil {
+		return 0
+	}
+	var result int
+	for nodes := []*TreeNode{root}; len(nodes) > 0; {
+		n := nodes[len(nodes)-1]
+		nodes = nodes[0 : len(nodes)-1]
+		if n.Val >= low {
+			if n.Val <= high {
+				result += n.Val
+			}
+
+			if n.Left != nil {
+				nodes = append(nodes, n.Left)
+			}
+		}
+
+		if n.Val <= high && n.Right != nil {
+			nodes = append(nodes, n.Right)
+		}
+	}
+	return result
+}
+
+/*
+Poor Pigs
+There are 1000 buckets, one and only one of them is poisonous, while the rest are filled with water.
+They all look identical.
+If a pig drinks the poison it will die within 15 minutes.
+What is the minimum amount of pigs you need to figure out which bucket is poisonous within one hour?
+
+Answer this question, and write an algorithm for the general case.
+
+General case:
+If there are n buckets and a pig drinking poison will die within m minutes, how many pigs (x) you need to figure out
+the poisonous bucket within p minutes? There is exactly one bucket with poison.
+
+Note:
+
+A pig can be allowed to drink simultaneously on as many buckets as one would like, and the feeding takes no time.
+After a pig has instantly finished drinking buckets, there has to be a cool down time of m minutes.
+During this time, only observation is allowed and no feedings at all.
+Any given bucket can be sampled an infinite number of times (by an unlimited number of pigs).
+*/
+
+func poorPigs(buckets int, minutesToDie int, minutesToTest int) int {
+	t := minutesToTest / minutesToDie
+	x := math.Log(float64(buckets)) / math.Log(float64(t+1))
+	xceil := math.Ceil(x)
+	if xceil < x {
+		xceil += 1.0
+	}
+	return int(xceil)
+}
+
+/*
+Populating Next Right Pointers in Each Node
+You are given a perfect binary tree where all leaves are on the same level, and every parent has two children.
+Populate each next pointer to point to its next right node.
+If there is no next right node, the next pointer should be set to NULL.
+Initially, all next pointers are set to NULL.
+
+Follow up:
+
+You may only use constant extra space.
+Recursive approach is fine, you may assume implicit stack space does not count as extra space for this problem.
+
+Constraints:
+
+The number of nodes in the given tree is less than 4096.
+-1000 <= node.val <= 1000
+*/
+
+type cnNode struct {
+	Val   int
+	Left  *cnNode
+	Right *cnNode
+	Next  *cnNode
+}
+
+func connect(root *cnNode) *cnNode {
+	list := root
+	for list != nil {
+		var nextList cnNode
+		prev := &nextList
+		for i := list; i != nil; i = i.Next {
+			if i.Left == nil {
+				break
+			}
+			prev.Next, i.Left.Next = i.Left, i.Right
+			prev = i.Right
+		}
+		list = nextList.Next
+	}
+
+	return root
+}
+
+/*
+Valid Square
+Given the coordinates of four points in 2D space, return whether the four points could construct a square.
+
+The coordinate (x,y) of a point is represented by an integer array with two integers.
+
+Note:
+
+All the input integers are in the range [-10000, 10000].
+A valid square has four equal sides with positive length and four equal angles (90-degree angles).
+Input points have no order.
+*/
+
+func validSquare(p1 []int, p2 []int, p3 []int, p4 []int) bool {
+	p := [][]int{p1, p2, p3, p4}
+	var d []int // accumulates distance squares
+	for i := 0; i < len(p); i++ {
+		for j := i + 1; j < len(p); j++ {
+			a, b := p[i], p[j]
+			dx, dy := b[0]-a[0], b[1]-a[1]
+			d = append(d, dx*dx+dy*dy)
+		}
+	}
+	sort.Ints(d) // if square, d must have four equal sides followed by two equal diagonals, e.g. [1,1,1,1,2,2]
+	return d[0] != 0 && d[0] == d[1] && d[1] == d[2] && d[2] == d[3] && d[4] == d[5]
+}
+
+func TestValidSquare(t *testing.T) {
+	t.Logf("result=%t", validSquare(
+		[]int{0, 0},
+		[]int{1, 1},
+		[]int{0, 1},
+		[]int{1, 0},
+	))
+}
+
+/*
+Flipping an Image
+Given a binary matrix A, we want to flip the image horizontally, then invert it, and return the resulting image.
+*/
+
+func flipAndInvertImage(a [][]int) [][]int {
+	for _, row := range a {
+		n := len(row)
+		half := n/2 + n%2
+		for i, j := 0, n-1; i < half; i++ {
+			row[i], row[j] = (row[j]+1)%2, (row[i]+1)%2
+			j--
+		}
+	}
+	return a
+}
+
+func TestFlipImage(t *testing.T) {
+	t.Logf("result=%v", flipAndInvertImage([][]int{{0, 1, 0}}))
+	t.Logf("result=%v", flipAndInvertImage([][]int{{0, 1, 1, 0}}))
+}
+
+/*
+Maximum Difference Between Node and Ancestor
+Given the root of a binary tree, find the maximum value V for which there exist different nodes A and B
+where V = |A.val - B.val| and A is an ancestor of B.
+
+A node A is an ancestor of B if either: any child of A is equal to B, or any child of A is an ancestor of B.
+*/
+
+func maxAncestorDiff(root *TreeNode) int {
+	return intMax(maxAncestorDiffScan(root.Left, root.Val, root.Val), maxAncestorDiffScan(root.Right, root.Val, root.Val))
+}
+
+func maxAncestorDiffScan(n *TreeNode, min, max int) int {
+	if n == nil {
+		return math.MinInt32
+	}
+	abs := intMax(intAbs(min-n.Val), intAbs(max-n.Val))
+	min, max = intMin(min, n.Val), intMax(max, n.Val)
+	return intMax(abs, intMax(maxAncestorDiffScan(n.Left, min, max), maxAncestorDiffScan(n.Right, min, max)))
+}
+
+/*
 Binary Tree Tilt
 Given the root of a binary tree, return the sum of every tree node's tilt.
 
