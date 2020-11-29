@@ -20,6 +20,378 @@ func TestSample(t *testing.T) {
 }
 
 /*
+Jump Game III
+Given an array of non-negative integers arr, you are initially positioned at start index of the array.
+When you are at index i, you can jump to i + arr[i] or i - arr[i], check if you can reach to any index with value 0.
+
+Notice that you can not jump outside of the array at any time.
+
+Constraints:
+
+1 <= arr.length <= 5 * 10^4
+0 <= arr[i] < arr.length
+0 <= start < arr.length
+*/
+
+func canReach(arr []int, start int) bool {
+	visited := make([]bool, len(arr))
+	stack := []int{start}
+	visited[start] = true
+	for len(stack) > 0 {
+		last := len(stack) - 1
+		n := stack[last] // pop last
+		stack = stack[:last]
+
+		if arr[n] == 0 {
+			return true
+		}
+
+		if prev := n - arr[n]; prev >= 0 && !visited[prev] {
+			stack, visited[prev] = append(stack, prev), true
+		}
+		if next := n + arr[n]; next < len(arr) && !visited[next] {
+			stack, visited[next] = append(stack, next), true
+		}
+	}
+	return false
+}
+
+/*
+Sliding Window Maximum
+
+Solution
+You are given an array of integers nums, there is a sliding window of size k which is moving from the very left of
+the array to the very right. You can only see the k numbers in the window.
+Each time the sliding window moves right by one position.
+
+Return the max sliding window.
+
+Constraints:
+
+1 <= nums.length <= 10^5
+-10^4 <= nums[i] <= 10^4
+1 <= k <= nums.length
+
+Solution is in MaxSlidingWindowSolution.maxSlidingWindow (use binary tree to track sliding window)
+
+Better solution:
+				create two arrays with the default split (k):
+        1. going from right to left put the max -> right
+        2. going from left to right put the max -> left
+        put these in the dp array to lookup
+        Now the answer will be Max(right(i), left(j))
+        where the window size is from i to j
+
+        nums = [1,3,-1,-3,5,3,6,7], k = 3
+         slice : 1 3 1 , -3 5 3, 6 7
+
+        left  : 1 3 3 , -3 5 5 , 6 7
+				right : 3 3 -1,  5 5 3,  7 7
+
+class Solution {
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        int[] left = new int[nums.length];
+        int  max;
+        for(int i=0;i<nums.length;){
+             max = Integer.MIN_VALUE;
+            //do the operation for size k
+            for(int j=0;j<k && i< nums.length;j++){
+                max = Math.max(max, nums[i]);
+                left[i] = max;
+                i++;
+            }
+
+        }
+        int[] right = new int[nums.length];
+        for(int i=nums.length-1;i>=0;){
+           max = Integer.MIN_VALUE;
+           while(i%k > 0){
+                max = Math.max(max, nums[i]);
+                right[i] = max;
+               i--;
+           }
+            max = Math.max(max, nums[i]);
+            right[i] = max;
+            i--;
+        }
+
+        int[] result = new int[nums.length-k +1];
+
+        for(int i=0,j=i+k-1;j<nums.length; i++,j++){
+            result[i] = Math.max(left[j],right[i]);
+        }
+
+        return result;
+    }
+}
+*/
+
+/*
+Longest Substring with At Least K Repeating Characters
+Given a string s and an integer k, return the length of the longest substring of s such that the frequency of each
+character in this substring is less than or equal to k.
+
+Constraints:
+
+1 <= s.length <= 10^4
+s consists of only lowercase English letters.
+1 <= k <= 10^5
+*/
+
+func longestSubstring(s string, k int) int {
+	// address primitive cases first
+	if k <= 1 {
+		return len(s)
+	}
+	if k > len(s) {
+		return 0
+	}
+
+	// accumulate character frequences
+	size := len(s)
+	freqs := make([][engAlphabetSize]int, size)
+	charFreq := [engAlphabetSize]int{}
+	for i := 0; i < size; i++ {
+		ci := s[i] - 'a'
+		charFreq[ci]++
+		freqs[i] = charFreq
+	}
+
+	var maxTermLength int
+	for i := k - 1; i < size; i++ {
+		ci := s[i] - 'a'
+		if freqs[i][ci] < k {
+			continue // TODO: better heuristics
+		}
+
+		for j := i - maxTermLength; j >= 0; j-- {
+			if isValidSubseq(freqs, j, i, k) {
+				maxTermLength = i - j + 1
+			}
+		}
+	}
+
+	return maxTermLength
+}
+
+const engAlphabetSize = 'z' - 'a' + 1
+
+func isValidSubseq(freqs [][engAlphabetSize]int, seqStart, seqEnd, k int) bool {
+	var prevFreqs [engAlphabetSize]int
+	if seqStart > 0 {
+		prevFreqs = freqs[seqStart-1]
+	}
+	for cj := 0; cj < engAlphabetSize; cj++ {
+		diff := freqs[seqEnd][cj] - prevFreqs[cj]
+		if diff != 0 && diff < k {
+			return false
+		}
+	}
+	return true
+}
+
+/*
+Better solutions:
+
+## Option 1 - Divide and Conquer
+
+longestSustring(start, end) = max(longestSubstring(start, mid), longestSubstring(mid+1, end))
+
+## Option 2 - Sliding Window
+
+Time Complexity : \mathcal{O}(\text{maxUnique} \cdot N)O(maxUnique⋅N).
+We iterate over the string of length NN, \text{maxUnqiue}maxUnqiue times. Ideally, the number of unique characters
+in the string would not be more than 26 (a to z).
+Hence, the time complexity is approximately \mathcal{O}( 26 \cdot N)O(26⋅N) = \mathcal{O}(N)O(N)
+
+Space Complexity: \mathcal{O}(1)O(1) We use constant extra space of size 26 to store the countMap.
+
+class Solution {
+public:
+    int longestSubstring(string s, int k) {
+        int countMap[26];
+        int maxUnique = getMaxUniqueLetters(s);
+        int result = 0;
+        for (int currUnique = 1; currUnique <= maxUnique; currUnique++) {
+            // reset countMap
+            memset(countMap, 0, sizeof(countMap));
+            int windowStart = 0, windowEnd = 0, idx = 0, unique = 0, countAtLeastK = 0;
+            while (windowEnd < s.size()) {
+                // expand the sliding window
+                if (unique <= currUnique) {
+                    idx = s[windowEnd] - 'a';
+                    if (countMap[idx] == 0) unique++;
+                    countMap[idx]++;
+                    if (countMap[idx] == k) countAtLeastK++;
+                    windowEnd++;
+                }
+                // shrink the sliding window
+                else {
+                    idx = s[windowStart] - 'a';
+                    if (countMap[idx] == k) countAtLeastK--;
+                    countMap[idx]--;
+                    if (countMap[idx] == 0) unique--;
+                    windowStart++;
+                }
+                if (unique == currUnique && unique == countAtLeastK)
+                    result = max(windowEnd - windowStart, result);
+            }
+        }
+
+        return result;
+    }
+
+    // get the maximum number of unique letters in the string s
+    int getMaxUniqueLetters(string s) {
+        bool map[26] = {0};
+        int maxUnique = 0;
+        for (int i = 0; i < s.length(); i++) {
+            if (!map[s[i] - 'a']) {
+                maxUnique++;
+                map[s[i] - 'a'] = true;
+            }
+        }
+        return maxUnique;
+    }
+};
+*/
+
+func TestLongestSubstring(t *testing.T) {
+	testCases := []struct {
+		expected int
+		k        int
+		str      string
+	}{
+		{
+			expected: 3,
+			k:        3,
+			str:      "aaabb",
+		},
+		{
+			expected: 5,
+			k:        2,
+			str:      "ababbc",
+		},
+		{
+			expected: 4,
+			k:        2,
+			str:      "abab",
+		},
+		{
+			expected: 4,
+			k:        2,
+			str:      "abba",
+		},
+		{
+			expected: 4,
+			k:        2,
+			str:      "dabbaq",
+		},
+		{
+			expected: 4,
+			k:        2,
+			str:      "dabab",
+		},
+	}
+
+	for n, tc := range testCases {
+		t.Run(fmt.Sprintf("tree %d should produce %d", n, tc.expected), func(t *testing.T) {
+			actual := longestSubstring(tc.str, tc.k)
+			t.Logf("result=%d", actual)
+			if actual != tc.expected {
+				t.Errorf("mismatch: expected=%d, actual=%d", tc.expected, actual)
+			}
+		})
+	}
+}
+
+/*
+Smallest Integer Divisible by K
+Given a positive integer K, you need to find the length of the smallest positive integer N such that N is
+divisible by K, and N only contains the digit 1.
+
+Return the length of N. If there is no such N, return -1.
+
+Note: N may not fit in a 64-bit signed integer.
+*/
+
+func smallestRepunitDivByK(k int) int {
+	for num, len := 1, 1; len <= k; {
+		num = num % k
+		if num == 0 {
+			return len
+		}
+		for num < k {
+			num = num*10 + 1
+			len++
+		}
+	}
+	return -1
+}
+
+/*
+House Robber III
+The thief has found himself a new place for his thievery again. There is only one entrance to this area, called
+the "root." Besides the root, each house has one and only one parent house. After a tour, the smart thief realized
+that "all houses in this place forms a binary tree". It will automatically contact the police if two directly-linked
+houses were broken into on the same night.
+
+Determine the maximum amount of money the thief can rob tonight without alerting the police.
+*/
+
+func robIII(root *TreeNode) int {
+	maxWithNode, maxWithoutNode := collectRob3Maximums(root)
+	return intMax(maxWithNode, maxWithoutNode)
+}
+
+func collectRob3Maximums(n *TreeNode) (maxWithNode, maxWithoutNode int) {
+	if n == nil {
+		maxWithNode, maxWithoutNode = 0, 0
+		return
+	}
+
+	lhsWith, lhsWithout := collectRob3Maximums(n.Left)
+	rhsWith, rhsWithout := collectRob3Maximums(n.Right)
+	maxWithNode = n.Val + lhsWithout + rhsWithout
+	maxWithoutNode = intMax(lhsWith, lhsWithout) + intMax(rhsWith, rhsWithout)
+	return
+}
+
+func TestRobIII(t *testing.T) {
+	testCases := []struct {
+		expected int
+		root     *TreeNode
+	}{
+		{
+			expected: 7,
+			root:     treeFromNumbers(2, 1, 3, tnil, 4),
+		},
+		{
+			expected: 7,
+			root:     treeFromNumbers(4, 1, tnil, 2, tnil, tnil, tnil, 3),
+		},
+		{
+			expected: 9,
+			root:     treeFromNumbers(3, 4, 5, 1, 3, tnil, 1),
+		},
+		{
+			expected: 7,
+			root:     treeFromNumbers(3, 2, 3, tnil, 3, tnil, 1),
+		},
+	}
+
+	for n, tc := range testCases {
+		t.Run(fmt.Sprintf("tree %d should produce %d", n, tc.expected), func(t *testing.T) {
+			actual := robIII(tc.root)
+			t.Logf("result=%d", actual)
+			if actual != tc.expected {
+				t.Errorf("mismatch: expected=%d, actual=%d", tc.expected, actual)
+			}
+		})
+	}
+}
+
+/*
 Unique Morse Code Words
 International Morse Code defines a standard encoding where each letter is mapped to a series of dots and dashes,
 as follows: "a" maps to ".-", "b" maps to "-...", "c" maps to "-.-.", and so on.
@@ -28,7 +400,8 @@ For convenience, the full table for the 26 letters of the English alphabet is gi
 */
 
 var morseAlphabet = []string{
-	".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", "...", "-", "..-", "...-", ".--", "-..-", "-.--", "--..",
+	".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", ".---", "-.-", ".-..", "--", "-.", "---", ".--.",
+	"--.-", ".-.", "...", "-", "..-", "...-", ".--", "-..-", "-.--", "--..",
 }
 
 func uniqueMorseRepresentations(words []string) int {
