@@ -250,17 +250,17 @@ public class SExpression {
     return p.next();
   }
 
-  public class ReaderException extends RuntimeException {
+  public static class ReaderException extends RuntimeException {
     public ReaderException(String message) {
       super(message);
     }
   }
 
-  final class ParserException extends RuntimeException {
+  static final class ParserException extends RuntimeException {
     public ParserException(String message) { super(message); }
   }
 
-  final class Parser {
+  static final class Parser {
     private final CharSequence buffer;
     private int start;
     private int end;

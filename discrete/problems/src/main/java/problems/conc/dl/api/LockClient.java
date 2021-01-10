@@ -56,13 +56,13 @@ public final class LockClient  {
   }
 
   @Value
-  public class Handle {
+  public static class Handle {
     String id;
   }
 
   @Value
   @Builder
-  public class RemoteFileMode {
+  public static class RemoteFileMode {
     @Builder.Default
     int mode = O_RDONLY;
 
@@ -73,13 +73,13 @@ public final class LockClient  {
   }
 
   @Value
-  public class LockRequest {
+  public static class LockRequest {
     long timeoutMillis;
     long maxHeartbeatDelay;
   }
 
   @Value
-  public class Stat {
+  public static class Stat {
     @NonNull String name;
     @NonNull Instant mtime; // last modification time
     int mode; // mode bits
@@ -88,7 +88,7 @@ public final class LockClient  {
   }
 
   @Value
-  class ContentsAndStat {
+  static class ContentsAndStat {
     @NonNull byte[] contents;
     @NonNull Stat stat;
   }
