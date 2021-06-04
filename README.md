@@ -1,4 +1,4 @@
 math
 ====
 
-My math snippets
+My math snippets.
