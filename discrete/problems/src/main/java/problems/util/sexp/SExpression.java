@@ -47,9 +47,9 @@ public class SExpression {
   };
 
   @Value(staticConstructor = "of")
-  public static final class Cons implements Node {
-    private final Node car;
-    private final Node cdr;
+  public static class Cons implements Node {
+    Node car;
+    Node cdr;
 
     @Override public boolean isCons() {
       return true;
@@ -263,7 +263,7 @@ public class SExpression {
   static final class Parser {
     private final CharSequence buffer;
     private int start;
-    private int end;
+    private final int end;
 
     Parser(@NonNull CharSequence buffer, int start, int end) {
       this.buffer = buffer;

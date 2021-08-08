@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>transmit2</name>
+	<name>chnumerals</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -16,9 +16,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>transmit2.tla</name>
+			<name>chnumerals.tla</name>
 			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/transmit2.tla</locationURI>
+			<locationURI>PARENT-1-PROJECT_LOC/chnumerals.tla</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
