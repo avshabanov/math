@@ -9,7 +9,7 @@
 
   <properties>
     <!--  compiler settings -->
-    <kotlin.version>0.9.66</kotlin.version>
+    <kotlin.version>1.6.0</kotlin.version>
 
     <!-- encoding -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
