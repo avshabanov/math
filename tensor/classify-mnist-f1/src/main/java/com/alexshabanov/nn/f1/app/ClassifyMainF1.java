@@ -75,7 +75,7 @@ public final class ClassifyMainF1 {
         }
       }
     }
-    System.out.println(String.format("Match quality: %.2f percent(s)",
-        (100.0 * (trainingDataSet.size() - mismatches)) / trainingDataSet.size()));
+    System.out.printf("Match quality: %.2f percent(s)%n",
+        (100.0 * (trainingDataSet.size() - mismatches)) / trainingDataSet.size());
   }
 }

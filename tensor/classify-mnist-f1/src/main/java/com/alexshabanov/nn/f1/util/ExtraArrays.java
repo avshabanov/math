@@ -1,12 +1,11 @@
 package com.alexshabanov.nn.f1.util;
 
-import java.util.Random;
+import lombok.experimental.UtilityClass;
 
 /**
  * Array utilities.
  */
-public final class ExtraArrays {
-  private ExtraArrays() {}
+@UtilityClass public class ExtraArrays {
 
   public static String floatsToString(float[] arr) {
     final StringBuilder sb = new StringBuilder(arr.length * 7 + 10).append('[');

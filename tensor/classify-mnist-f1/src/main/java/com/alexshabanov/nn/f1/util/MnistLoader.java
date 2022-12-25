@@ -26,7 +26,7 @@ public final class MnistLoader {
   }
 
   private static IdxImages readImageData(String filePath, int limit) throws IOException {
-    try (final FileInputStream fileInputStream = new FileInputStream(new File(filePath))) {
+    try (final FileInputStream fileInputStream = new FileInputStream(filePath)) {
       try (final GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream)) {
         try (final DataInputStream dataInputStream = new DataInputStream(gzipInputStream)) {
           final IdxImagesHeader header = IdxImagesHeader.read(dataInputStream);
@@ -43,7 +43,7 @@ public final class MnistLoader {
   }
 
   private static void complementLabelData(String filePath, IdxImages images) throws IOException {
-    try (final FileInputStream fileInputStream = new FileInputStream(new File(filePath))) {
+    try (final FileInputStream fileInputStream = new FileInputStream(filePath)) {
       try (final GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream)) {
         try (final DataInputStream dataInputStream = new DataInputStream(gzipInputStream)) {
           final IdxLabelHeader header = IdxLabelHeader.read(dataInputStream);
@@ -126,8 +126,8 @@ public final class MnistLoader {
     }
 
     public void dump(int limit) {
-      System.out.println(String.format("Header: numberOfImages=%d, numberOfColumns=%d, numberOfRows=%d",
-          header.numberOfImages, header.numberOfColumns, header.numberOfRows));
+      System.out.printf("Header: numberOfImages=%d, numberOfColumns=%d, numberOfRows=%d%n",
+          header.numberOfImages, header.numberOfColumns, header.numberOfRows);
 
       for (int i = 0; i < limit; ++i) {
         final byte[] image = images.get(i);
@@ -135,7 +135,7 @@ public final class MnistLoader {
         for (int y = 0; y < header.numberOfRows; ++y) {
           for (int x = 0; x < header.numberOfColumns; ++x) {
             byte b = image[x + y * header.numberOfColumns];
-            System.out.print(String.format("%02X", b));
+            System.out.printf("%02X", b);
           }
           System.out.println();
         }

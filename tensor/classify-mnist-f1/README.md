@@ -2,6 +2,15 @@
 
 This code is a java-to-python translation of code at http://neuralnetworksanddeeplearning.com/chap1.html using float numbers only.
 
+## Source Dataset
+
+```
+http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz
+http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
+http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+```
+
 ## Notes
 
 * [ReLU vs Sigmoid, Softmax and Tanh](https://algorithmsdatascience.quora.com/ReLu-compared-against-Sigmoid-Softmax-Tanh)

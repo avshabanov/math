@@ -8,22 +8,22 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
-public final class GradientDescentSettings {
-  private final int epochs;
+public class GradientDescentSettings {
+  int epochs;
 
   @Builder.Default
-  private final int miniBatchSize = 1;
+  int miniBatchSize = 1;
 
   @Builder.Default
-  private final float learningRate = 1.0f;
+  float learningRate = 1.0f;
 
   @Builder.Default
-  private final float weightDecay = 0.0f;
+  float weightDecay = 0.0f;
 
-  private final boolean reportEpoch;
+  boolean reportEpoch;
 
   @Builder.Default
-  private final Stopper stopper = SimpleStoppers.NEVER;
+  Stopper stopper = SimpleStoppers.NEVER;
 
   public interface Stopper {
     boolean shouldStop(NeuralNetwork context);
