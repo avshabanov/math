@@ -6,9 +6,9 @@ import lombok.Value;
  * Represents training data for the neural network.
  */
 @Value
-public final class TrainingData {
-  private final float[] input;
-  private final float[] output;
+public class TrainingData {
+  float[] input;
+  float[] output;
 
   public static TrainingData withInput(float... input) {
     return new TrainingData(input, new float[0]);

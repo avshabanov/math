@@ -2,6 +2,17 @@
 
 This code is a java-to-python translation of code at http://neuralnetworksanddeeplearning.com/chap1.html using float numbers only.
 
+## Source Dataset
+
+```
+http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz
+http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
+http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+```
+
+Dataset verification: `mvn exec:java -Dexec.args="$(pwd)/abandoned -debugLoader"`
+
 ## Notes
 
 * [ReLU vs Sigmoid, Softmax and Tanh](https://algorithmsdatascience.quora.com/ReLu-compared-against-Sigmoid-Softmax-Tanh)
@@ -70,3 +81,5 @@ Match quality: 88.73 percent(s)
 ```
 
 Record precision: 98.31% (which is exceptionally great!).
+
+> Update 2022-12-25 - 2.5s vs 10s on more recent intel Mac Book and java 11.

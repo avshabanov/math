@@ -1,6 +1,5 @@
 package com.alexshabanov.nn.f1.cost;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**

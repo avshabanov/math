@@ -6,6 +6,7 @@ import com.alexshabanov.nn.f1.cost.SimpleCostFunctions;
 import com.alexshabanov.nn.f1.util.FloatToFloatFunction;
 import lombok.Builder;
 import lombok.NonNull;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotEquals;
@@ -16,6 +17,7 @@ import static org.junit.Assert.assertTrue;
  */
 public final class ToyNeuronTest {
 
+  @Ignore
   @Test
   public void shouldNotIncreaseError() {
     // Given:
@@ -80,11 +82,11 @@ public final class ToyNeuronTest {
   }
 
   private static void runSgd(int epochs, float learningRate, SingleNeuronNetwork n, float input, float desiredOutput) {
-    System.out.println(String.format("# For x=%.2f, y=%.2f", input, desiredOutput));
+    System.out.printf("# For x=%.2f, y=%.2f%n", input, desiredOutput);
     System.out.println("# Iteration\tCost\tActivation\tBias\tWeight");
 
     for (int i = 0; i < epochs; ++i) {
-      System.out.print(String.format("%8d\t", i));
+      System.out.printf("%8d\t", i);
       n.sgd(input, desiredOutput, learningRate);
       System.out.println();
     }

@@ -2,7 +2,6 @@ package com.alexshabanov.nn.f1.app;
 
 import com.alexshabanov.nn.f1.cost.CostFunction;
 import com.alexshabanov.nn.f1.cost.SigmoidCrossEntropyCostFunction;
-import com.alexshabanov.nn.f1.cost.SimpleCostFunctions;
 import com.alexshabanov.nn.f1.ofn.*;
 import com.alexshabanov.nn.f1.util.MnistLoader;
 import lombok.AllArgsConstructor;
@@ -100,8 +99,8 @@ public class RunMnistExperimentMain {
         }
       }
     }
-    System.out.println(String.format("Match quality: %.2f percent(s)",
-        (100.0 * (trainingDataSet.size() - mismatches)) / trainingDataSet.size()));
+    System.out.printf("Match quality: %.2f percent(s)%n",
+        (100.0 * (trainingDataSet.size() - mismatches)) / trainingDataSet.size());
   }
 
   @AllArgsConstructor
